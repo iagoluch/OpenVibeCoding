@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/iagoluch/OpenVibeCoding/internal/config"
 	"net/http"
@@ -76,6 +77,23 @@ func TestStatusErrorsAreActionable(t *testing.T) {
 	_, e := p.Stream(context.Background(), nil, nil, func(string) {})
 	if e == nil || !strings.Contains(e.Error(), "401") || strings.Contains(e.Error(), "sensitive") {
 		t.Fatalf("unsafe/missing error: %v", e)
+	}
+}
+
+func TestModelUnavailableClassification(t *testing.T) {
+	for _, tc := range []struct {
+		status int
+		want   bool
+	}{{404, true}, {429, true}, {500, true}, {503, true}, {401, false}, {403, false}, {400, false}, {302, false}} {
+		if got := ModelUnavailable(httpStatusError(tc.status)); got != tc.want {
+			t.Fatalf("status %d: got %v, want %v", tc.status, got, tc.want)
+		}
+	}
+	if ModelUnavailable(errors.New("network trouble")) {
+		t.Fatal("non-status errors must not be classified as model-level")
+	}
+	if ModelUnavailable(fmt.Errorf("wrapped: %w", httpStatusError(503))) != true {
+		t.Fatal("wrapped status errors must keep their classification")
 	}
 }
 

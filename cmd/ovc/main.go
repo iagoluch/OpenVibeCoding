@@ -17,6 +17,7 @@ import (
 	"github.com/iagoluch/OpenVibeCoding/internal/automation"
 	"github.com/iagoluch/OpenVibeCoding/internal/config"
 
+	"github.com/iagoluch/OpenVibeCoding/internal/setup"
 	"github.com/iagoluch/OpenVibeCoding/internal/tui"
 	"github.com/iagoluch/OpenVibeCoding/internal/workspace"
 )
@@ -34,6 +35,7 @@ func run() error {
 	credentialFile := flag.Bool("credential-file", false, "explicitly use restricted local file instead of OS keychain")
 	export := flag.String("export", "", "export session JSON to stdout")
 	setupBrowser := flag.Bool("setup-browser", false, "install pinned Playwright and Chromium into application data directory")
+	setupWizard := flag.Bool("setup", false, "interactive provider setup: detect local models, store a credential, smoke test")
 	debug := flag.Bool("debug", false, "enable runtime diagnostic metadata logging")
 	flag.Parse()
 	if *debug {
@@ -50,6 +52,9 @@ func run() error {
 	c, e := config.Load(dir)
 	if e != nil {
 		return fmt.Errorf("configuration: %w", e)
+	}
+	if *setupWizard {
+		return setup.Run(context.Background(), dir, c)
 	}
 	if *setupBrowser {
 		return automation.SetupBrowser(context.Background(), dir)

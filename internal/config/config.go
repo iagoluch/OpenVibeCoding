@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 )
 
@@ -52,8 +53,9 @@ func Default() Config {
 			{ID: "claude-sonnet-4-5", Context: 200000, Tools: true, InputPrice: price(3), OutputPrice: price(15)},
 		}},
 		"gemini": {Protocol: "gemini", BaseURL: "https://generativelanguage.googleapis.com/v1beta", KeyEnv: "GEMINI_API_KEY", Models: []Model{
-			{ID: "gemini-2.5-flash", Context: 1048576, Tools: true, InputPrice: price(0.30), OutputPrice: price(2.50)},
-			{ID: "gemini-2.5-flash-lite", Context: 1048576, Tools: true, InputPrice: price(0.10), OutputPrice: price(0.40)},
+			{ID: "gemini-3.8-flash", Context: 1048576, Tools: true, InputPrice: price(0.75), OutputPrice: price(3.75)},
+			{ID: "gemini-flash-latest", Context: 1048576, Tools: true, InputPrice: price(0.75), OutputPrice: price(3.75)},
+			{ID: "gemini-3.1-flash-lite", Context: 1048576, Tools: true, InputPrice: price(0.25), OutputPrice: price(1.5)},
 		}},
 		"openai": {BaseURL: "https://api.openai.com/v1", KeyEnv: "OPENAI_API_KEY", Usage: true, Models: []Model{
 			{ID: "gpt-4.1-mini", Context: 1047576, Tools: true, InputPrice: price(0.40), OutputPrice: price(1.60)},
@@ -90,8 +92,9 @@ func Default() Config {
 		}},
 		"nvidia": {BaseURL: "https://integrate.api.nvidia.com/v1", KeyEnv: "NVIDIA_API_KEY", Usage: true, Models: []Model{
 			{ID: "z-ai/glm-5.3-flash", Context: 1000000, Tools: true, InputPrice: price(0), OutputPrice: price(0)},
-			{ID: "bytedance/seed-oss-36b-instruct", Context: 262000, Tools: true, InputPrice: price(0), OutputPrice: price(0)},
+			{ID: "deepseek-ai/deepseek-v4.1-flash", Context: 1000000, Tools: true, InputPrice: price(0), OutputPrice: price(0)},
 			{ID: "poolside/laguna-xs-2.1", Context: 262144, Tools: true, InputPrice: price(0), OutputPrice: price(0)},
+			{ID: "moonshotai/kimi-k2.6", Context: 262144, Tools: true, InputPrice: price(0), OutputPrice: price(0)},
 		}},
 		"zai": {BaseURL: "https://api.z.ai/api/paas/v4", KeyEnv: "ZAI_API_KEY", Usage: true, Models: []Model{
 			{ID: "glm-4.7-flash", Context: 200000, Tools: true, InputPrice: price(0), OutputPrice: price(0)},
@@ -110,12 +113,90 @@ func Default() Config {
 		}},
 	}}
 }
+// Dir returns the configuration directory.
 func Dir() (string, error) {
 	if p := os.Getenv("OPENVIBECODING_HOME"); p != "" {
 		return filepath.Abs(p)
 	}
 	p, e := os.UserConfigDir()
 	return filepath.Join(p, "openvibecoding"), e
+}
+
+// legacyStock returns the provider presets exactly as shipped in v0.1.0.
+// An entry that still matches them means the user never customized it.
+func legacyStock() map[string]Provider {
+	return map[string]Provider{
+		"anthropic": {Protocol: "anthropic", BaseURL: "https://api.anthropic.com/v1", KeyEnv: "ANTHROPIC_API_KEY", Models: []Model{{ID: "claude-sonnet-4-5", Context: 32768, Tools: true}}},
+		"gemini":    {Protocol: "gemini", BaseURL: "https://generativelanguage.googleapis.com/v1beta", KeyEnv: "GEMINI_API_KEY", Models: []Model{{ID: "gemini-2.5-flash", Context: 32768, Tools: true}}},
+		"openai":    {BaseURL: "https://api.openai.com/v1", KeyEnv: "OPENAI_API_KEY", Usage: true, Models: []Model{{ID: "gpt-4.1-mini", Context: 32768, Tools: true}}},
+		"deepseek":  {BaseURL: "https://api.deepseek.com", KeyEnv: "DEEPSEEK_API_KEY", Models: []Model{{ID: "deepseek-chat", Context: 32768, Tools: true}}},
+		"kimi":      {BaseURL: "https://api.moonshot.ai/v1", KeyEnv: "MOONSHOT_API_KEY", Models: []Model{{ID: "kimi-k2", Context: 32768, Tools: true}}},
+		"qwen":      {BaseURL: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1", KeyEnv: "DASHSCOPE_API_KEY", Models: []Model{{ID: "qwen-plus", Context: 32768, Tools: true}}},
+		"local":     {BaseURL: "http://127.0.0.1:11434/v1", Models: []Model{{ID: "qwen3:8b", Context: 8192, Tools: true}}},
+	}
+}
+
+// adoptCurrentPresets upgrades stock provider entries (unchanged since v0.1.0)
+// to the current presets so model IDs, contexts and prices stay fresh across
+// releases. Entries the user edited are preserved; the active model is repaired
+// when it no longer exists after the replacement. Reports whether anything
+// changed.
+func adoptCurrentPresets(c *Config) bool {
+	changed := false
+	legacy := legacyStock()
+	defaults := Default()
+	for name, disk := range c.Providers {
+		stock, ok := legacy[name]
+		if !ok {
+			continue
+		}
+		p := disk
+		p.Secret = ""
+		if reflect.DeepEqual(p, stock) {
+			c.Providers[name] = defaults.Providers[name]
+			changed = true
+		}
+	}
+	if p, ok := c.Providers[c.Provider]; ok {
+		valid := false
+		for _, m := range p.Models {
+			if m.ID == c.Model {
+				valid = true
+				break
+			}
+		}
+		if !valid && len(p.Models) > 0 {
+			c.Model = p.Models[0].ID
+			changed = true
+		}
+	}
+	return changed
+}
+
+// Save persists the configuration with restrictive permissions. Provider
+// entries that still match shipped presets are omitted, so future releases can
+// refresh them; only user-made changes are written. Secrets are never stored.
+func Save(dir string, c Config) error {
+	c.Provider = strings.TrimSpace(c.Provider)
+	defaults := Default()
+	disk := c
+	disk.Providers = map[string]Provider{}
+	for name, p := range c.Providers {
+		entry := p
+		entry.Secret = ""
+		if stock, ok := defaults.Providers[name]; ok {
+			stock.Secret = ""
+			if reflect.DeepEqual(entry, stock) {
+				continue
+			}
+		}
+		disk.Providers[name] = p
+	}
+	b, e := json.MarshalIndent(disk, "", "  ")
+	if e != nil {
+		return e
+	}
+	return os.WriteFile(filepath.Join(dir, "config.json"), b, 0600)
 }
 func Load(dir string) (Config, error) {
 	c := Default()
@@ -124,10 +205,16 @@ func Load(dir string) (Config, error) {
 	}
 	b, e := os.ReadFile(filepath.Join(dir, "config.json"))
 	if errors.Is(e, os.ErrNotExist) {
-		b, _ = json.MarshalIndent(c, "", "  ")
-		e = os.WriteFile(filepath.Join(dir, "config.json"), b, 0600)
+		e = Save(dir, c)
 	} else if e == nil {
-		e = json.Unmarshal(b, &c)
+		if e = json.Unmarshal(b, &c); e != nil {
+			return c, e
+		}
+		if adoptCurrentPresets(&c) {
+			// Best effort: persist the upgrade so later runs do not repeat it and
+			// stock provider entries are pruned from the file.
+			_ = Save(dir, c)
+		}
 	}
 	if e != nil {
 		return c, e

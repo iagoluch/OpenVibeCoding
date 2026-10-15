@@ -2,6 +2,8 @@ package config
 
 import (
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -32,6 +34,88 @@ func TestLoadPreservesConfiguration(t *testing.T) {
 	again, e := Load(dir)
 	if e != nil || again.Model != c.Model {
 		t.Fatal(e)
+	}
+}
+
+func TestSaveLoadRoundTrip(t *testing.T) {
+	dir := t.TempDir()
+	c := Default()
+	c.Provider, c.Model = "openrouter", "thinkingmachines/inkling:free"
+	if e := Save(dir, c); e != nil {
+		t.Fatal(e)
+	}
+	back, e := Load(dir)
+	if e != nil || back.Provider != c.Provider || back.Model != c.Model {
+		t.Fatal(e)
+	}
+}
+
+func TestLoadAdoptsStockPresets(t *testing.T) {
+	dir := t.TempDir()
+	stock := `{
+  "provider": "gemini",
+  "model": "gemini-2.5-flash",
+  "harness": "review",
+  "providers": {
+    "gemini": {"protocol": "gemini", "base_url": "https://generativelanguage.googleapis.com/v1beta", "key_env": "GEMINI_API_KEY", "models": [{"id": "gemini-2.5-flash", "context": 32768, "tools": true}]},
+    "anthropic": {"protocol": "anthropic", "base_url": "https://custom.example/v1", "key_env": "ANTHROPIC_API_KEY", "models": [{"id": "claude-sonnet-4-5", "context": 32768, "tools": true}]},
+    "custom": {"base_url": "https://example.com/v1", "key_env": "CUSTOM_KEY", "models": [{"id": "m", "context": 8192, "tools": true}]}
+  }
+}`
+	if e := os.WriteFile(filepath.Join(dir, "config.json"), []byte(stock), 0600); e != nil {
+		t.Fatal(e)
+	}
+	c, e := Load(dir)
+	if e != nil {
+		t.Fatal(e)
+	}
+	if got := c.Providers["gemini"].Models[0].ID; got != "gemini-3.8-flash" {
+		t.Fatalf("stock preset not upgraded: %s", got)
+	}
+	if c.Model != "gemini-3.8-flash" {
+		t.Fatalf("active model not repaired after upgrade: %s", c.Model)
+	}
+	if c.Providers["anthropic"].BaseURL != "https://custom.example/v1" {
+		t.Fatal("customized stock entry replaced")
+	}
+	if c.Providers["custom"].BaseURL != "https://example.com/v1" {
+		t.Fatal("custom provider lost")
+	}
+}
+
+func TestSaveOmitsStockProviders(t *testing.T) {
+	dir := t.TempDir()
+	c := Default()
+	c.Provider, c.Model = "openrouter", "thinkingmachines/inkling:free"
+	c.Providers["custom"] = Provider{BaseURL: "https://example.com/v1", KeyEnv: "CUSTOM_KEY", Models: []Model{{ID: "m", Context: 8192, Tools: true}}}
+	if e := Save(dir, c); e != nil {
+		t.Fatal(e)
+	}
+	b, e := os.ReadFile(filepath.Join(dir, "config.json"))
+	if e != nil {
+		t.Fatal(e)
+	}
+	var raw struct {
+		Providers map[string]any `json:"providers"`
+	}
+	if e = json.Unmarshal(b, &raw); e != nil {
+		t.Fatal(e)
+	}
+	if len(raw.Providers) != 1 {
+		t.Fatalf("expected only the custom provider on disk, got %d entries", len(raw.Providers))
+	}
+	if _, ok := raw.Providers["custom"]; !ok {
+		t.Fatal("custom provider missing from disk")
+	}
+	back, e := Load(dir)
+	if e != nil {
+		t.Fatal(e)
+	}
+	if len(back.Providers) != len(Default().Providers)+1 {
+		t.Fatalf("defaults not merged back: %d", len(back.Providers))
+	}
+	if back.Provider != "openrouter" || back.Model != "thinkingmachines/inkling:free" {
+		t.Fatal("active selection lost")
 	}
 }
 

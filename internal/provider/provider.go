@@ -234,23 +234,48 @@ func endpointHost(base string) string {
 	return u.Host
 }
 
+// StatusError reports a non-200 provider response. It carries the HTTP status
+// so callers can distinguish model-level or temporary failures from
+// configuration problems. Response bodies stay hidden because they can echo
+// credentials.
+type StatusError struct {
+	Code int
+	text string
+}
+
+func (e *StatusError) Error() string { return e.text }
+
+// ModelUnavailable reports whether err should be retried with another model of
+// the same provider: the model may be retired or not served, rate limited, or
+// the provider may be temporarily down. Credential, endpoint and network
+// problems return false, because another model would fail the same way.
+func ModelUnavailable(err error) bool {
+	var s *StatusError
+	if !errors.As(err, &s) {
+		return false
+	}
+	return s.Code == 404 || s.Code == 429 || s.Code >= 500
+}
+
 // httpStatusError converts a non-200 provider response into an actionable
 // message. Response bodies stay hidden because they can echo credentials.
 func httpStatusError(status int) error {
+	var text string
 	switch {
 	case status == 401:
-		return errors.New("authentication failed (HTTP 401): the credential is missing or invalid; store one with ovc --credential or set the provider key")
+		text = "authentication failed (HTTP 401): the credential is missing or invalid; store one with ovc --credential or set the provider key"
 	case status == 403:
-		return errors.New("access denied (HTTP 403): the key cannot use this model or endpoint; check your provider plan and access")
+		text = "access denied (HTTP 403): the key cannot use this model or endpoint; check your provider plan and access"
 	case status == 404:
-		return errors.New("not found (HTTP 404): verify the model ID and the provider base URL")
+		text = "not found (HTTP 404): verify the model ID and the provider base URL"
 	case status == 429:
-		return errors.New("rate limited (HTTP 429): wait a moment, use a smaller request, or switch models")
+		text = "rate limited (HTTP 429): wait a moment, use a smaller request, or switch models"
 	case status >= 300 && status < 400:
-		return errors.New("provider redirected the request: redirects are refused to protect credentials; verify the base URL")
+		text = "provider redirected the request: redirects are refused to protect credentials; verify the base URL"
 	case status >= 500:
-		return fmt.Errorf("provider unavailable (HTTP %d): retry shortly or switch models", status)
+		text = fmt.Sprintf("provider unavailable (HTTP %d): retry shortly or switch models", status)
 	default:
-		return fmt.Errorf("unexpected provider response (HTTP %d); response body kept hidden to protect credentials", status)
+		text = fmt.Sprintf("unexpected provider response (HTTP %d); response body kept hidden to protect credentials", status)
 	}
+	return &StatusError{Code: status, text: text}
 }
