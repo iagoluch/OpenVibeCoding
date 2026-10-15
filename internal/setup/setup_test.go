@@ -54,14 +54,18 @@ func TestEnsureModelAddsMissing(t *testing.T) {
 func TestSelectRefusesUnknownProviderAndModel(t *testing.T) {
 	dir := t.TempDir()
 	c := config.Default()
-	if e := Select(dir, c, "missing", "gpt-4.1-mini"); e == nil {
+	if _, e := Select(dir, c, "missing", "gpt-4.1-mini"); e == nil {
 		t.Fatal("unknown provider accepted")
 	}
-	if e := Select(dir, c, "openai", "gpt-4.1-turbo"); e == nil {
+	if _, e := Select(dir, c, "openai", "gpt-4.1-turbo"); e == nil {
 		t.Fatal("unknown model accepted")
 	}
-	if e := Select(dir, c, "openai", "gpt-4.1"); e != nil {
-		t.Fatal(e)
+	updated, e := Select(dir, c, "openai", "gpt-4.1")
+	if e != nil || updated.Provider != "openai" || updated.Model != "gpt-4.1" {
+		t.Fatalf("select did not report the new configuration: %v", e)
+	}
+	if c.Provider != "openai" || c.Model != "gpt-4.1-mini" {
+		t.Fatal("select must not mutate the caller's configuration")
 	}
 	back, e := config.Load(dir)
 	if e != nil || back.Provider != "openai" || back.Model != "gpt-4.1" {

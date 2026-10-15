@@ -16,6 +16,7 @@ import (
 	"github.com/iagoluch/OpenVibeCoding/internal/config"
 	"github.com/iagoluch/OpenVibeCoding/internal/provider"
 	"github.com/iagoluch/OpenVibeCoding/internal/store"
+	"github.com/iagoluch/OpenVibeCoding/internal/webui"
 	"github.com/iagoluch/OpenVibeCoding/internal/workspace"
 	"log/slog"
 	"net"
@@ -53,7 +54,12 @@ type Server struct {
 	ctx       context.Context
 	log       *slog.Logger
 	db        *store.Store
+	ui        http.Handler
 	config    config.Config
+	dir       string
+	addr      string
+	workspace string
+	pairings  map[string]time.Time
 	mu        sync.Mutex
 	busy      map[string]bool
 	approvals map[string]approval
@@ -113,7 +119,11 @@ func Serve(ctx context.Context, dir string, c config.Config) error {
 	logger := slog.New(slog.NewJSONHandler(logFile, &slog.HandlerOptions{Level: level}))
 	serverCtx, cancelServer := context.WithCancel(ctx)
 	defer cancelServer()
-	s := &Server{ctx: serverCtx, log: logger, db: db, config: c, busy: map[string]bool{}, approvals: map[string]approval{}, stop: make(chan struct{}), token: random()}
+	ui, e := webui.Handler()
+	if e != nil {
+		return e
+	}
+	s := &Server{ctx: serverCtx, log: logger, db: db, ui: ui, dir: dir, addr: listener.Addr().String(), config: c, pairings: map[string]time.Time{}, busy: map[string]bool{}, approvals: map[string]approval{}, stop: make(chan struct{}), token: random()}
 	meta := Metadata{URL: "http://" + listener.Addr().String(), Token: s.token, Version: Protocol, PID: os.Getpid()}
 	b, _ := json.Marshal(meta)
 	path := filepath.Join(dir, "runtime.json")
@@ -146,12 +156,25 @@ func Serve(ctx context.Context, dir string, c config.Config) error {
 	return httpServer.Shutdown(shutdown)
 }
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if r.Header.Get("Origin") != "" || subtle.ConstantTimeCompare([]byte(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")), []byte(s.token)) != 1 {
+	if r.Host != s.addr {
+		http.Error(w, "forbidden host", 403)
+		return
+	}
+	if !sameOrigin(r) {
 		http.Error(w, "unauthorized", 401)
+		return
+	}
+	if r.Method == "GET" {
+		s.serveUI(w, r)
 		return
 	}
 	if r.Method != "POST" {
 		http.Error(w, "POST required", 405)
+		return
+	}
+	bearer := subtle.ConstantTimeCompare([]byte(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")), []byte(s.token)) == 1
+	if !bearer && !s.cookieAuth(r) {
+		http.Error(w, "unauthorized", 401)
 		return
 	}
 	r.Body = http.MaxBytesReader(w, r.Body, 2<<20)
@@ -182,6 +205,12 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			close(s.stop)
 		}
 		json.NewEncoder(w).Encode(map[string]bool{"stopping": true})
+	case "/pair":
+		if !bearer {
+			http.Error(w, "unauthorized", 401)
+			return
+		}
+		s.pairCreate(w, r)
 	case "/approve":
 		var a struct {
 			ID    string
@@ -209,9 +238,38 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.storage(w, r)
 	case "/run":
 		s.run(w, r, owner)
+	case "/ui/info":
+		s.uiInfo(w, r)
+	case "/ui/setup":
+		s.uiSetup(w, r)
+	case "/ui/select":
+		s.uiSelect(w, r)
 	default:
 		http.NotFound(w, r)
 	}
+}
+
+// sameOrigin reports whether a request may address the daemon on behalf of the
+// browser. Requests without Origin and fetch metadata (the CLI and TUI) pass;
+// a browser request must come from the daemon's own origin. This replaces the
+// earlier blanket refusal of any Origin header, so the paired page can use the
+// API while cross-site pages still cannot.
+func sameOrigin(r *http.Request) bool {
+	if o := r.Header.Get("Origin"); o != "" && o != "http://"+r.Host {
+		return false
+	}
+	switch r.Header.Get("Sec-Fetch-Site") {
+	case "", "same-origin", "none":
+		return true
+	}
+	return false
+}
+
+// cookieAuth reports whether the request carries the cookie minted by a pairing
+// link. It is only consulted after the origin policy passed.
+func (s *Server) cookieAuth(r *http.Request) bool {
+	c, e := r.Cookie("ovc_ui")
+	return e == nil && subtle.ConstantTimeCompare([]byte(c.Value), []byte(s.token)) == 1
 }
 func (s *Server) storage(w http.ResponseWriter, r *http.Request) {
 	var req request
@@ -318,7 +376,9 @@ func (s *Server) run(w http.ResponseWriter, r *http.Request, owner string) {
 		http.Error(w, "invalid session workspace", 400)
 		return
 	}
+	s.mu.Lock()
 	c := s.config
+	s.mu.Unlock()
 	c.Provider = req.Provider
 	c.Model = req.Model
 	c.Harness = req.Harness
@@ -404,9 +464,17 @@ func (s *Server) run(w http.ResponseWriter, r *http.Request, owner string) {
 	enc.Encode(out)
 	flusher.Flush()
 }
+
+// ErrNotRunning reports that no runtime metadata exists for the configured
+// directory, which is the ordinary state before the first ovc start.
+var ErrNotRunning = errors.New("runtime is not running")
+
 func Discover(dir string) (Metadata, error) {
 	var m Metadata
 	b, e := os.ReadFile(filepath.Join(dir, "runtime.json"))
+	if errors.Is(e, os.ErrNotExist) {
+		return m, ErrNotRunning
+	}
 	if e != nil {
 		return m, e
 	}

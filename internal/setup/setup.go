@@ -194,7 +194,7 @@ func activate(ctx context.Context, dir string, c config.Config, in *bufio.Reader
 	} else {
 		fmt.Println("Smoke test passed.")
 	}
-	if err := Select(dir, c, name, active); err != nil {
+	if _, err := Select(dir, c, name, active); err != nil {
 		fmt.Fprintf(os.Stderr, "Saving configuration: %v\n", err)
 		return false
 	}
@@ -244,20 +244,20 @@ func Probe(ctx context.Context, p config.Provider, preferred string, report func
 	return "", last
 }
 
-// Select persists one provider/model pair as the active choice, refusing
-// anything the configuration cannot activate.
-func Select(dir string, c config.Config, provider, model string) error {
+// Select validates one provider/model pair, persists it as the active choice
+// and returns the updated configuration, which the caller adopts.
+func Select(dir string, c config.Config, provider, model string) (config.Config, error) {
 	p, ok := c.Providers[provider]
 	if !ok {
-		return fmt.Errorf("unknown provider %q", provider)
+		return c, fmt.Errorf("unknown provider %q", provider)
 	}
 	for _, m := range p.Models {
 		if m.ID == model {
 			c.Provider, c.Model = provider, model
-			return config.Save(dir, c)
+			return c, config.Save(dir, c)
 		}
 	}
-	return fmt.Errorf("unknown model %q for %s", model, provider)
+	return c, fmt.Errorf("unknown model %q for %s", model, provider)
 }
 
 // Store saves one credential for a provider and refreshes the in-memory

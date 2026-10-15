@@ -11,6 +11,7 @@ import (
 	"github.com/iagoluch/OpenVibeCoding/internal/store"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -178,4 +179,64 @@ func (c *Client) Run(ctx context.Context, e *agent.Engine, prompt string, emit f
 			response.Body.Close()
 		}
 	}
+}
+
+// Pair creates a single-use link that pairs one browser with this runtime. The
+// workspace, when set, is proposed to the page for new sessions.
+func (c *Client) Pair(ctx context.Context, workspace string) (string, error) {
+	resp, e := c.request(ctx, "/pair", pairRequest{Workspace: workspace})
+	if e != nil {
+		return "", e
+	}
+	defer resp.Body.Close()
+	var v struct {
+		Code string
+	}
+	if e = json.NewDecoder(io.LimitReader(resp.Body, 4096)).Decode(&v); e != nil {
+		return "", e
+	}
+	if v.Code == "" {
+		return "", errors.New("runtime returned no pairing code")
+	}
+	return c.Meta.URL + "/pair?token=" + url.QueryEscape(v.Code), nil
+}
+
+// UIInfo reads the browser state: active configuration, workspaces and the
+// providers a beginner may connect.
+func (c *Client) UIInfo(ctx context.Context) (UIInfo, error) {
+	var v UIInfo
+	resp, e := c.request(ctx, "/ui/info", struct{}{})
+	if e != nil {
+		return v, e
+	}
+	defer resp.Body.Close()
+	e = json.NewDecoder(io.LimitReader(resp.Body, 1<<20)).Decode(&v)
+	return v, e
+}
+
+// UISetup connects one provider for the browser and reports the active model.
+// The credential, when set, is stored in the OS keychain and never returned.
+func (c *Client) UISetup(ctx context.Context, provider, model, key string, force bool) (UIAction, error) {
+	return c.uiAction(ctx, "/ui/setup", map[string]any{"provider": provider, "model": model, "key": key, "force": force})
+}
+
+// UISelect activates a provider/model pair that is already configured.
+func (c *Client) UISelect(ctx context.Context, provider, model string) (UIAction, error) {
+	return c.uiAction(ctx, "/ui/select", map[string]any{"provider": provider, "model": model})
+}
+
+func (c *Client) uiAction(ctx context.Context, path string, body any) (UIAction, error) {
+	var v UIAction
+	resp, e := c.request(ctx, path, body)
+	if e != nil {
+		return v, e
+	}
+	defer resp.Body.Close()
+	if e = json.NewDecoder(io.LimitReader(resp.Body, 4096)).Decode(&v); e != nil {
+		return v, e
+	}
+	if v.Error != "" {
+		return v, errors.New(v.Error)
+	}
+	return v, nil
 }
