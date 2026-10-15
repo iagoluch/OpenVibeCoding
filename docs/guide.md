@@ -4,17 +4,18 @@ A terminal coding agent written in Go with Bubble Tea. It can inspect projects, 
 
 ## Install and launch
 
-Use a trusted release archive matching your OS/CPU, or build with **Go 1.26.2+**:
+Install the latest [release](https://github.com/iagoluch/OpenVibeCoding/releases/latest) with the install script — it downloads the archive for your OS/CPU and verifies SHA-256 — or grab the archive manually:
 
 ```sh
-go build -o ovc ./cmd/ovc
-bash scripts/install.sh ./ovc
+git clone https://github.com/iagoluch/OpenVibeCoding.git
+cd OpenVibeCoding
+bash scripts/install.sh
 # Add ~/.local/bin to PATH if needed:
 export PATH="$HOME/.local/bin:$PATH"
 ovc --workspace /path/to/project
 ```
 
-Windows: `go build -o ovc.exe ./cmd/ovc`, then `./scripts/install.ps1 -Binary ./ovc.exe -AddToPath`. Reopen the terminal after updating PATH. Both installers also support downloading release binaries when no local binary is supplied. They detect OS/architecture and verify SHA-256 checksums. **No public release has been published by this task**; until one exists, use a local binary or the generated archives. A tagged CI workflow creates draft releases for review.
+Windows: `./scripts/install.ps1 -AddToPath`, then reopen the terminal. Pin a specific release with `-Version v0.1.0` (PowerShell) or `OPENVIBECODING_VERSION=v0.1.0` (shell). Building from source needs **Go 1.26.2+**: `go build -o ovc ./cmd/ovc`, then `bash scripts/install.sh ./ovc` (`./scripts/install.ps1 -Binary ./ovc.exe -AddToPath` on Windows).
 
 `bash scripts/package.sh` creates Linux/macOS/Windows × amd64/arm64 archives containing `ovc`, plus `SHA256SUMS`. Building needs Go; packaging also needs Python 3. Running a release binary does not need Go. Browser QA additionally needs Node and Chromium; desktop prerequisites are listed below.
 

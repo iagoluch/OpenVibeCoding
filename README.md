@@ -35,22 +35,21 @@ OpenVibeCoding is a Go/Bubble Tea coding agent with persistent sessions, native 
 
 ## Get started
 
-Build with **Go 1.26.2+**:
+Install the latest release — the script downloads the archive for your OS/CPU and verifies SHA-256 (no Go required):
 
 ```sh
 git clone https://github.com/iagoluch/OpenVibeCoding.git
 cd OpenVibeCoding
-go build -o ovc ./cmd/ovc
-bash scripts/install.sh ./ovc
+bash scripts/install.sh
 ovc --credential openai
 ovc --workspace /path/to/project
 ```
 
-Add `~/.local/bin` to PATH if needed. On Windows, build `ovc.exe` and use `./scripts/install.ps1 -Binary ./ovc.exe -AddToPath`, then reopen PowerShell.
+Add `~/.local/bin` to PATH if needed. On Windows, run `./scripts/install.ps1 -AddToPath`, then reopen PowerShell. You can also download the archive for your OS/CPU directly from [Releases](https://github.com/iagoluch/OpenVibeCoding/releases/latest). Building from source needs **Go 1.26.2+**: `go build -o ovc ./cmd/ovc`, then `bash scripts/install.sh ./ovc`.
 
 Credentials use the OS keychain by default. Environment variables are supported; a restricted local credential file requires explicit opt-in. Run `ovc --doctor` to inspect setup without exposing keys.
 
-Release download installers and archive/checksum generation are included. **This task has not published a public release**; build locally or use generated archives until one is available. See the [installation and upgrade guide](docs/guide.md#install-and-launch).
+Release archives for Linux, macOS and Windows (amd64/arm64) are built by CI from tagged commits and published on [Releases](https://github.com/iagoluch/OpenVibeCoding/releases/latest); the installers verify SHA-256 checksums. See the [installation and upgrade guide](docs/guide.md#install-and-launch).
 
 ## The development loop
 
@@ -122,4 +121,4 @@ go vet ./...
 bash scripts/package.sh
 ```
 
-<p align="center"><sub>An independent terminal coding project. Built around reviewable actions and observed results.</sub></p>
+<p align="center"><sub>An independent terminal coding project. Built around reviewable actions and observed results. MIT licensed.</sub></p>
