@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"sort"
 	"strings"
@@ -70,7 +71,7 @@ func (p Compatible) Stream(ctx context.Context, messages []Message, tools []Tool
 		key = os.Getenv(p.Settings.KeyEnv)
 	}
 	if p.Settings.KeyEnv != "" && key == "" {
-		return reply, fmt.Errorf("set %s before requesting this provider", p.Settings.KeyEnv)
+		return reply, fmt.Errorf("no credential configured: set %s or store one with ovc --credential", p.Settings.KeyEnv)
 	}
 	// Native protocol metadata is stored for resumption but is not an OpenAI field.
 	clean := make([]Message, len(messages))
@@ -121,7 +122,7 @@ func (p Compatible) Stream(ctx context.Context, messages []Message, tools []Tool
 			if ctx.Err() != nil {
 				return reply, ctx.Err()
 			}
-			return reply, errors.New("provider connection failed; check endpoint and network")
+			return reply, fmt.Errorf("could not reach %s: check the endpoint, network, or that a local server is running", endpointHost(p.Settings.BaseURL))
 		}
 		if resp.StatusCode != 429 && resp.StatusCode < 500 {
 			break
@@ -138,7 +139,7 @@ func (p Compatible) Stream(ctx context.Context, messages []Message, tools []Tool
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
-		return reply, fmt.Errorf("provider HTTP %d (response body omitted to protect credentials)", resp.StatusCode)
+		return reply, httpStatusError(resp.StatusCode)
 	}
 	scanner := bufio.NewScanner(io.LimitReader(resp.Body, 8<<20))
 	scanner.Buffer(make([]byte, 4096), 1<<20)
@@ -223,4 +224,33 @@ func (p Compatible) Stream(ctx context.Context, messages []Message, tools []Tool
 		reply.Message.Calls = append(reply.Message.Calls, *calls[i])
 	}
 	return reply, nil
+}
+
+func endpointHost(base string) string {
+	u, err := url.Parse(base)
+	if err != nil || u.Host == "" {
+		return "the provider endpoint"
+	}
+	return u.Host
+}
+
+// httpStatusError converts a non-200 provider response into an actionable
+// message. Response bodies stay hidden because they can echo credentials.
+func httpStatusError(status int) error {
+	switch {
+	case status == 401:
+		return errors.New("authentication failed (HTTP 401): the credential is missing or invalid; store one with ovc --credential or set the provider key")
+	case status == 403:
+		return errors.New("access denied (HTTP 403): the key cannot use this model or endpoint; check your provider plan and access")
+	case status == 404:
+		return errors.New("not found (HTTP 404): verify the model ID and the provider base URL")
+	case status == 429:
+		return errors.New("rate limited (HTTP 429): wait a moment, use a smaller request, or switch models")
+	case status >= 300 && status < 400:
+		return errors.New("provider redirected the request: redirects are refused to protect credentials; verify the base URL")
+	case status >= 500:
+		return fmt.Errorf("provider unavailable (HTTP %d): retry shortly or switch models", status)
+	default:
+		return fmt.Errorf("unexpected provider response (HTTP %d); response body kept hidden to protect credentials", status)
+	}
 }

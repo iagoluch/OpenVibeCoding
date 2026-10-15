@@ -57,3 +57,32 @@ func TestCancellation(t *testing.T) {
 		t.Fatal("expected cancellation")
 	}
 }
+
+func TestStatusErrorsAreActionable(t *testing.T) {
+	for _, tc := range []struct {
+		status int
+		want   string
+	}{{401, "authentication failed"}, {403, "access denied"}, {404, "not found"}, {429, "rate limited"}, {503, "unavailable"}, {302, "redirect"}} {
+		if e := httpStatusError(tc.status); !strings.Contains(e.Error(), tc.want) {
+			t.Fatalf("status %d: %v", tc.status, e)
+		}
+	}
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(401)
+		fmt.Fprint(w, "sensitive body with key sk-123")
+	}))
+	defer s.Close()
+	p := Compatible{Settings: config.Provider{BaseURL: s.URL}}
+	_, e := p.Stream(context.Background(), nil, nil, func(string) {})
+	if e == nil || !strings.Contains(e.Error(), "401") || strings.Contains(e.Error(), "sensitive") {
+		t.Fatalf("unsafe/missing error: %v", e)
+	}
+}
+
+func TestUnreachableEndpointMessage(t *testing.T) {
+	p := Compatible{Settings: config.Provider{BaseURL: "http://127.0.0.1:1"}}
+	_, e := p.Stream(context.Background(), nil, nil, func(string) {})
+	if e == nil || !strings.Contains(e.Error(), "could not reach 127.0.0.1:1") {
+		t.Fatalf("%v", e)
+	}
+}

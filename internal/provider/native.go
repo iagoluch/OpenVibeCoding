@@ -37,7 +37,7 @@ func (p Native) Stream(ctx context.Context, messages []Message, tools []Tool, em
 		key = os.Getenv(p.Settings.KeyEnv)
 	}
 	if key == "" {
-		return result, fmt.Errorf("credential unavailable: %s", p.Settings.KeyEnv)
+		return result, fmt.Errorf("no credential configured: set %s or store one with ovc --credential", p.Settings.KeyEnv)
 	}
 	var systems []string
 	var converted []map[string]any
@@ -171,7 +171,7 @@ func (p Native) Stream(ctx context.Context, messages []Message, tools []Tool, em
 			if ctx.Err() != nil {
 				return result, ctx.Err()
 			}
-			return result, errors.New("native provider connection failed")
+			return result, fmt.Errorf("could not reach %s: check the endpoint, network, or that a local server is running", endpointHost(p.Settings.BaseURL))
 		}
 		if (resp.StatusCode != 429 && resp.StatusCode < 500) || attempt == 2 {
 			break
@@ -185,7 +185,7 @@ func (p Native) Stream(ctx context.Context, messages []Message, tools []Tool, em
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
-		return result, fmt.Errorf("provider HTTP %d (body omitted)", resp.StatusCode)
+		return result, httpStatusError(resp.StatusCode)
 	}
 	scan := bufio.NewScanner(io.LimitReader(resp.Body, 8<<20))
 	scan.Buffer(make([]byte, 4096), 1<<20)
