@@ -70,10 +70,15 @@ Enter sends; Ctrl+J or Alt+Enter inserts a newline; Alt+Up/Down recalls input; T
 | `/harness [review\|inspect]` | Review permits approved operations; inspect permits project reads only |
 | `/sessions`, `/resume <id>`, `/new` | Persistent session navigation |
 | `/rename <title>`, `/delete <other-session-id>` | Manage sessions |
+| `/init`, `/undo`, `/doctor` | Draft `AGENTS.md`, reverse the last applied change, show runtime diagnostics |
 | `/context`, `/cost`, `/changes` | Context state, saved usage/cost, observed file changes |
 | `/capabilities` | Discover installed automation and sandbox prerequisites |
 | `/permissions [browser\|desktop\|clipboard\|network\|install on\|off]` | Inspect or explicitly change grants for this client |
 | `/clear`, `/exit` | Clear the view without deleting data; exit |
+
+An `AGENTS.md` at the workspace root is added to every turn's system message (bounded at 16 KiB) as project conventions; like any project file it is evidence, never authorization. `/init` asks the agent to inspect the project and propose one through the normal review flow. New sessions are titled from their first prompt; `/rename` overrides that.
+
+`/undo` reverses applied changes one at a time — the inverse of each approved write, deletion or move is stored with the session, so undo survives restarts. It refuses when the file changed after the operation, when the path was recreated, or while a turn is active: newer work is never overwritten silently.
 
 Grants do not remove operation approvals. Network and install default off. The package-install tool requires its separate grant. A permitted shell is a general programming environment: application-level tool categories do not prevent equivalent operations inside an approved shell. OS isolation enforces its filesystem/network boundary; host mode does not.
 

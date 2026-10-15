@@ -14,11 +14,11 @@ import (
 // denies network, host home and /proc, and dies with its parent. No fallback.
 func (w *Workspace) sandboxCommand(ctx context.Context, command string) (*exec.Cmd, error) {
 	if runtime.GOOS != "linux" {
-		return nil, errors.New("OS sandbox backend unavailable on this platform; host execution requires explicit opt-in")
+		return nil, errors.New("command denied: this platform has no OS sandbox; restart as 'ovc --allow-unsandboxed-shell' to approve individual host commands (they run with your user privileges, without isolation)")
 	}
 	path, e := exec.LookPath("bwrap")
 	if e != nil {
-		return nil, errors.New("install bubblewrap to enable confined commands")
+		return nil, errors.New("command denied: bubblewrap (bwrap) is not installed; install it to enable confined commands, or restart as 'ovc --allow-unsandboxed-shell' to approve individual host commands without isolation")
 	}
 	args := []string{"--die-with-parent", "--new-session", "--unshare-all", "--ro-bind", "/usr", "/usr", "--tmpfs", "/tmp", "--dir", "/dev", "--ro-bind", "/dev/null", "/dev/null", "--ro-bind", "/dev/urandom", "/dev/urandom"}
 	for _, name := range []string{"bin", "sbin", "lib", "lib64"} {

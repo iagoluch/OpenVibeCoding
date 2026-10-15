@@ -436,7 +436,7 @@ func (m *Model) command(text string) tea.Cmd {
 			}
 			m.Engine.Config = c
 		}
-		m.add("permissions", fmt.Sprintf("Harness %s; file changes reviewed individually. Host shell opt-in: %t. Default shell: isolated on supported Linux hosts, otherwise denied. Browser=%t Desktop=%t Clipboard=%t. Automation actions require approval. Network/install grants are visible in /config. Use /permissions browser|desktop|clipboard|network|install on|off.", c.Harness, m.Engine.Workspace.AllowShell, c.Automation.Browser, c.Automation.Desktop, c.Automation.Clipboard))
+		m.add("permissions", fmt.Sprintf("Harness %s; file changes reviewed individually. Host shell opt-in: %t. Default shell: isolated on supported Linux hosts, otherwise denied (opt-in: restart with --allow-unsandboxed-shell). Browser=%t Desktop=%t Clipboard=%t. Automation actions require approval. Network/install grants are visible in /config. Use /permissions browser|desktop|clipboard|network|install on|off.", c.Harness, m.Engine.Workspace.AllowShell, c.Automation.Browser, c.Automation.Desktop, c.Automation.Clipboard))
 	case "/config":
 		b, _ := json.MarshalIndent(c, "", "  ")
 		m.add("configuration", string(b))

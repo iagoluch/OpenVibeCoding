@@ -72,7 +72,10 @@ Enter sends · Ctrl+J adds a newline · Tab completes commands · PgUp/PgDn scro
 /context                             /cost
 /changes                             /permissions
 /capabilities                        /help
+/init · /undo · /doctor
 ```
+
+Project instructions from `AGENTS.md` ride along in every turn; `/undo` reverses the last applied change.
 
 ## Browser and computer use
 
