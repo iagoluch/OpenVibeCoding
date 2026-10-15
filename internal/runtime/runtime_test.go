@@ -117,9 +117,21 @@ func TestRuntimeTurnOwnership(t *testing.T) {
 	if e = <-done; e != nil {
 		t.Fatal(e)
 	}
-	b, e := c.Export(id)
-	if e != nil || !json.Valid(b) {
-		t.Fatal("export failed", e)
+	// The runtime releases the session when the turn handler returns, which can
+	// trail the done event the client returns on; wait for the release before
+	// reading the session back.
+	var b []byte
+	for deadline := time.Now().Add(5 * time.Second); ; {
+		if b, e = c.Export(id); e == nil {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("export failed", e)
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	if !json.Valid(b) {
+		t.Fatalf("export is not valid JSON: %q", b)
 	}
 }
 
