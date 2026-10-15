@@ -22,7 +22,7 @@ import (
 	"github.com/iagoluch/OpenVibeCoding/internal/workspace"
 )
 
-var version = "0.1.0-dev"
+var version = "0.2.0-dev"
 
 func run() error {
 	project := flag.String("workspace", ".", "project root")
