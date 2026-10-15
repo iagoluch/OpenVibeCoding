@@ -193,7 +193,7 @@ func (s *Server) uiSetup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.mu.Lock()
-	c := s.config
+	c := clone(s.config)
 	s.mu.Unlock()
 	name, model := strings.TrimSpace(req.Provider), strings.TrimSpace(req.Model)
 	if _, ok := c.Providers[name]; !ok {
@@ -243,7 +243,7 @@ func (s *Server) uiSelect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.mu.Lock()
-	c := s.config
+	c := clone(s.config)
 	s.mu.Unlock()
 	name, model := strings.TrimSpace(req.Provider), strings.TrimSpace(req.Model)
 	updated, e := setup.Select(s.dir, c, name, model)
@@ -255,6 +255,19 @@ func (s *Server) uiSelect(w http.ResponseWriter, r *http.Request) {
 	s.config = updated
 	s.mu.Unlock()
 	json.NewEncoder(w).Encode(UIAction{OK: true, Provider: name, Model: model})
+}
+
+// clone returns a configuration the caller may mutate. Config carries a map
+// and slices, so a plain copy would still write into the daemon's live
+// configuration while other requests read it.
+func clone(c config.Config) config.Config {
+	providers := make(map[string]config.Provider, len(c.Providers))
+	for name, p := range c.Providers {
+		p.Models = append([]config.Model(nil), p.Models...)
+		providers[name] = p
+	}
+	c.Providers = providers
+	return c
 }
 
 // uiFailure reports a redacted reason and leaves the active configuration

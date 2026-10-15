@@ -284,6 +284,33 @@ func TestRuntimeUISetupFailureKeepsConfigurationAndForcesOnRequest(t *testing.T)
 	}
 }
 
+func TestRuntimeUISetupKeepsTheLiveRegistryClean(t *testing.T) {
+	down := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(503)
+	}))
+	defer down.Close()
+	cfg := config.Default()
+	cfg.Providers["local"] = config.Provider{BaseURL: down.URL, Models: []config.Model{{ID: "preset-model", Context: 32768, Tools: true}}}
+	_, c := startFixture(t, cfg)
+	// A model the preset does not know is registered in a copy of the
+	// configuration; a failed onboarding must not leave it behind for the
+	// next reader of the live registry.
+	if _, e := c.UISetup(context.Background(), "local", "ghost-model", "", false); e == nil {
+		t.Fatal("unreachable local model accepted")
+	}
+	info, e := c.UIInfo(context.Background())
+	if e != nil {
+		t.Fatal(e)
+	}
+	for _, p := range info.Providers {
+		for _, m := range p.Models {
+			if m.ID == "ghost-model" {
+				t.Fatalf("failed setup leaked %q into the live registry of %s", m.ID, p.ID)
+			}
+		}
+	}
+}
+
 func TestDiscoverReportsNotRunning(t *testing.T) {
 	if _, e := Discover(t.TempDir()); !errors.Is(e, ErrNotRunning) {
 		t.Fatalf("missing metadata must map to ErrNotRunning, got %v", e)
