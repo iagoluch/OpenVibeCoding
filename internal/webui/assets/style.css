@@ -1,0 +1,17 @@
+:root { color-scheme: light dark; }
+body { margin: 0 auto; max-width: 60rem; padding: 1.5rem; font: 15px/1.5 system-ui, sans-serif; }
+h1 { font-size: 1.3rem; margin: 0 0 1rem; }
+h2 { font-size: 1rem; margin: 1.5rem 0 .5rem; }
+.muted { color: #6b7280; }
+code { font-family: ui-monospace, monospace; }
+.row { display: flex; gap: .5rem; align-items: center; margin: .5rem 0; }
+input[type="password"], textarea, select { width: 100%; box-sizing: border-box; padding: .4rem; font: inherit; }
+textarea { resize: vertical; }
+button { font: inherit; padding: .35rem .8rem; }
+#transcript { margin: 1rem 0; max-height: 45vh; overflow-y: auto; border: 1px solid #d1d5db; border-radius: 6px; padding: .75rem; }
+.line { margin: 0 0 .5rem; padding: .4rem .6rem; border-radius: 4px; white-space: pre-wrap; word-break: break-word; font: inherit; }
+.line.user { background: #eef2ff; }
+.line.assistant { background: #f3f4f6; }
+.line.meta, .line.status { color: #6b7280; font-size: .85rem; }
+.line.tool { background: #fffbeb; }
+.line.approval { background: #fef2f2; border: 1px solid #fca5a5; }

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenVibeCoding</title>
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+<h1>OpenVibeCoding</h1>
+<p id="notice" hidden></p>
+
+<section id="setup" hidden>
+  <h2>Connect a model provider</h2>
+  <p class="muted">Pick a provider, paste its API key, then connect. Local servers need no key.</p>
+  <select id="providers"></select>
+  <p><label for="key">API key</label>
+  <input id="key" type="password" autocomplete="off" spellcheck="false"></p>
+  <button id="connect" type="button">Connect</button>
+  <p id="setup-status" class="muted"></p>
+</section>
+
+<section id="work" hidden>
+  <h2>Sessions</h2>
+  <p class="muted" id="session-meta"></p>
+  <div class="row">
+    <select id="sessions"></select>
+    <button id="new" type="button">New session</button>
+  </div>
+  <div id="transcript"></div>
+  <form id="composer">
+    <textarea id="prompt" rows="3" placeholder="Describe the change you want in this workspace"></textarea>
+    <div class="row">
+      <button id="send" type="submit">Send</button>
+      <button id="stop" type="button" disabled>Stop</button>
+    </div>
+  </form>
+</section>
+
+<script src="/assets/app.js"></script>
+</body>
+</html>
