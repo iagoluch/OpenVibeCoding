@@ -13,6 +13,9 @@ func TestCommands(t *testing.T) {
 	if _, _, e = Parse("/exit extra"); e == nil {
 		t.Fatal("unexpected argument accepted")
 	}
+	if _, _, e = Parse("/init extra"); e == nil {
+		t.Fatal("unexpected argument accepted")
+	}
 	if len(Complete("/mod")) != 1 {
 		t.Fatal("completion failed")
 	}

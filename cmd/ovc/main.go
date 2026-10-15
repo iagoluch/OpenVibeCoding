@@ -141,6 +141,7 @@ func run() error {
 	}
 	engine := &agent.Engine{Config: c, Store: db, Workspace: w, Session: id, Remote: client.Run}
 	model := tui.New(engine)
+	model.Version = version
 	_, e = tea.NewProgram(model).Run()
 	model.Shutdown()
 	return e

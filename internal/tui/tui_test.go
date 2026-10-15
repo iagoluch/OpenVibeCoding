@@ -66,6 +66,39 @@ func (cancellationClient) Stream(ctx context.Context, _ []provider.Message, _ []
 	<-ctx.Done()
 	return provider.Reply{}, ctx.Err()
 }
+type echoClient struct{}
+
+func (echoClient) Stream(_ context.Context, _ []provider.Message, _ []provider.Tool, _ func(string)) (provider.Reply, error) {
+	return provider.Reply{Message: provider.Message{Role: "assistant", Content: "ok"}}, nil
+}
+func TestInitSubmitsPrompt(t *testing.T) {
+	m := fixture(t)
+	m.Engine.Client = echoClient{}
+	if cmd := m.command("/init"); cmd == nil || !m.busy {
+		t.Fatal("init did not start a turn")
+	}
+	found := false
+	for _, l := range m.lines {
+		if strings.Contains(l, "AGENTS.md") {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatal("init prompt missing")
+	}
+	m.Shutdown()
+}
+func TestDoctorCommand(t *testing.T) {
+	m := fixture(t)
+	m.Version = "0.2.0-test"
+	m.command("/doctor")
+	joined := strings.Join(m.lines, "\n")
+	for _, want := range []string{"0.2.0-test", "OS sandbox", "Runtime", "Workspace"} {
+		if !strings.Contains(joined, want) {
+			t.Fatalf("doctor output missing %q", want)
+		}
+	}
+}
 func TestShutdownCancelsAndDrains(t *testing.T) {
 	m := fixture(t)
 	m.Engine.Client = cancellationClient{}

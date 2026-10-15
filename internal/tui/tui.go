@@ -24,6 +24,7 @@ type done struct{ err error }
 type Model struct {
 	finished      chan struct{}
 	Engine        *agent.Engine
+	Version       string
 	input         textarea.Model
 	output        viewport.Model
 	lines         []string
@@ -198,32 +199,41 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if strings.HasPrefix(text, "/") {
 				return m, m.command(text)
 			}
-			m.add("user", text)
-			m.busy = true
-			m.status = "requesting"
-			ctx, cancel := context.WithCancel(context.Background())
-			m.cancel = cancel
-			m.events = make(chan tea.Msg, 64)
-			events := m.events
-			m.finished = make(chan struct{})
-			finished := m.finished
-			engine := *m.Engine
-			go func() {
-				defer close(finished)
-				err := engine.Run(ctx, text, func(e agent.Event) {
-					select {
-					case events <- e:
-					case <-ctx.Done():
-					}
-				})
-				events <- done{err}
-			}()
-			return m, wait(events)
+			return m, m.submit(text)
 		}
 	}
 	var cmd tea.Cmd
 	m.input, cmd = m.input.Update(msg)
 	return m, cmd
+}
+// initPrompt drives /init: the model inspects the project and proposes the
+// AGENTS.md that later serves as project instructions in the system message.
+const initPrompt = "Inspect this project and create or improve AGENTS.md at the workspace root: build and test commands, project layout, conventions and rules for future agents. Propose it with write_file so I can review the diff."
+
+// submit starts one model turn for text — the same path Enter uses — so
+// commands such as /init run through the normal request and approval flow.
+func (m *Model) submit(text string) tea.Cmd {
+	m.add("user", text)
+	m.busy = true
+	m.status = "requesting"
+	ctx, cancel := context.WithCancel(context.Background())
+	m.cancel = cancel
+	m.events = make(chan tea.Msg, 64)
+	events := m.events
+	m.finished = make(chan struct{})
+	finished := m.finished
+	engine := *m.Engine
+	go func() {
+		defer close(finished)
+		err := engine.Run(ctx, text, func(e agent.Event) {
+			select {
+			case events <- e:
+			case <-ctx.Done():
+			}
+		})
+		events <- done{err}
+	}()
+	return wait(events)
 }
 func (m *Model) command(text string) tea.Cmd {
 	name, arg, err := Parse(text)
@@ -236,11 +246,13 @@ func (m *Model) command(text string) tea.Cmd {
 	case "/exit":
 		return tea.Quit
 	case "/help":
-		m.add("help", "/model [provider/model] · /provider [name] · /harness [review|inspect]\n/sessions · /resume <id> · /new · /rename <title> · /delete <other-session-id>\n/context · /cost · /permissions · /capabilities · /changes · /config · /status · /clear · /exit\nEnter send · Ctrl+J multiline · Tab complete · Alt+↑/↓ history\nPgUp/PgDn scroll · Esc cancel · Ctrl+C cancel/exit\nApprovals: Ctrl+Y accept one operation · Ctrl+N reject")
+		m.add("help", "/model [provider/model] · /provider [name] · /harness [review|inspect]\n/sessions · /resume <id> · /new · /rename <title> · /delete <other-session-id>\n/init · /doctor\n/context · /cost · /permissions · /capabilities · /changes · /config · /status · /clear · /exit\nEnter send · Ctrl+J multiline · Tab complete · Alt+↑/↓ history\nPgUp/PgDn scroll · Esc cancel · Ctrl+C cancel/exit\nApprovals: Ctrl+Y accept one operation · Ctrl+N reject")
 	case "/clear":
 		m.lines = nil
 		m.stream = ""
 		m.refresh(true)
+	case "/init":
+		return m.submit(initPrompt)
 	case "/model", "/provider", "/harness":
 		if arg == "" {
 			var list []string
@@ -411,6 +423,14 @@ func (m *Model) command(text string) tea.Cmd {
 	case "/config":
 		b, _ := json.MarshalIndent(c, "", "  ")
 		m.add("configuration", string(b))
+	case "/doctor":
+		p, model, _ := c.Active()
+		version := m.Version
+		if version == "" {
+			version = "dev"
+		}
+		m.add("doctor", fmt.Sprintf("OpenVibeCoding %s\nWorkspace: %s\nProvider: %s/%s · tools %t\nHarness: %s\nCredential available: %t\nHost shell opt-in: %t\nOS sandbox: %s\nNetwork grant: %t · install grant: %t\nRuntime: shared authenticated service",
+			version, m.Engine.Workspace.Path, c.Provider, c.Model, model.Tools, c.Harness, p.KeyEnv == "" || p.Secret != "", m.Engine.Workspace.AllowShell, m.Engine.Workspace.SandboxStatus(), c.Permissions.Network, c.Permissions.Install))
 	case "/status":
 		m.add("status", fmt.Sprintf("Session: %s\nWorkspace: %s\nProvider: %s/%s\nHarness: %s\nRuntime: shared authenticated service\nState: %s", m.Engine.Session, m.Engine.Workspace.Path, c.Provider, c.Model, c.Harness, m.status))
 	}
