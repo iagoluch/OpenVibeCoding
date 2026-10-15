@@ -42,30 +42,75 @@ type choice struct {
 	keyURL   string
 }
 
+// Catalog describes one connectable provider as it is presented to beginners.
+type Catalog struct {
+	ID     string
+	Title  string
+	Detail string
+	KeyURL string
+}
+
+// Providers returns the provider catalog in the order beginners should see it:
+// the services with a free tier first. The wizard and the browser onboarding
+// read the same table, so the two paths cannot drift.
+func Providers() []Catalog {
+	return []Catalog{
+		{ID: "openrouter", Title: "OpenRouter", Detail: "includes free models (:free); key at openrouter.ai/keys", KeyURL: "https://openrouter.ai/keys"},
+		{ID: "groq", Title: "Groq", Detail: "free developer tier with rate limits; key at console.groq.com/keys", KeyURL: "https://console.groq.com/keys"},
+		{ID: "gemini", Title: "Google Gemini", Detail: "AI Studio free tier; key at aistudio.google.com/apikey", KeyURL: "https://aistudio.google.com/apikey"},
+		{ID: "zai", Title: "Z.AI", Detail: "free glm flash models; key at z.ai", KeyURL: "https://z.ai"},
+		{ID: "nvidia", Title: "NVIDIA NIM", Detail: "free credits on build.nvidia.com", KeyURL: "https://build.nvidia.com"},
+		{ID: "cerebras", Title: "Cerebras", Detail: "free trial tier; key at cloud.cerebras.ai", KeyURL: "https://cloud.cerebras.ai"},
+	}
+}
+
+// Local lists the models served by the local runners that answer right now.
+type Local struct {
+	Ollama   []string
+	LMStudio []string
+}
+
+const (
+	ollamaURL   = "http://127.0.0.1:11434/api/tags"
+	lmstudioURL = "http://127.0.0.1:1234/v1/models"
+)
+
+// Detect probes the local model runners; a missing server is normal and
+// reported as no models.
+func Detect() Local {
+	return Local{
+		Ollama:   detectModels(ollamaURL, "models", "name"),
+		LMStudio: detectModels(lmstudioURL, "data", "id"),
+	}
+}
+
+// LocalProvider reports whether a provider name is served by a local runner.
+func LocalProvider(name string) bool { return name == "local" || name == "lmstudio" }
+
+// wizardOptions builds the interactive menu: running local servers first, then
+// the catalog, then the OpenCode import.
+func wizardOptions(detected Local) []choice {
+	var options []choice
+	if len(detected.Ollama) > 0 {
+		options = append(options, choice{provider: "local", title: fmt.Sprintf("Ollama (running, %d model(s))", len(detected.Ollama)), detail: "free, runs on this machine"})
+	}
+	if len(detected.LMStudio) > 0 {
+		options = append(options, choice{provider: "lmstudio", title: fmt.Sprintf("LM Studio (running, %d model(s))", len(detected.LMStudio)), detail: "free, runs on this machine"})
+	}
+	for _, p := range Providers() {
+		options = append(options, choice{provider: p.ID, title: p.Title, detail: p.Detail, keyURL: p.KeyURL})
+	}
+	return append(options, choice{provider: "import", title: "Import credentials from OpenCode", detail: "uses accounts already configured in OpenCode (google, nvidia)"})
+}
+
 func Run(ctx context.Context, dir string, c config.Config) error {
 	in := bufio.NewReader(os.Stdin)
 	fmt.Println("OpenVibeCoding setup")
 	fmt.Println("Connect one model provider. Credentials go to your OS keychain; nothing is echoed.")
 	fmt.Println()
 
-	var options []choice
-	ollama := detectModels("http://127.0.0.1:11434/api/tags", "models", "name")
-	if len(ollama) > 0 {
-		options = append(options, choice{provider: "local", title: fmt.Sprintf("Ollama (running, %d model(s))", len(ollama)), detail: "free, runs on this machine"})
-	}
-	lmstudio := detectModels("http://127.0.0.1:1234/v1/models", "data", "id")
-	if len(lmstudio) > 0 {
-		options = append(options, choice{provider: "lmstudio", title: fmt.Sprintf("LM Studio (running, %d model(s))", len(lmstudio)), detail: "free, runs on this machine"})
-	}
-	options = append(options,
-		choice{provider: "openrouter", title: "OpenRouter", detail: "includes free models (:free); key at openrouter.ai/keys", keyURL: "https://openrouter.ai/keys"},
-		choice{provider: "groq", title: "Groq", detail: "free developer tier with rate limits; key at console.groq.com/keys", keyURL: "https://console.groq.com/keys"},
-		choice{provider: "gemini", title: "Google Gemini", detail: "AI Studio free tier; key at aistudio.google.com/apikey", keyURL: "https://aistudio.google.com/apikey"},
-		choice{provider: "zai", title: "Z.AI", detail: "free glm flash models; key at z.ai", keyURL: "https://z.ai"},
-		choice{provider: "nvidia", title: "NVIDIA NIM", detail: "free credits on build.nvidia.com", keyURL: "https://build.nvidia.com"},
-		choice{provider: "cerebras", title: "Cerebras", detail: "free trial tier; key at cloud.cerebras.ai", keyURL: "https://cloud.cerebras.ai"},
-		choice{provider: "import", title: "Import credentials from OpenCode", detail: "uses accounts already configured in OpenCode (google, nvidia)"},
-	)
+	detected := Detect()
+	options := wizardOptions(detected)
 
 	for i, o := range options {
 		fmt.Printf("  %d. %s — %s\n", i+1, o.title, o.detail)
@@ -88,7 +133,7 @@ func Run(ctx context.Context, dir string, c config.Config) error {
 		return importOpenCode(ctx, dir, c, in)
 	}
 	if selected.provider == "local" || selected.provider == "lmstudio" {
-		if activateLocal(ctx, dir, c, in, selected.provider, ollama, lmstudio) {
+		if activateLocal(ctx, dir, c, in, selected.provider, detected) {
 			fmt.Println("\nSetup complete. Next:")
 			fmt.Println("  cd <your project>")
 			fmt.Println("  ovc")
@@ -104,17 +149,9 @@ func Run(ctx context.Context, dir string, c config.Config) error {
 	if err != nil {
 		return err
 	}
-	if key == "" {
-		return fmt.Errorf("empty credential; nothing was changed")
+	if err := Store(dir, &c, selected.provider, key); err != nil {
+		return err
 	}
-	if err := credentials.Set(dir, selected.provider, key, false); err != nil {
-		return fmt.Errorf("storing the credential: %w", err)
-	}
-	// The configuration was loaded before the credential existed; refresh it so
-	// the smoke test authenticates with the key that was just stored.
-	stored := c.Providers[selected.provider]
-	stored.Secret = key
-	c.Providers[selected.provider] = stored
 	if !activate(ctx, dir, c, in, selected.provider, "") {
 		return nil
 	}
@@ -142,27 +179,13 @@ func activate(ctx context.Context, dir string, c config.Config, in *bufio.Reader
 	if first == "" {
 		first = p.Models[0].ID
 	}
-	active := ""
-	deadline := time.Now().Add(smokeBudget)
-	for _, candidate := range modelOrder(p, first) {
-		timeout := smokeTimeout
-		if remaining := time.Until(deadline); remaining < timeout {
-			timeout = remaining
-		}
-		if timeout <= 0 {
-			break
-		}
-		fmt.Printf("Testing %s/%s with a real request...\n", name, candidate)
-		err := smoke(ctx, p, candidate, timeout)
+	active, _ := Probe(ctx, p, first, func(candidate string, err error) {
 		if err == nil {
-			active = candidate
-			break
+			fmt.Printf("Testing %s/%s with a real request...\n", name, candidate)
+			return
 		}
 		fmt.Fprintf(os.Stderr, "Smoke test failed: %v\n", err)
-		if !provider.ModelUnavailable(err) && !errors.Is(err, errNoResponse) {
-			break
-		}
-	}
+	})
 	if active == "" {
 		if !confirm(in, "Activate this provider anyway?") {
 			return false
@@ -171,8 +194,7 @@ func activate(ctx context.Context, dir string, c config.Config, in *bufio.Reader
 	} else {
 		fmt.Println("Smoke test passed.")
 	}
-	c.Provider, c.Model = name, active
-	if err := config.Save(dir, c); err != nil {
+	if err := Select(dir, c, name, active); err != nil {
 		fmt.Fprintf(os.Stderr, "Saving configuration: %v\n", err)
 		return false
 	}
@@ -180,8 +202,85 @@ func activate(ctx context.Context, dir string, c config.Config, in *bufio.Reader
 	return true
 }
 
-// modelOrder lists the provider's models with the preferred one first.
-func modelOrder(p config.Provider, preferred string) []string {
+// Probe runs a real request against the provider's models, preferred first, and
+// returns the first model that answered. budget bounds the whole set and one
+// attempt is bounded by timeout. report, when set, is called before each
+// attempt with a nil error and again with the failure when an attempt failed.
+func Probe(ctx context.Context, p config.Provider, preferred string, report func(model string, err error)) (string, error) {
+	if len(p.Models) == 0 {
+		return "", errors.New("provider has no models configured")
+	}
+	if preferred == "" {
+		preferred = p.Models[0].ID
+	}
+	deadline := time.Now().Add(smokeBudget)
+	var last error
+	for _, candidate := range candidates(p, preferred) {
+		timeout := smokeTimeout
+		if remaining := time.Until(deadline); remaining < timeout {
+			timeout = remaining
+		}
+		if timeout <= 0 {
+			break
+		}
+		if report != nil {
+			report(candidate, nil)
+		}
+		err := smoke(ctx, p, candidate, timeout)
+		if err == nil {
+			return candidate, nil
+		}
+		last = err
+		if report != nil {
+			report(candidate, err)
+		}
+		if !provider.ModelUnavailable(err) && !errors.Is(err, errNoResponse) {
+			break
+		}
+	}
+	if last == nil {
+		last = fmt.Errorf("%w (%s): the provider is slow; retry", errNoResponse, smokeBudget)
+	}
+	return "", last
+}
+
+// Select persists one provider/model pair as the active choice, refusing
+// anything the configuration cannot activate.
+func Select(dir string, c config.Config, provider, model string) error {
+	p, ok := c.Providers[provider]
+	if !ok {
+		return fmt.Errorf("unknown provider %q", provider)
+	}
+	for _, m := range p.Models {
+		if m.ID == model {
+			c.Provider, c.Model = provider, model
+			return config.Save(dir, c)
+		}
+	}
+	return fmt.Errorf("unknown model %q for %s", model, provider)
+}
+
+// Store saves one credential for a provider and refreshes the in-memory
+// configuration, so a following smoke test authenticates with the key that was
+// just stored. The key never leaves the credential store.
+func Store(dir string, c *config.Config, provider, key string) error {
+	if _, ok := c.Providers[provider]; !ok {
+		return fmt.Errorf("unknown provider %q", provider)
+	}
+	if strings.TrimSpace(key) == "" {
+		return errors.New("empty credential; nothing was changed")
+	}
+	if err := credentials.Set(dir, provider, key, false); err != nil {
+		return fmt.Errorf("storing the credential: %w", err)
+	}
+	p := c.Providers[provider]
+	p.Secret = key
+	c.Providers[provider] = p
+	return nil
+}
+
+// candidates lists the provider's models with the preferred one first.
+func candidates(p config.Provider, preferred string) []string {
 	order := []string{preferred}
 	for _, m := range p.Models {
 		if m.ID != preferred {
@@ -191,20 +290,20 @@ func modelOrder(p config.Provider, preferred string) []string {
 	return order
 }
 
-func activateLocal(ctx context.Context, dir string, c config.Config, in *bufio.Reader, name string, ollama, lmstudio []string) bool {
-	detected := ollama
+func activateLocal(ctx context.Context, dir string, c config.Config, in *bufio.Reader, name string, detected Local) bool {
+	models := detected.Ollama
 	if name == "lmstudio" {
-		detected = lmstudio
+		models = detected.LMStudio
 	}
 	p := c.Providers[name]
-	model := pickLocalModel(detected, p.Models[0].ID)
-	c.Providers[name] = ensureModel(c.Providers[name], model, 32768)
+	model := pickLocalModel(models, p.Models[0].ID)
+	c.Providers[name] = EnsureModel(c.Providers[name], model, 32768)
 	return activate(ctx, dir, c, in, name, model)
 }
 
-// ensureModel adds a locally served model to the provider registry when the
+// EnsureModel adds a locally served model to the provider registry when the
 // user's server exposes one that is not in the shipped preset.
-func ensureModel(p config.Provider, model string, context int) config.Provider {
+func EnsureModel(p config.Provider, model string, context int) config.Provider {
 	for _, m := range p.Models {
 		if m.ID == model {
 			return p
@@ -280,15 +379,10 @@ func importOpenCode(ctx context.Context, dir string, c config.Config, in *bufio.
 		if !confirm(in, fmt.Sprintf("Import the %s credential into OpenVibeCoding?", name)) {
 			continue
 		}
-		if err := credentials.Set(dir, name, key, false); err != nil {
+		if err := Store(dir, &c, name, key); err != nil {
 			fmt.Fprintf(os.Stderr, "Importing %s: %v\n", name, err)
 			continue
 		}
-		// Keep the in-memory configuration consistent with the stored credential
-		// so the smoke test can authenticate immediately.
-		stored := c.Providers[name]
-		stored.Secret = key
-		c.Providers[name] = stored
 		fmt.Printf("Imported %s.\n", name)
 		if imported == "" {
 			imported = name

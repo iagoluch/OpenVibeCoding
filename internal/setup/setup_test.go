@@ -42,12 +42,62 @@ func TestPickLocalModel(t *testing.T) {
 
 func TestEnsureModelAddsMissing(t *testing.T) {
 	p := config.Provider{Models: []config.Model{{ID: "qwen3:8b", Context: 40960}}}
-	p = ensureModel(p, "mistral:7b", 32768)
+	p = EnsureModel(p, "mistral:7b", 32768)
 	if len(p.Models) != 2 || p.Models[1].ID != "mistral:7b" || p.Models[1].InputPrice == nil {
 		t.Fatalf("%+v", p.Models)
 	}
-	if again := ensureModel(p, "qwen3:8b", 32768); len(again.Models) != 2 {
+	if again := EnsureModel(p, "qwen3:8b", 32768); len(again.Models) != 2 {
 		t.Fatal("duplicate model added")
+	}
+}
+
+func TestSelectRefusesUnknownProviderAndModel(t *testing.T) {
+	dir := t.TempDir()
+	c := config.Default()
+	if e := Select(dir, c, "missing", "gpt-4.1-mini"); e == nil {
+		t.Fatal("unknown provider accepted")
+	}
+	if e := Select(dir, c, "openai", "gpt-4.1-turbo"); e == nil {
+		t.Fatal("unknown model accepted")
+	}
+	if e := Select(dir, c, "openai", "gpt-4.1"); e != nil {
+		t.Fatal(e)
+	}
+	back, e := config.Load(dir)
+	if e != nil || back.Provider != "openai" || back.Model != "gpt-4.1" {
+		t.Fatalf("%s/%s %v", back.Provider, back.Model, e)
+	}
+}
+
+func TestStoreRejectsEmptyCredential(t *testing.T) {
+	c := config.Default()
+	if e := Store(t.TempDir(), &c, "openai", "  "); e == nil {
+		t.Fatal("empty credential accepted")
+	}
+	if e := Store(t.TempDir(), &c, "missing", "key"); e == nil {
+		t.Fatal("unknown provider accepted")
+	}
+	if c.Providers["openai"].Secret != "" {
+		t.Fatal("rejected credential leaked into the configuration")
+	}
+}
+
+func TestWizardOptionsKeepBeginnerOrder(t *testing.T) {
+	options := wizardOptions(Local{Ollama: []string{"qwen3:8b"}})
+	if len(options) != 1+len(Providers())+1 {
+		t.Fatalf("%d options", len(options))
+	}
+	if options[0].provider != "local" || options[0].title != "Ollama (running, 1 model(s))" {
+		t.Fatalf("%+v", options[0])
+	}
+	if options[1].provider != "openrouter" || options[len(options)-1].provider != "import" {
+		t.Fatalf("catalog order changed: %+v", options)
+	}
+	if len(wizardOptions(Local{})) != len(Providers())+1 {
+		t.Fatal("undetected local servers must not be offered")
+	}
+	if !LocalProvider("lmstudio") || LocalProvider("openai") {
+		t.Fatal("local provider predicate drifted")
 	}
 }
 
