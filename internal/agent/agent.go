@@ -183,6 +183,24 @@ func (e *Engine) autoTitle(prompt string) {
 	}
 	_ = e.Store.Rename(e.Session, e.Config.Redact(title))
 }
+
+// recordUndo stores the inverse of an applied change for /undo, verified
+// against the post-change digest. It returns a suffix for the tool result
+// when recording fails, so the model and the user know undo is unavailable.
+func (e *Engine) recordUndo(path, expect string, inverse workspace.Inverse) string {
+	recorder, ok := e.Store.(store.ChangeRecorder)
+	if !ok {
+		return ""
+	}
+	b, err := json.Marshal(inverse)
+	if err != nil {
+		return " (undo record failed)"
+	}
+	if err := recorder.RecordChange(e.Session, path, expect, string(b)); err != nil {
+		return " (undo record failed: " + err.Error() + ")"
+	}
+	return ""
+}
 func (e *Engine) approve(ctx context.Context, description string, emit func(Event)) (bool, error) {
 	if err := e.Store.Audit(e.Session, "proposed: "+e.Config.Redact(description)); err != nil {
 		return false, err
@@ -288,15 +306,20 @@ func (e *Engine) tool(ctx context.Context, call provider.Call, emit func(Event))
 		if ctx.Err() != nil {
 			return "", ctx.Err()
 		}
+		suffix := ""
 		if call.Function.Name == "delete_file" {
-			err = e.Workspace.Delete(change)
+			if err = e.Workspace.Delete(change); err == nil {
+				suffix = e.recordUndo(args.Path, "", workspace.Inverse{Action: "write", Path: args.Path, Content: change.Before})
+			}
 		} else {
-			err = e.Workspace.Move(change, args.Destination)
+			if err = e.Workspace.Move(change, args.Destination); err == nil {
+				suffix = e.recordUndo(args.Destination, workspace.Digest(change.Before), workspace.Inverse{Action: "move", Path: args.Path, From: args.Destination})
+			}
 		}
 		if err != nil {
 			return "", err
 		}
-		return description + "\nCompleted", nil
+		return description + "\nCompleted" + suffix, nil
 
 	case "list_files":
 		return e.Workspace.List()
@@ -346,7 +369,11 @@ func (e *Engine) tool(ctx context.Context, call provider.Call, emit func(Event))
 		if err = e.Workspace.Apply(change); err != nil {
 			return "", err
 		}
-		return "Applied reviewed replacement: " + args.Path, nil
+		inverse := workspace.Inverse{Action: "delete", Path: args.Path}
+		if change.Exists {
+			inverse = workspace.Inverse{Action: "write", Path: args.Path, Content: change.Before}
+		}
+		return "Applied reviewed replacement: " + args.Path + e.recordUndo(args.Path, workspace.Digest(change.After), inverse), nil
 	case "shell", "install_packages":
 		if call.Function.Name == "install_packages" && !e.Config.Permissions.Install {
 			return "", errors.New("package installation permission disabled")

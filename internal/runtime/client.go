@@ -117,6 +117,13 @@ func (c *Client) Rename(id, text string) error {
 }
 func (c *Client) Delete(id string) error  { return c.call(request{Op: "delete", ID: id}, nil) }
 func (c *Client) Recover(id string) error { return c.call(request{Op: "recover", ID: id}, nil) }
+
+// Undo reverses the most recent applied workspace change of the session and
+// returns a summary of what was restored.
+func (c *Client) Undo(id string) (v string, e error) {
+	e = c.call(request{Op: "undo", ID: id}, &v)
+	return
+}
 func (c *Client) Summary(id string) (v store.Summary, e error) {
 	e = c.call(request{Op: "summary", ID: id}, &v)
 	return

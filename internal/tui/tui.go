@@ -21,6 +21,12 @@ var muted = lipgloss.NewStyle().Foreground(lipgloss.Color("#8B92A5"))
 var warning = lipgloss.NewStyle().Foreground(lipgloss.Color("#F1C879"))
 
 type done struct{ err error }
+
+// Undoer is the runtime capability that reverses the most recent applied
+// change of a session. The shared-runtime client implements it; plain stores
+// keep the change log but cannot act on the workspace themselves.
+type Undoer interface{ Undo(string) (string, error) }
+
 type Model struct {
 	finished      chan struct{}
 	Engine        *agent.Engine
@@ -246,13 +252,24 @@ func (m *Model) command(text string) tea.Cmd {
 	case "/exit":
 		return tea.Quit
 	case "/help":
-		m.add("help", "/model [provider/model] · /provider [name] · /harness [review|inspect]\n/sessions · /resume <id> · /new · /rename <title> · /delete <other-session-id>\n/init · /doctor\n/context · /cost · /permissions · /capabilities · /changes · /config · /status · /clear · /exit\nEnter send · Ctrl+J multiline · Tab complete · Alt+↑/↓ history\nPgUp/PgDn scroll · Esc cancel · Ctrl+C cancel/exit\nApprovals: Ctrl+Y accept one operation · Ctrl+N reject")
+		m.add("help", "/model [provider/model] · /provider [name] · /harness [review|inspect]\n/sessions · /resume <id> · /new · /rename <title> · /delete <other-session-id>\n/init · /undo · /doctor\n/context · /cost · /permissions · /capabilities · /changes · /config · /status · /clear · /exit\nEnter send · Ctrl+J multiline · Tab complete · Alt+↑/↓ history\nPgUp/PgDn scroll · Esc cancel · Ctrl+C cancel/exit\nApprovals: Ctrl+Y accept one operation · Ctrl+N reject")
 	case "/clear":
 		m.lines = nil
 		m.stream = ""
 		m.refresh(true)
 	case "/init":
 		return m.submit(initPrompt)
+	case "/undo":
+		undoer, ok := m.Engine.Store.(Undoer)
+		if !ok {
+			err = fmt.Errorf("undo needs the shared runtime change log")
+			break
+		}
+		var summary string
+		summary, err = undoer.Undo(m.Engine.Session)
+		if err == nil {
+			m.add("undo", summary)
+		}
 	case "/model", "/provider", "/harness":
 		if arg == "" {
 			var list []string

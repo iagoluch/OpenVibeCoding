@@ -112,3 +112,13 @@ func TestShutdownCancelsAndDrains(t *testing.T) {
 		t.Fatal("shutdown did not cancel worker")
 	}
 }
+
+
+func TestUndoRequiresRuntimeCapability(t *testing.T) {
+	m := fixture(t)
+	m.command("/undo")
+	if !strings.Contains(strings.Join(m.lines, "\n"), "shared runtime") {
+		t.Fatal("missing capability message")
+	}
+}
+

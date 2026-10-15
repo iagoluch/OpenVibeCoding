@@ -222,7 +222,7 @@ func (s *Server) storage(w http.ResponseWriter, r *http.Request) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	switch req.Op {
-	case "delete", "rename", "recover", "audit", "export":
+	case "delete", "rename", "recover", "audit", "export", "undo":
 		if s.busy["session:"+req.ID] {
 			http.Error(w, "session is running", 409)
 			return
@@ -256,6 +256,15 @@ func (s *Server) storage(w http.ResponseWriter, r *http.Request) {
 		value, e = s.db.Summary(req.ID)
 	case "usage":
 		value, e = s.db.Usage(req.ID)
+	case "undo":
+		var session store.Session
+		session, e = s.db.Get(req.ID)
+		if e == nil && s.busy["workspace:"+session.Workspace] {
+			e = errors.New("workspace is running; wait for the current turn to finish")
+		}
+		if e == nil {
+			value, e = s.undo(session)
+		}
 	case "export":
 		value, e = s.db.Export(req.ID)
 	default:
@@ -268,6 +277,35 @@ func (s *Server) storage(w http.ResponseWriter, r *http.Request) {
 		out.Value, _ = json.Marshal(value)
 	}
 	json.NewEncoder(w).Encode(out)
+}
+
+// undo reverses the most recent applied change of one session inside its
+// workspace, then marks the change undone and audits the result.
+func (s *Server) undo(session store.Session) (string, error) {
+	change, e := s.db.LastChange(session.ID)
+	if e != nil {
+		return "", e
+	}
+	var inverse workspace.Inverse
+	if e = json.Unmarshal([]byte(change.Inverse), &inverse); e != nil {
+		return "", errors.New("stored undo record is unreadable")
+	}
+	ws, e := workspace.Open(session.Workspace, false)
+	if e != nil {
+		return "", errors.New("workspace unavailable")
+	}
+	defer ws.Close()
+	if e = ws.Undo(inverse, change.Expect); e != nil {
+		return "", e
+	}
+	if e = s.db.MarkChangeUndone(session.ID, change.ID); e != nil {
+		return "", e
+	}
+	summary := "Undid the last applied change: " + change.Path
+	if e = s.db.Audit(session.ID, summary); e != nil {
+		return "", e
+	}
+	return summary, nil
 }
 func (s *Server) run(w http.ResponseWriter, r *http.Request, owner string) {
 	var req turn

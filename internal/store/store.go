@@ -47,7 +47,7 @@ func Open(dir string) (*Store, error) {
 	if e = db.QueryRow(`PRAGMA user_version`).Scan(&version); e != nil {
 		return fail(e)
 	}
-	if version > 2 {
+	if version > 3 {
 		return fail(errors.New("session database is newer than this application"))
 	}
 	if version == 0 {
@@ -76,6 +76,22 @@ PRAGMA user_version=1;`)
 		_, e = tx.Exec(`CREATE TABLE IF NOT EXISTS summaries(session TEXT PRIMARY KEY REFERENCES sessions(id) ON DELETE CASCADE,through_id INTEGER NOT NULL,content TEXT NOT NULL);
  CREATE TABLE IF NOT EXISTS usage(id INTEGER PRIMARY KEY,session TEXT NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,provider TEXT,model TEXT,input_tokens INTEGER,output_tokens INTEGER,cost REAL);
  PRAGMA user_version=2;`)
+		if e != nil {
+			tx.Rollback()
+			return fail(e)
+		}
+		if e = tx.Commit(); e != nil {
+			return fail(e)
+		}
+	}
+	if version < 3 {
+		tx, e := db.Begin()
+		if e != nil {
+			return fail(e)
+		}
+		_, e = tx.Exec(`CREATE TABLE IF NOT EXISTS changes(id INTEGER PRIMARY KEY AUTOINCREMENT,session TEXT NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,created TEXT NOT NULL,path TEXT NOT NULL,expect TEXT NOT NULL,inverse TEXT NOT NULL,undone INTEGER NOT NULL DEFAULT 0);
+ CREATE INDEX IF NOT EXISTS changes_session ON changes(session,id);
+ PRAGMA user_version=3;`)
 		if e != nil {
 			tx.Rollback()
 			return fail(e)

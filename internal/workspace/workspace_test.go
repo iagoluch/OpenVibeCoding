@@ -82,3 +82,79 @@ func TestLimitsAndShell(t *testing.T) {
 		t.Fatal("cancellation failed", e)
 	}
 }
+
+
+func TestUndoReversesAppliedChanges(t *testing.T) {
+	w := setup(t)
+	write := func(path, content string) {
+		t.Helper()
+		c, e := w.Propose(path, content)
+		if e != nil {
+			t.Fatal(e)
+		}
+		if e = w.Apply(c); e != nil {
+			t.Fatal(e)
+		}
+	}
+	write("doc.txt", "v1\n")
+	write("doc.txt", "v2\n")
+	if e := w.Undo(Inverse{Action: "write", Path: "doc.txt", Content: "v1\n"}, Digest("v2\n")); e != nil {
+		t.Fatal(e)
+	}
+	if text, _ := w.Read("doc.txt"); text != "v1\n" {
+		t.Fatalf("write undo left %q", text)
+	}
+	// Newer edits are never overwritten silently.
+	write("doc.txt", "v2\n")
+	write("doc.txt", "v3\n")
+	if e := w.Undo(Inverse{Action: "write", Path: "doc.txt", Content: "v1\n"}, Digest("v2\n")); e == nil {
+		t.Fatal("stale undo accepted")
+	}
+	// Undo of a creation removes the file.
+	write("new.txt", "fresh\n")
+	if e := w.Undo(Inverse{Action: "delete", Path: "new.txt"}, Digest("fresh\n")); e != nil {
+		t.Fatal(e)
+	}
+	if _, e := w.Read("new.txt"); e == nil {
+		t.Fatal("created file survived undo")
+	}
+	// Undo of a delete restores the content only while the path stays free.
+	write("gone.txt", "keep\n")
+	c, e := w.Propose("gone.txt", "")
+	if e != nil {
+		t.Fatal(e)
+	}
+	if e = w.Delete(c); e != nil {
+		t.Fatal(e)
+	}
+	if e = w.Undo(Inverse{Action: "write", Path: "gone.txt", Content: "keep\n"}, ""); e != nil {
+		t.Fatal(e)
+	}
+	if text, _ := w.Read("gone.txt"); text != "keep\n" {
+		t.Fatalf("delete undo left %q", text)
+	}
+	if e = w.Undo(Inverse{Action: "write", Path: "gone.txt", Content: "keep\n"}, ""); e == nil {
+		t.Fatal("recreated path overwritten")
+	}
+	// Undo of a move brings the file back to its source.
+	write("a.txt", "moving\n")
+	if c, e = w.Propose("a.txt", ""); e != nil {
+		t.Fatal(e)
+	}
+	if e = w.Move(c, "sub/b.txt"); e != nil {
+		t.Fatal(e)
+	}
+	if e = w.Undo(Inverse{Action: "move", Path: "a.txt", From: "sub/b.txt"}, Digest("moving\n")); e != nil {
+		t.Fatal(e)
+	}
+	if text, _ := w.Read("a.txt"); text != "moving\n" {
+		t.Fatal("move undo did not restore the source")
+	}
+	if _, e = w.Read("sub/b.txt"); e == nil {
+		t.Fatal("move undo left the destination")
+	}
+	if e = w.Undo(Inverse{Action: "rotate", Path: "a.txt"}, ""); e == nil {
+		t.Fatal("unknown undo action accepted")
+	}
+}
+

@@ -173,3 +173,62 @@ func TestRemoteApprovalAppliesOnlyAfterDecision(t *testing.T) {
 		t.Fatal("remote approved operation failed", e)
 	}
 }
+
+
+func TestRemoteUndoReversesAppliedChange(t *testing.T) {
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var b struct{ Messages []struct{ Role string } }
+		json.NewDecoder(r.Body).Decode(&b)
+		hasTool := false
+		for _, m := range b.Messages {
+			if m.Role == "tool" {
+				hasTool = true
+			}
+		}
+		w.Header().Set("Content-Type", "text/event-stream")
+		if !hasTool {
+			w.Write([]byte("data: {\"choices\":[{\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"u1\",\"function\":{\"name\":\"write_file\",\"arguments\":\"{\\\"path\\\":\\\"undo.txt\\\",\\\"content\\\":\\\"created\\\"}\"}}]}}]}\n\ndata: [DONE]\n\n"))
+		} else {
+			w.Write([]byte("data: {\"choices\":[{\"delta\":{\"content\":\"Observed\"}}]}\n\ndata: [DONE]\n\n"))
+		}
+	}))
+	defer provider.Close()
+	cfg := config.Default()
+	p := cfg.Providers["local"]
+	p.BaseURL = provider.URL
+	cfg.Providers["local"] = p
+	cfg.Provider = "local"
+	cfg.Model = "qwen3:8b"
+	_, c := startFixture(t, cfg)
+	ws, e := workspace.Open(t.TempDir(), false)
+	if e != nil {
+		t.Fatal(e)
+	}
+	defer ws.Close()
+	id, _ := c.New(ws.Path)
+	engine := &agent.Engine{Config: cfg, Store: c, Workspace: ws, Session: id}
+	if e = c.Run(context.Background(), engine, "create file", func(event agent.Event) {
+		if event.Decision != nil {
+			event.Decision <- true
+		}
+	}); e != nil {
+		t.Fatal(e)
+	}
+	if text, err := ws.Read("undo.txt"); err != nil || text != "created" {
+		t.Fatalf("write not applied: %v %q", err, text)
+	}
+	summary, e := c.Undo(id)
+	if e != nil {
+		t.Fatal(e)
+	}
+	if !strings.Contains(summary, "undo.txt") {
+		t.Fatalf("summary: %q", summary)
+	}
+	if _, e = ws.Read("undo.txt"); e == nil {
+		t.Fatal("undo did not remove the created file")
+	}
+	if _, e = c.Undo(id); e == nil {
+		t.Fatal("second undo accepted")
+	}
+}
+

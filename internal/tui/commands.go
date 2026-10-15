@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-var commands = []string{"/changes", "/capabilities", "/help", "/model", "/provider", "/harness", "/sessions", "/resume", "/new", "/clear", "/context", "/cost", "/permissions", "/config", "/status", "/rename", "/delete", "/init", "/doctor", "/exit"}
+var commands = []string{"/changes", "/capabilities", "/help", "/model", "/provider", "/harness", "/sessions", "/resume", "/new", "/clear", "/context", "/cost", "/permissions", "/config", "/status", "/rename", "/delete", "/init", "/undo", "/doctor", "/exit"}
 
 func Parse(s string) (string, string, error) {
 	parts := strings.SplitN(strings.TrimSpace(s), " ", 2)
@@ -17,7 +17,7 @@ func Parse(s string) (string, string, error) {
 	for _, c := range commands {
 		if name == c {
 			switch name {
-			case "/help", "/sessions", "/new", "/clear", "/context", "/cost", "/config", "/status", "/init", "/doctor", "/exit":
+			case "/help", "/sessions", "/new", "/clear", "/context", "/cost", "/config", "/status", "/init", "/undo", "/doctor", "/exit":
 				if arg != "" {
 					return "", "", fmt.Errorf("usage: %s (no arguments)", name)
 				}
