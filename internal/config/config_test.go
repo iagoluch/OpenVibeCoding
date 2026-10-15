@@ -50,6 +50,22 @@ func TestSaveLoadRoundTrip(t *testing.T) {
 	}
 }
 
+func TestExampleConfigValid(t *testing.T) {
+	b, e := os.ReadFile(filepath.Join("..", "..", "config.example.json"))
+	if e != nil {
+		t.Skip("example config not present")
+	}
+	// The example is a diff on top of the shipped defaults, exactly like a
+	// user's config.json: load defaults first, then apply the file.
+	c := Default()
+	if e = json.Unmarshal(b, &c); e != nil {
+		t.Fatal(e)
+	}
+	if e = c.Validate(); e != nil {
+		t.Fatal(e)
+	}
+}
+
 func TestLoadAdoptsStockPresets(t *testing.T) {
 	dir := t.TempDir()
 	stock := `{

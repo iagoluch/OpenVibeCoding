@@ -15,13 +15,15 @@ export PATH="$HOME/.local/bin:$PATH"
 ovc --workspace /path/to/project
 ```
 
-Windows: `./scripts/install.ps1 -AddToPath`, then reopen the terminal. Pin a specific release with `-Version v0.1.0` (PowerShell) or `OPENVIBECODING_VERSION=v0.1.0` (shell). Building from source needs **Go 1.26.2+**: `go build -o ovc ./cmd/ovc`, then `bash scripts/install.sh ./ovc` (`./scripts/install.ps1 -Binary ./ovc.exe -AddToPath` on Windows).
+Windows: `./scripts/install.ps1 -AddToPath`, then reopen the terminal (if your execution policy blocks scripts: `powershell -ExecutionPolicy Bypass -File scripts/install.ps1 -AddToPath`). Pin a specific release with `-Version v0.1.0` (PowerShell) or `OPENVIBECODING_VERSION=v0.1.0` (shell). Building from source needs **Go 1.26.2+**: `go build -o ovc ./cmd/ovc`, then `bash scripts/install.sh ./ovc` (`./scripts/install.ps1 -Binary ./ovc.exe -AddToPath` on Windows).
 
 `bash scripts/package.sh` creates Linux/macOS/Windows × amd64/arm64 archives containing `ovc`, plus `SHA256SUMS`. Building needs Go; packaging also needs Python 3. Running a release binary does not need Go. Browser QA additionally needs Node and Chromium; desktop prerequisites are listed below.
 
 ## Credentials and first run
 
-The first run writes a default configuration. Store a provider credential through hidden terminal input:
+The first run writes a default configuration. `ovc --setup` is the guided path: it detects Ollama and LM Studio servers, lists free-tier providers with the page that issues each key, can import credentials already configured in OpenCode, stores the key in the OS keychain and makes one real request before activating. When the preferred model is retired, rate limited or busy, the wizard tries the provider's next model instead of failing the first run.
+
+Store a credential directly through hidden terminal input when you already know the provider:
 
 ```sh
 ovc --credential openai
@@ -40,10 +42,13 @@ Use `ovc --doctor` to check configuration and capabilities without printing keys
 | OpenAI | Native Chat Completions streaming, tools, optional usage |
 | Anthropic Claude | Native Messages API streaming, tool use/results, usage |
 | Google Gemini | Native streamGenerateContent, function calls/results, image evidence, thought-signature preservation |
-| DeepSeek, Kimi, Qwen | Configured OpenAI-compatible endpoints |
-| Local/custom providers | Register any compatible endpoint and its models; loopback HTTP is allowed |
+| DeepSeek, Kimi, Qwen, Mistral | Configured OpenAI-compatible endpoints |
+| Free-tier presets | OpenRouter (`:free` models), Groq, Cerebras, NVIDIA NIM, Z.AI and Google AI Studio, listed by `ovc --setup` with the key page for each |
+| Local/custom providers | Register any compatible endpoint and its models; loopback HTTP is allowed, and Ollama/LM Studio are detected by `ovc --setup` |
 
-Models, context budgets, tool capability, output limits, temperature and prices live in the provider registry. Defaults are conservative starting configurations; verify model availability and regional endpoints with your provider. Unknown prices are reported as unknown. Requests have timeouts, bounded responses, cancellation, HTTP 429/5xx retries and redacted errors. Redirects are rejected to protect credentials. HTTP is accepted only on loopback.
+Models, context budgets, tool capability, output limits, temperature and prices live in the provider registry. Defaults are conservative starting configurations; verify model availability and regional endpoints with your provider. Routes that are genuinely free to use (OpenRouter `:free`, NVIDIA NIM credits, Z.AI flash, local servers) report `$0`; paid platforms show list prices per million tokens; when no reliable price is known the cost is reported as unknown rather than guessed. Requests have timeouts, bounded responses, cancellation, HTTP 429/5xx retries and redacted errors. Redirects are rejected to protect credentials. HTTP is accepted only on loopback.
+
+Provider presets refresh with each release: `config.json` stores only your own changes, so entries you never edited pick up new model IDs, contexts and prices automatically, while edited entries are preserved exactly as written.
 
 ## Development workflow
 
@@ -118,7 +123,7 @@ See [config.example.json](../config.example.json). Data lives under the platform
 
 The directory contains `config.json`, SQLite session files, `runtime.json`/`runtime.lock`, metadata-only `runtime.log`, optional `credentials.json`, and `qa/` dependencies. Unix files/directories are restricted; Windows relies on the user's profile ACLs. `--debug` enables diagnostic runtime metadata logging without request bodies or secrets. Logs do not contain prompts/screenshots. Stop the runtime before copying the whole data directory for backup or upgrading binaries.
 
-Upgrade by running the installer with a newer local binary or release version (`OPENVIBECODING_VERSION=v…` / PowerShell `-Version v…`). Configuration and sessions are preserved. Stop the runtime, then use `scripts/uninstall.sh` or `scripts/uninstall.ps1` to remove the launcher. Remove data separately only if you intend to erase sessions and credentials. Fish users can add PATH with `fish_add_path ~/.local/bin`; Bash/Zsh users should update their appropriate shell startup file. PowerShell installation does not change execution policy or request administrator access.
+Upgrade by running the installer with a newer local binary or release version (`OPENVIBECODING_VERSION=v…` / PowerShell `-Version v…`). Configuration and sessions are preserved. Stop the runtime, then use `scripts/uninstall.sh` or `scripts/uninstall.ps1` to remove the launcher. Remove data separately only if you intend to erase sessions and credentials. Fish users can add PATH with `fish_add_path ~/.local/bin`; Bash/Zsh users should update their appropriate shell startup file. PowerShell installation does not change execution policy or request administrator access; if your policy blocks scripts, run `powershell -ExecutionPolicy Bypass -File scripts/install.ps1 -AddToPath`.
 
 ## Verification
 

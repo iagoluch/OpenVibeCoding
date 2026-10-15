@@ -26,7 +26,7 @@ OpenVibeCoding is a Go/Bubble Tea coding agent with persistent sessions, native 
 
 ### Built to carry the work forward
 
-- **Your choice of model.** Native OpenAI, Anthropic and Gemini protocols; compatible DeepSeek, Kimi, Qwen and local endpoints.
+- **Your choice of model.** Native OpenAI, Anthropic and Gemini protocols; free-tier presets for OpenRouter, Groq, Cerebras, NVIDIA NIM, Z.AI and Google AI Studio; compatible DeepSeek, Kimi, Qwen, Mistral and local endpoints.
 - **One local runtime.** Multiple terminals reuse an authenticated service with coordinated workspace/session execution.
 - **Persistent context.** SQLite keeps original conversations, incremental summaries, audit records and usage.
 - **Visible control.** File diffs, operation approvals, separate automation/network grants and cancellation.
@@ -41,13 +41,13 @@ Install the latest release — the script downloads the archive for your OS/CPU 
 git clone https://github.com/iagoluch/OpenVibeCoding.git
 cd OpenVibeCoding
 bash scripts/install.sh
-ovc --credential openai
+ovc --setup          # guided: local models, free tiers, key storage, real test
 ovc --workspace /path/to/project
 ```
 
-Add `~/.local/bin` to PATH if needed. On Windows, run `./scripts/install.ps1 -AddToPath`, then reopen PowerShell. You can also download the archive for your OS/CPU directly from [Releases](https://github.com/iagoluch/OpenVibeCoding/releases/latest). Building from source needs **Go 1.26.2+**: `go build -o ovc ./cmd/ovc`, then `bash scripts/install.sh ./ovc`.
+Add `~/.local/bin` to PATH if needed. On Windows, run `./scripts/install.ps1 -AddToPath`, then reopen PowerShell (if script execution is blocked: `powershell -ExecutionPolicy Bypass -File scripts/install.ps1 -AddToPath`). You can also download the archive for your OS/CPU directly from [Releases](https://github.com/iagoluch/OpenVibeCoding/releases/latest). Building from source needs **Go 1.26.2+**: `go build -o ovc ./cmd/ovc`, then `bash scripts/install.sh ./ovc`.
 
-Credentials use the OS keychain by default. Environment variables are supported; a restricted local credential file requires explicit opt-in. Run `ovc --doctor` to inspect setup without exposing keys.
+Credentials use the OS keychain by default. `ovc --setup` detects Ollama and LM Studio, offers free-tier providers with the page that issues each key, and can import credentials already configured in OpenCode; it only activates a provider after one real request succeeds. Environment variables are supported; a restricted local credential file requires explicit opt-in. Run `ovc --doctor` to inspect setup without exposing keys.
 
 Release archives for Linux, macOS and Windows (amd64/arm64) are built by CI from tagged commits and published on [Releases](https://github.com/iagoluch/OpenVibeCoding/releases/latest); the installers verify SHA-256 checksums. See the [installation and upgrade guide](docs/guide.md#install-and-launch).
 
