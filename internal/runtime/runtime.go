@@ -156,7 +156,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	r.Body = http.MaxBytesReader(w, r.Body, 2<<20)
 	defer r.Body.Close()
-	owner := r.Header.Get("X-Interpreter-Client")
+	owner := r.Header.Get("X-OpenVibeCoding-Client")
 	if owner == "" {
 		http.Error(w, "client identity required", 400)
 		return

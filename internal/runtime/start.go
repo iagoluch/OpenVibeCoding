@@ -18,7 +18,7 @@ func Ensure(ctx context.Context, dir string) (*Client, error) {
 		return nil, e
 	}
 	cmd := exec.Command(exe, "--runtime", "serve")
-	cmd.Env = append(os.Environ(), "INTERPRETER_HOME="+dir)
+	cmd.Env = append(os.Environ(), "OPENVIBECODING_HOME="+dir)
 	detach(cmd)
 	null, e := os.OpenFile(os.DevNull, os.O_RDWR, 0600)
 	if e != nil {
@@ -41,7 +41,7 @@ func Ensure(ctx context.Context, dir string) (*Client, error) {
 		case <-ctx.Done():
 			return nil, ctx.Err()
 		case <-timeout.C:
-			return nil, errors.New("runtime did not start; run interpreter --runtime serve for diagnostics")
+			return nil, errors.New("runtime did not start; run ovc --runtime serve for diagnostics")
 		case <-ticker.C:
 			if c, e := Connect(dir); e == nil {
 				return c, nil

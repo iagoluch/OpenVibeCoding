@@ -201,7 +201,7 @@ func (w *Workspace) Apply(c Change) error {
 	if e = w.Root.MkdirAll(filepath.Dir(c.Path), 0755); e != nil {
 		return e
 	}
-	tmp := c.Path + fmt.Sprintf(".interpreter-%d", time.Now().UnixNano())
+	tmp := c.Path + fmt.Sprintf(".openvibecoding-%d", time.Now().UnixNano())
 	f, e := w.Root.OpenFile(tmp, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
 	if e != nil {
 		return e

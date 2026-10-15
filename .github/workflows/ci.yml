@@ -15,7 +15,7 @@ jobs:
           go-version-file: go.mod
       - run: go test -race ./...
       - run: go vet ./...
-      - run: go build -o interpreter${{ runner.os == 'Windows' && '.exe' || '' }} ./cmd/interpreter
+      - run: go build -o ovc${{ runner.os == 'Windows' && '.exe' || '' }} ./cmd/ovc
   packages:
     runs-on: ubuntu-latest
     steps:
@@ -26,5 +26,5 @@ jobs:
       - run: bash scripts/build.sh
       - uses: actions/upload-artifact@v4
         with:
-          name: interpreter-binaries
+          name: openvibecoding-binaries
           path: dist/

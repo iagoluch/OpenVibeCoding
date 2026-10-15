@@ -31,11 +31,11 @@ func TestExplicitFileFallback(t *testing.T) {
 }
 
 func TestRealOSKeychain(t *testing.T) {
-	if os.Getenv("INTERPRETER_TEST_KEYCHAIN") != "1" {
+	if os.Getenv("OPENVIBECODING_TEST_KEYCHAIN") != "1" {
 		t.Skip("requires explicit isolated OS keychain fixture")
 	}
 	dir := t.TempDir()
-	name := "interpreter-synthetic-keychain-test"
+	name := "openvibecoding-synthetic-keychain-test"
 	if e := Set(dir, name, "synthetic-fixture-value", false); e != nil {
 		t.Fatal(e)
 	}

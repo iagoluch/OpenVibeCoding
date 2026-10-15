@@ -30,9 +30,9 @@ func TestPermissionBoundaries(t *testing.T) {
 	}
 }
 func TestRealBrowserWorkflow(t *testing.T) {
-	module := os.Getenv("INTERPRETER_TEST_PLAYWRIGHT")
+	module := os.Getenv("OPENVIBECODING_TEST_PLAYWRIGHT")
 	if module == "" {
-		t.Skip("set INTERPRETER_TEST_PLAYWRIGHT to installed Playwright module")
+		t.Skip("set OPENVIBECODING_TEST_PLAYWRIGHT to installed Playwright module")
 	}
 	site := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, `<html><title>QA fixture</title><input id="name"><button onclick="document.querySelector('#result').textContent='Hello '+document.querySelector('#name').value">Go</button><p id="result"></p></html>`)
@@ -57,7 +57,7 @@ func TestRealBrowserWorkflow(t *testing.T) {
 	}
 }
 func TestRealDesktop(t *testing.T) {
-	if os.Getenv("INTERPRETER_TEST_DESKTOP") != "1" || runtime.GOOS != "linux" {
+	if os.Getenv("OPENVIBECODING_TEST_DESKTOP") != "1" || runtime.GOOS != "linux" {
 		t.Skip("requires explicit isolated X11 test desktop")
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
@@ -77,14 +77,14 @@ func TestRealDesktop(t *testing.T) {
 		t.Fatal("screenshot failed", e)
 	}
 	target := filepath.Join(t.TempDir(), "typed.txt")
-	terminal := exec.CommandContext(ctx, "xterm", "-title", "Interpreter synthetic keyboard fixture", "-e", "sh", "-c", `read -r text; printf '%s' "$text" > "$1"; sleep 1`, "fixture", target)
+	terminal := exec.CommandContext(ctx, "xterm", "-title", "OpenVibeCoding synthetic keyboard fixture", "-e", "sh", "-c", `read -r text; printf '%s' "$text" > "$1"; sleep 1`, "fixture", target)
 	if err := terminal.Start(); err != nil {
 		t.Fatal(err)
 	}
 	defer func() { terminal.Process.Kill(); terminal.Wait() }()
 	var id string
 	for i := 0; i < 40; i++ {
-		b, _ := exec.Command("xdotool", "search", "--name", "Interpreter synthetic keyboard fixture").Output()
+		b, _ := exec.Command("xdotool", "search", "--name", "OpenVibeCoding synthetic keyboard fixture").Output()
 		if fields := strings.Fields(string(b)); len(fields) > 0 {
 			id = fields[0]
 			break

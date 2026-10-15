@@ -49,7 +49,7 @@ func (c *Client) request(ctx context.Context, path string, v any) (*http.Respons
 		return nil, e
 	}
 	r.Header.Set("Authorization", "Bearer "+c.Meta.Token)
-	r.Header.Set("X-Interpreter-Client", c.ID)
+	r.Header.Set("X-OpenVibeCoding-Client", c.ID)
 	r.Header.Set("Content-Type", "application/json")
 	resp, e := c.HTTP.Do(r)
 	if e != nil {

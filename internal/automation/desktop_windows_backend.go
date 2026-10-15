@@ -11,7 +11,7 @@ import (
 )
 
 func screenshot(ctx context.Context, tool string, args ...string) (string, error) {
-	f, e := os.CreateTemp("", "interpreter-screen-*.png")
+	f, e := os.CreateTemp("", "openvibecoding-screen-*.png")
 	if e != nil {
 		return "", e
 	}
@@ -64,7 +64,7 @@ switch($a.action){
  default { throw 'unsupported action' }
 }`
 	// A temporary script is task-owned and contains no user input or credentials.
-	dir, e := os.MkdirTemp("", "interpreter-desktop-*")
+	dir, e := os.MkdirTemp("", "openvibecoding-desktop-*")
 	if e != nil {
 		return "", e
 	}

@@ -37,7 +37,7 @@ func run() error {
 	debug := flag.Bool("debug", false, "enable runtime diagnostic metadata logging")
 	flag.Parse()
 	if *debug {
-		os.Setenv("INTERPRETER_DEBUG", "1")
+		os.Setenv("OPENVIBECODING_DEBUG", "1")
 	}
 	if *ver {
 		fmt.Println("OpenVibeCoding " + version)
@@ -142,7 +142,7 @@ func run() error {
 }
 func main() {
 	if e := run(); e != nil {
-		fmt.Fprintln(os.Stderr, "interpreter:", e)
+		fmt.Fprintln(os.Stderr, "ovc:", e)
 		os.Exit(1)
 	}
 }

@@ -55,11 +55,11 @@ func Default() Config {
 	}}
 }
 func Dir() (string, error) {
-	if p := os.Getenv("INTERPRETER_HOME"); p != "" {
+	if p := os.Getenv("OPENVIBECODING_HOME"); p != "" {
 		return filepath.Abs(p)
 	}
 	p, e := os.UserConfigDir()
-	return filepath.Join(p, "open-interpreter"), e
+	return filepath.Join(p, "openvibecoding"), e
 }
 func Load(dir string) (Config, error) {
 	c := Default()
@@ -76,13 +76,13 @@ func Load(dir string) (Config, error) {
 	if e != nil {
 		return c, e
 	}
-	if os.Getenv("INTERPRETER_DEBUG") == "1" {
+	if os.Getenv("OPENVIBECODING_DEBUG") == "1" {
 		c.Debug = true
 	}
-	if p := os.Getenv("INTERPRETER_PROVIDER"); p != "" {
+	if p := os.Getenv("OPENVIBECODING_PROVIDER"); p != "" {
 		c.Provider = p
 	}
-	if m := os.Getenv("INTERPRETER_MODEL"); m != "" {
+	if m := os.Getenv("OPENVIBECODING_MODEL"); m != "" {
 		c.Model = m
 	}
 	if c.Automation.BrowserModule == "" {

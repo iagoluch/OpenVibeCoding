@@ -31,7 +31,7 @@ OpenVibeCoding is a Go/Bubble Tea coding agent with persistent sessions, native 
 - **Persistent context.** SQLite keeps original conversations, incremental summaries, audit records and usage.
 - **Visible control.** File diffs, operation approvals, separate automation/network grants and cancellation.
 - **Beyond the terminal.** Playwright workflows and platform desktop backends, with capability detection and OS permission checks.
-- **Portable binaries.** Linux, macOS and Windows builds for amd64 and arm64. Both `i` and `interpreter` enter the same application.
+- **Portable binaries.** Linux, macOS and Windows builds for amd64 and arm64. Launch the application with `ovc`.
 
 ## Get started
 
@@ -40,15 +40,15 @@ Build with **Go 1.26.2+**:
 ```sh
 git clone https://github.com/iagoluch/OpenVibeCoding.git
 cd OpenVibeCoding
-go build -o interpreter ./cmd/interpreter
-bash scripts/install.sh ./interpreter
-interpreter --credential openai
-interpreter --workspace /path/to/project
+go build -o ovc ./cmd/ovc
+bash scripts/install.sh ./ovc
+ovc --credential openai
+ovc --workspace /path/to/project
 ```
 
-Add `~/.local/bin` to PATH if needed. On Windows, build `interpreter.exe` and use `./scripts/install.ps1 -Binary ./interpreter.exe -AddToPath`, then reopen PowerShell.
+Add `~/.local/bin` to PATH if needed. On Windows, build `ovc.exe` and use `./scripts/install.ps1 -Binary ./ovc.exe -AddToPath`, then reopen PowerShell.
 
-Credentials use the OS keychain by default. Environment variables are supported; a restricted local credential file requires explicit opt-in. Run `interpreter --doctor` to inspect setup without exposing keys.
+Credentials use the OS keychain by default. Environment variables are supported; a restricted local credential file requires explicit opt-in. Run `ovc --doctor` to inspect setup without exposing keys.
 
 Release download installers and archive/checksum generation are included. **This task has not published a public release**; build locally or use generated archives until one is available. See the [installation and upgrade guide](docs/guide.md#install-and-launch).
 
@@ -80,7 +80,7 @@ Enter sends · Ctrl+J adds a newline · Tab completes commands · PgUp/PgDn scro
 Enable only the capabilities the task needs:
 
 ```sh
-interpreter --setup-browser
+ovc --setup-browser
 ```
 
 ```text

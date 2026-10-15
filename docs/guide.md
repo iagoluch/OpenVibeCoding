@@ -7,31 +7,30 @@ A terminal coding agent written in Go with Bubble Tea. It can inspect projects, 
 Use a trusted release archive matching your OS/CPU, or build with **Go 1.26.2+**:
 
 ```sh
-go build -o interpreter ./cmd/interpreter
-bash scripts/install.sh ./interpreter
+go build -o ovc ./cmd/ovc
+bash scripts/install.sh ./ovc
 # Add ~/.local/bin to PATH if needed:
 export PATH="$HOME/.local/bin:$PATH"
-interpreter --workspace /path/to/project
-# i enters the same application and runtime
+ovc --workspace /path/to/project
 ```
 
-Windows: `go build -o interpreter.exe ./cmd/interpreter`, then `./scripts/install.ps1 -Binary ./interpreter.exe -AddToPath`. Reopen the terminal after updating PATH. Both installers also support downloading release binaries when no local binary is supplied. They detect OS/architecture and verify SHA-256 checksums. **No public release has been published by this task**; until one exists, use a local binary or the generated archives. A tagged CI workflow creates draft releases for review.
+Windows: `go build -o ovc.exe ./cmd/ovc`, then `./scripts/install.ps1 -Binary ./ovc.exe -AddToPath`. Reopen the terminal after updating PATH. Both installers also support downloading release binaries when no local binary is supplied. They detect OS/architecture and verify SHA-256 checksums. **No public release has been published by this task**; until one exists, use a local binary or the generated archives. A tagged CI workflow creates draft releases for review.
 
-`bash scripts/package.sh` creates Linux/macOS/Windows × amd64/arm64 archives containing both `i` and `interpreter`, plus `SHA256SUMS`. Building needs Go; packaging also needs Python 3. Running a release binary does not need Go. Browser QA additionally needs Node and Chromium; desktop prerequisites are listed below.
+`bash scripts/package.sh` creates Linux/macOS/Windows × amd64/arm64 archives containing `ovc`, plus `SHA256SUMS`. Building needs Go; packaging also needs Python 3. Running a release binary does not need Go. Browser QA additionally needs Node and Chromium; desktop prerequisites are listed below.
 
 ## Credentials and first run
 
 The first run writes a default configuration. Store a provider credential through hidden terminal input:
 
 ```sh
-interpreter --credential openai
-interpreter --credential anthropic
-interpreter --credential gemini
+ovc --credential openai
+ovc --credential anthropic
+ovc --credential gemini
 ```
 
 The default credential backend is the OS keychain: macOS Keychain, Windows Credential Manager, or Linux Secret Service. If unavailable, explicitly choose `--credential-file` to use a local file with restrictive permissions. There is no silent plaintext fallback. Environment variables such as `OPENAI_API_KEY`, `ANTHROPIC_API_KEY` and `GEMINI_API_KEY` override saved credentials. Never paste secrets into conversations or endpoint URLs.
 
-Use `interpreter --doctor` to check configuration and capabilities without printing keys. If credentials or saved configuration change while the runtime is running, stop the idle runtime with `interpreter --runtime stop`, then reconnect to load them. `/model` and `/harness` switches take effect immediately without a restart.
+Use `ovc --doctor` to check configuration and capabilities without printing keys. If credentials or saved configuration change while the runtime is running, stop the idle runtime with `ovc --runtime stop`, then reconnect to load them. `/model` and `/harness` switches take effect immediately without a restart.
 
 ## Providers
 
@@ -77,11 +76,11 @@ Grants do not remove operation approvals. Network and install default off. The p
 The first terminal starts one local runtime; subsequent terminals reuse it. The daemon owns SQLite, provider configuration, audit records and task coordination. IPC uses authenticated loopback HTTP on all three operating systems, with a random token in a private metadata file and an OS lock preventing duplicate daemons. Browsers cannot invoke it via cross-origin requests.
 
 ```sh
-interpreter --runtime start
-interpreter --runtime status
-interpreter --runtime stop
-interpreter --resume SESSION_ID --workspace /path/to/project
-interpreter --export SESSION_ID > session.json
+ovc --runtime start
+ovc --runtime status
+ovc --runtime stop
+ovc --resume SESSION_ID --workspace /path/to/project
+ovc --export SESSION_ID > session.json
 ```
 
 Each client has independent identity and approvals. Turns are serialized per session **and workspace**. Closing one client cancels its current request and leaves other clients' tasks intact. The daemon stays available until explicitly stopped; stopping with active tasks is refused. OS termination cancels active tasks before closing storage. Stale metadata from a crash is replaced after obtaining the released OS lock. A protocol mismatch requires stopping the older runtime.
@@ -93,7 +92,7 @@ Context preparation incrementally summarizes older complete exchanges into struc
 ## Browser QA
 
 ```sh
-interpreter --setup-browser
+ovc --setup-browser
 # In the TUI:
 /permissions browser on
 ```
@@ -114,11 +113,11 @@ Enable `/permissions desktop on`; clipboard needs `/permissions clipboard on` se
 
 ## Configuration and maintenance
 
-See [config.example.json](../config.example.json). Data lives under the platform's `os.UserConfigDir()/open-interpreter` (`~/.config`, macOS Application Support, or Windows AppData). The existing `open-interpreter` storage identifier, OS keychain identifier and Windows `Programs\OpenInterpreter` installation directory are retained for compatibility with prior installations. The product name is OpenVibeCoding. `INTERPRETER_HOME` overrides the data directory. `INTERPRETER_PROVIDER`/`INTERPRETER_MODEL` override defaults. Provider secrets are excluded from JSON configuration/export.
+See [config.example.json](../config.example.json). Data lives under the platform's `os.UserConfigDir()/openvibecoding` (`~/.config`, macOS Application Support, or Windows AppData). `OPENVIBECODING_HOME` overrides the data directory. `OPENVIBECODING_PROVIDER`/`OPENVIBECODING_MODEL` override defaults. Provider secrets are excluded from JSON configuration/export.
 
 The directory contains `config.json`, SQLite session files, `runtime.json`/`runtime.lock`, metadata-only `runtime.log`, optional `credentials.json`, and `qa/` dependencies. Unix files/directories are restricted; Windows relies on the user's profile ACLs. `--debug` enables diagnostic runtime metadata logging without request bodies or secrets. Logs do not contain prompts/screenshots. Stop the runtime before copying the whole data directory for backup or upgrading binaries.
 
-Upgrade by running the installer with a newer local binary or release version (`INTERPRETER_VERSION=v…` / PowerShell `-Version v…`). Configuration and sessions are preserved. Stop the runtime, then use `scripts/uninstall.sh` or `scripts/uninstall.ps1` to remove both launchers. Remove data separately only if you intend to erase sessions and credentials. Fish users can add PATH with `fish_add_path ~/.local/bin`; Bash/Zsh users should update their appropriate shell startup file. PowerShell installation does not change execution policy or request administrator access.
+Upgrade by running the installer with a newer local binary or release version (`OPENVIBECODING_VERSION=v…` / PowerShell `-Version v…`). Configuration and sessions are preserved. Stop the runtime, then use `scripts/uninstall.sh` or `scripts/uninstall.ps1` to remove the launcher. Remove data separately only if you intend to erase sessions and credentials. Fish users can add PATH with `fish_add_path ~/.local/bin`; Bash/Zsh users should update their appropriate shell startup file. PowerShell installation does not change execution policy or request administrator access.
 
 ## Verification
 

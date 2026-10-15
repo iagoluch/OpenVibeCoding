@@ -9,8 +9,8 @@ import (
 )
 
 func TestSandboxBoundary(t *testing.T) {
-	if os.Getenv("INTERPRETER_TEST_SANDBOX") != "1" {
-		t.Skip("set INTERPRETER_TEST_SANDBOX=1 on bubblewrap-capable Linux")
+	if os.Getenv("OPENVIBECODING_TEST_SANDBOX") != "1" {
+		t.Skip("set OPENVIBECODING_TEST_SANDBOX=1 on bubblewrap-capable Linux")
 	}
 	w := setup(t)
 	secret := filepath.Join(t.TempDir(), "outside")

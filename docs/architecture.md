@@ -4,7 +4,7 @@
 
 | Module | Responsibility |
 | --- | --- |
-| `cmd/interpreter` | CLI, first-run configuration, hidden credential input, runtime lifecycle, diagnostics/export/browser setup |
+| `cmd/ovc` | CLI, first-run configuration, hidden credential input, runtime lifecycle, diagnostics/export/browser setup |
 | `internal/config` | Model/provider registry, protocol selection, request parameters, permissions and credential-safe configuration |
 | `internal/credentials` | OS keychain plus explicit restricted-file fallback |
 | `internal/provider` | OpenAI-compatible, native Anthropic and native Gemini streaming adapters; tools, images, usage, errors/retries |

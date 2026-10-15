@@ -11,7 +11,7 @@ import (
 	"runtime"
 )
 
-const service = "open-interpreter"
+const service = "openvibecoding"
 
 func Get(dir, name string) string {
 	if s, e := keyring.Get(service, name); e == nil {
