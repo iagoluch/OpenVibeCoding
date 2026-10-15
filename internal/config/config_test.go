@@ -1,6 +1,7 @@
 package config
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 )
@@ -52,5 +53,42 @@ func TestCredentialAcrossStreamFrames(t *testing.T) {
 	redactor.Close()
 	if strings.Contains(output, p.Secret) || !strings.Contains(output, "[REDACTED]") {
 		t.Fatal(output)
+	}
+}
+
+func TestPriceConfiguredDistinctFromUnknown(t *testing.T) {
+	c := Default()
+	free := c.Providers["openrouter"].Models[0]
+	if free.InputPrice == nil || free.OutputPrice == nil || *free.InputPrice != 0 || *free.OutputPrice != 0 {
+		t.Fatal("free preset must carry configured zero prices")
+	}
+	c.Providers["plain"] = Provider{BaseURL: "https://example.com/v1", KeyEnv: "PLAIN_KEY", Models: []Model{{ID: "custom-model", Context: 8192, Tools: true}}}
+	b, err := json.Marshal(c)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var back Config
+	if err = json.Unmarshal(b, &back); err != nil {
+		t.Fatal(err)
+	}
+	if m := back.Providers["openrouter"].Models[0]; m.InputPrice == nil || *m.InputPrice != 0 {
+		t.Fatal("configured zero price lost in round trip")
+	}
+	if m := back.Providers["openai"].Models[0]; m.InputPrice == nil || *m.InputPrice != 0.40 {
+		t.Fatal("paid price lost in round trip")
+	}
+	if m := back.Providers["plain"].Models[0]; m.InputPrice != nil || m.OutputPrice != nil {
+		t.Fatal("unset prices must remain unknown")
+	}
+}
+
+func TestNegativePriceRejected(t *testing.T) {
+	c := Default()
+	p := c.Providers["openai"]
+	negative := -1.0
+	p.Models[0].InputPrice = &negative
+	c.Providers["openai"] = p
+	if c.Validate() == nil {
+		t.Fatal("negative price accepted")
 	}
 }

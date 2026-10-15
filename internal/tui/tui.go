@@ -422,6 +422,9 @@ func (m *Model) command(text string) tea.Cmd {
 func (m *Model) View() tea.View {
 	title := accent.Render(" OPENVIBECODING ") + muted.Render(" project agent")
 	status := fmt.Sprintf(" %s/%s · %s · %s", m.Engine.Config.Provider, m.Engine.Config.Model, m.Engine.Config.Harness, m.status)
+	if label := m.usageLabel(); label != "" {
+		status += " · " + label
+	}
 	status = lipgloss.NewStyle().Width(max(10, m.width-2)).Render(m.Engine.Config.Redact(status))
 	help := "Enter send  Ctrl+J newline  /help  Esc stop"
 	if m.approval != nil {
@@ -430,6 +433,45 @@ func (m *Model) View() tea.View {
 	v := tea.NewView(title + "\n" + muted.Render(m.Engine.Config.Redact(m.Engine.Workspace.Path)) + "\n\n" + m.output.View() + "\n" + warning.Render(status) + "\n" + m.input.View() + "\n" + muted.Render(help))
 	v.AltScreen = true
 	return v
+}
+
+// usageLabel summarizes tokens reported this session view and the estimated
+// cost. Configured zero prices render as free; unset prices stay unknown.
+func (m *Model) usageLabel() string {
+	if m.usage.Input == 0 && m.usage.Output == 0 {
+		return ""
+	}
+	_, model, err := m.Engine.Config.Active()
+	if err != nil {
+		return ""
+	}
+	label := fmt.Sprintf("↑%s ↓%s", compactTokens(m.usage.Input), compactTokens(m.usage.Output))
+	if model.InputPrice == nil || model.OutputPrice == nil {
+		return label + " · price unset"
+	}
+	cost := (float64(m.usage.Input)* *model.InputPrice + float64(m.usage.Output)* *model.OutputPrice) / 1e6
+	if cost == 0 {
+		return label + " · free"
+	}
+	return fmt.Sprintf("%s · ~$%s", label, formatCost(cost))
+}
+
+func compactTokens(n int) string {
+	switch {
+	case n >= 1_000_000:
+		return fmt.Sprintf("%.1fM", float64(n)/1e6)
+	case n >= 1000:
+		return fmt.Sprintf("%.1fk", float64(n)/1000)
+	default:
+		return fmt.Sprintf("%d", n)
+	}
+}
+
+func formatCost(c float64) string {
+	if c < 0.0001 {
+		return "<0.0001"
+	}
+	return fmt.Sprintf("%.4f", c)
 }
 
 // Shutdown cancels and drains an active turn before storage is closed, including

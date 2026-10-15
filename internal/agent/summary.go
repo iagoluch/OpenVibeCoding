@@ -81,8 +81,8 @@ func (e *Engine) recordUsage(u provider.Usage) error {
 		return err
 	}
 	v := store.Usage{Provider: e.Config.Provider, Model: e.Config.Model, Input: u.Input, Output: u.Output}
-	if m.InputPrice > 0 && m.OutputPrice > 0 {
-		cost := (float64(u.Input)*m.InputPrice + float64(u.Output)*m.OutputPrice) / 1e6
+	if m.InputPrice != nil && m.OutputPrice != nil {
+		cost := (float64(u.Input)* *m.InputPrice + float64(u.Output)* *m.OutputPrice) / 1e6
 		v.Cost = &cost
 	}
 	return e.Store.AddUsage(e.Session, v)
