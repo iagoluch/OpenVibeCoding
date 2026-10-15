@@ -3,13 +3,16 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"github.com/iagoluch/OpenVibeCoding/internal/credentials"
 	daemon "github.com/iagoluch/OpenVibeCoding/internal/runtime"
+	"github.com/iagoluch/OpenVibeCoding/internal/webui"
 	"golang.org/x/term"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
@@ -36,6 +39,7 @@ func run() error {
 	export := flag.String("export", "", "export session JSON to stdout")
 	setupBrowser := flag.Bool("setup-browser", false, "install pinned Playwright and Chromium into application data directory")
 	setupWizard := flag.Bool("setup", false, "interactive provider setup: detect local models, store a credential, smoke test")
+	ui := flag.Bool("ui", false, "open the browser UI: start the runtime and print a single-use pairing link")
 	debug := flag.Bool("debug", false, "enable runtime diagnostic metadata logging")
 	flag.Parse()
 	if *debug {
@@ -87,6 +91,10 @@ func run() error {
 			client, e = daemon.Connect(dir)
 		}
 		if e != nil {
+			if (*runtimeOp == "status" || *runtimeOp == "stop") && errors.Is(e, daemon.ErrNotRunning) {
+				fmt.Println("OpenVibeCoding runtime is not running. It starts with ovc or ovc --ui.")
+				return nil
+			}
 			return e
 		}
 		if *runtimeOp != "start" && *runtimeOp != "status" && *runtimeOp != "stop" {
@@ -97,6 +105,9 @@ func run() error {
 			fmt.Print(status)
 		}
 		return err
+	}
+	if *ui {
+		return openUI(dir, *project)
 	}
 	w, e := workspace.Open(*project, *shell)
 	if e != nil {
@@ -151,4 +162,31 @@ func main() {
 		fmt.Fprintln(os.Stderr, "ovc:", e)
 		os.Exit(1)
 	}
+}
+
+// openUI starts the shared runtime, prints one single-use pairing link for the
+// browser and leaves the runtime serving. The link is the only way in: it is
+// minted here, with the bearer credential, and expires in five minutes.
+func openUI(dir, workspace string) error {
+	abs, e := filepath.Abs(workspace)
+	if e != nil {
+		return e
+	}
+	if info, err := os.Stat(abs); err != nil || !info.IsDir() {
+		return fmt.Errorf("workspace %s is not a directory", abs)
+	}
+	client, e := daemon.Ensure(context.Background(), dir)
+	if e != nil {
+		return e
+	}
+	link, e := client.Pair(context.Background(), abs)
+	if e != nil {
+		return e
+	}
+	fmt.Println("OpenVibeCoding UI: " + link)
+	fmt.Println("The link is single use and expires in 5 minutes; the runtime keeps running after you open it.")
+	if e := webui.OpenBrowser(link); e != nil {
+		fmt.Println("Could not open a browser automatically; open the URL above in your browser.")
+	}
+	return nil
 }
