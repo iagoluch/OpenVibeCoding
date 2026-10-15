@@ -24,13 +24,13 @@ else
   tar -xzf "$staging/$asset" -C "$staging" interpreter i
   source_binary="$staging/interpreter"
 fi
-if ! "$source_binary" --version | grep -q '^Open Interpreter '; then
+if ! "$source_binary" --version | grep -Eq '^(OpenVibeCoding|Open Interpreter) '; then
   echo "Invalid interpreter binary" >&2; exit 1
 fi
 install_dir="${INTERPRETER_BIN_DIR:-$HOME/.local/bin}"
 mkdir -p "$install_dir"
 for name in interpreter i; do
-  if [ -e "$install_dir/$name" ] && ! "$install_dir/$name" --version 2>/dev/null | grep -q '^Open Interpreter '; then
+  if [ -e "$install_dir/$name" ] && ! "$install_dir/$name" --version 2>/dev/null | grep -Eq '^(OpenVibeCoding|Open Interpreter) '; then
     echo "Refusing to replace unrelated command: $install_dir/$name" >&2; exit 1
   fi
 done

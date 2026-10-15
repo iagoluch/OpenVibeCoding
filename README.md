@@ -1,4 +1,4 @@
-<p align="center"><img src="assets/banner.svg" alt="Open Interpreter — From intent to verified change" width="100%"></p>
+<p align="center"><img src="assets/banner.svg" alt="OpenVibeCoding — From intent to verified change" width="100%"></p>
 
 <p align="center">
   <strong>A terminal workspace for real development work.</strong><br>
@@ -17,7 +17,7 @@
 
 ## Your terminal. Your models. Your approval.
 
-Open Interpreter is a Go/Bubble Tea coding agent with persistent sessions, native provider adapters, reviewed project tools, a shared local runtime, browser QA and desktop integrations.
+OpenVibeCoding is a Go/Bubble Tea coding agent with persistent sessions, native provider adapters, reviewed project tools, a shared local runtime, browser QA and desktop integrations.
 
 | Understand | Change | Verify |
 | :--- | :--- | :--- |

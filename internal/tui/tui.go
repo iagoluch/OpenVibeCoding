@@ -65,7 +65,7 @@ func (m *Model) restore() {
 		m.add(v.Message.Role, v.Message.Content)
 	}
 	if len(entries) == 0 {
-		m.add("welcome", "Open Interpreter · review before action\nAsk me to inspect this project. /help lists commands.\nFile tools stay inside the workspace. Commands require approval and use OS isolation when available.")
+		m.add("welcome", "OpenVibeCoding · review before action\nAsk me to inspect this project. /help lists commands.\nFile tools stay inside the workspace. Commands require approval and use OS isolation when available.")
 	}
 }
 func (m *Model) add(role, text string) {
@@ -420,7 +420,7 @@ func (m *Model) command(text string) tea.Cmd {
 	return nil
 }
 func (m *Model) View() tea.View {
-	title := accent.Render(" OPEN INTERPRETER ") + muted.Render(" project agent")
+	title := accent.Render(" OPENVIBECODING ") + muted.Render(" project agent")
 	status := fmt.Sprintf(" %s/%s · %s · %s", m.Engine.Config.Provider, m.Engine.Config.Model, m.Engine.Config.Harness, m.status)
 	status = lipgloss.NewStyle().Width(max(10, m.width-2)).Render(m.Engine.Config.Redact(status))
 	help := "Enter send  Ctrl+J newline  /help  Esc stop"

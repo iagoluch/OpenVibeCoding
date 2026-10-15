@@ -1,10 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="380" viewBox="0 0 1200 380" role="img" aria-labelledby="title desc">
-<title id="title">Open Interpreter — From intent to verified change.</title><desc id="desc">A terminal coding agent with project tools, reviewed changes, persistent context, and computer use.</desc>
+<title id="title">OpenVibeCoding — From intent to verified change.</title><desc id="desc">A terminal coding agent with project tools, reviewed changes, persistent context, and computer use.</desc>
 <rect width="1200" height="380" rx="24" fill="#111418"/>
 <path d="M700 0v380M800 0v380M900 0v380M1000 0v380M1100 0v380M600 80h600M600 180h600M600 280h600" stroke="#242a30"/>
 <rect x="52" y="52" width="46" height="46" rx="12" fill="#b9f690"/>
 <path d="m64 66 9 9-9 9m14 0h9" fill="none" stroke="#111418" stroke-width="3"/>
-<text x="114" y="80" font-family="Arial,sans-serif" font-size="19" font-weight="700" fill="#f5f7f4" letter-spacing="2">OPEN INTERPRETER</text>
+<text x="114" y="80" font-family="Arial,sans-serif" font-size="19" font-weight="700" fill="#f5f7f4" letter-spacing="2">OPENVIBECODING</text>
 <text x="52" y="166" font-family="Arial,sans-serif" font-size="49" font-weight="700" fill="#f5f7f4">From intent to</text>
 <text x="52" y="224" font-family="Arial,sans-serif" font-size="49" font-weight="700" fill="#b9f690">verified change.</text>
 <text x="54" y="282" font-family="Arial,sans-serif" font-size="18" fill="#a6afb8">Your terminal. Your models. Your approval.</text>

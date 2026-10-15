@@ -1,4 +1,4 @@
-# Open Interpreter
+# OpenVibeCoding
 
 A terminal coding agent written in Go with Bubble Tea. It can inspect projects, propose reviewed file changes, run approved commands, manage persistent task context, test websites in Chromium, and perform approved desktop actions through platform backends.
 
@@ -114,7 +114,7 @@ Enable `/permissions desktop on`; clipboard needs `/permissions clipboard on` se
 
 ## Configuration and maintenance
 
-See [config.example.json](../config.example.json). Data lives under the platform's `os.UserConfigDir()/open-interpreter` (`~/.config`, macOS Application Support, or Windows AppData). `INTERPRETER_HOME` overrides it. `INTERPRETER_PROVIDER`/`INTERPRETER_MODEL` override defaults. Provider secrets are excluded from JSON configuration/export.
+See [config.example.json](../config.example.json). Data lives under the platform's `os.UserConfigDir()/open-interpreter` (`~/.config`, macOS Application Support, or Windows AppData). The existing `open-interpreter` storage identifier, OS keychain identifier and Windows `Programs\OpenInterpreter` installation directory are retained for compatibility with prior installations. The product name is OpenVibeCoding. `INTERPRETER_HOME` overrides the data directory. `INTERPRETER_PROVIDER`/`INTERPRETER_MODEL` override defaults. Provider secrets are excluded from JSON configuration/export.
 
 The directory contains `config.json`, SQLite session files, `runtime.json`/`runtime.lock`, metadata-only `runtime.log`, optional `credentials.json`, and `qa/` dependencies. Unix files/directories are restricted; Windows relies on the user's profile ACLs. `--debug` enables diagnostic runtime metadata logging without request bodies or secrets. Logs do not contain prompts/screenshots. Stop the runtime before copying the whole data directory for backup or upgrading binaries.
 

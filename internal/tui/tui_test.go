@@ -55,7 +55,7 @@ func TestSwitchAndClear(t *testing.T) {
 		t.Fatal("clear deleted history")
 	}
 	m.Update(tea.WindowSizeMsg{Width: 30, Height: 12})
-	if !strings.Contains(m.View().Content, "OPEN INTERPRETER") {
+	if !strings.Contains(m.View().Content, "OPENVIBECODING") {
 		t.Fatal("missing view")
 	}
 }

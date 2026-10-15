@@ -22,14 +22,14 @@ if (-not $Binary) {
 }
 $source = (Resolve-Path $Binary).Path
 $version = & $source --version
-if ($LASTEXITCODE -ne 0 -or $version -notmatch '^Open Interpreter ') { throw 'Invalid interpreter binary' }
+if ($LASTEXITCODE -ne 0 -or $version -notmatch '^(OpenVibeCoding|Open Interpreter) ') { throw 'Invalid interpreter binary' }
 $dest = if ($env:INTERPRETER_BIN_DIR) { $env:INTERPRETER_BIN_DIR } else { Join-Path $env:LOCALAPPDATA 'Programs\OpenInterpreter' }
 New-Item -ItemType Directory -Force -Path $dest | Out-Null
 foreach ($name in @('interpreter.exe', 'i.exe')) {
     $target = Join-Path $dest $name
     if (Test-Path $target) {
         $existing = & $target --version
-        if ($LASTEXITCODE -ne 0 -or $existing -notmatch '^Open Interpreter ') { throw "Refusing to replace unrelated command: $target" }
+        if ($LASTEXITCODE -ne 0 -or $existing -notmatch '^(OpenVibeCoding|Open Interpreter) ') { throw "Refusing to replace unrelated command: $target" }
     }
 }
 foreach ($name in @('interpreter.exe', 'i.exe')) {

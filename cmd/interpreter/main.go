@@ -40,7 +40,7 @@ func run() error {
 		os.Setenv("INTERPRETER_DEBUG", "1")
 	}
 	if *ver {
-		fmt.Println("Open Interpreter " + version)
+		fmt.Println("OpenVibeCoding " + version)
 		return nil
 	}
 	dir, e := config.Dir()
@@ -100,7 +100,7 @@ func run() error {
 	defer w.Close()
 	if *doctor {
 		p, m, _ := c.Active()
-		fmt.Printf("Open Interpreter %s\nData: %s\nWorkspace: %s\nProvider: %s/%s\nTool calls configured: %t\nCredentials available: %t\nShell host access: %t\nOS sandbox: %s\nShared runtime: authenticated loopback service\n", version, dir, w.Path, c.Provider, m.ID, m.Tools, p.KeyEnv == "" || p.Secret != "", *shell, w.SandboxStatus())
+		fmt.Printf("OpenVibeCoding %s\nData: %s\nWorkspace: %s\nProvider: %s/%s\nTool calls configured: %t\nCredentials available: %t\nShell host access: %t\nOS sandbox: %s\nShared runtime: authenticated loopback service\n", version, dir, w.Path, c.Provider, m.ID, m.Tools, p.KeyEnv == "" || p.Secret != "", *shell, w.SandboxStatus())
 		b, _ := json.MarshalIndent(automation.Capabilities(c.Automation), "", "  ")
 		fmt.Println(string(b))
 		return nil
