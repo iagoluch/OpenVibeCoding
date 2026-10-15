@@ -1,0 +1,65 @@
+{
+  "provider": "openai",
+  "model": "gpt-4.1-mini",
+  "harness": "review",
+  "providers": {
+    "openai": {
+      "base_url": "https://api.openai.com/v1",
+      "key_env": "OPENAI_API_KEY",
+      "stream_usage": true,
+      "models": [
+        {
+          "id": "gpt-4.1-mini",
+          "context": 32768,
+          "tools": true
+        }
+      ]
+    },
+    "local": {
+      "base_url": "http://127.0.0.1:11434/v1",
+      "key_env": "",
+      "stream_usage": false,
+      "models": [
+        {
+          "id": "qwen3:8b",
+          "context": 8192,
+          "tools": true
+        }
+      ]
+    },
+    "anthropic": {
+      "protocol": "anthropic",
+      "base_url": "https://api.anthropic.com/v1",
+      "key_env": "ANTHROPIC_API_KEY",
+      "models": [
+        {
+          "id": "claude-sonnet-4-5",
+          "context": 32768,
+          "tools": true
+        }
+      ]
+    },
+    "gemini": {
+      "protocol": "gemini",
+      "base_url": "https://generativelanguage.googleapis.com/v1beta",
+      "key_env": "GEMINI_API_KEY",
+      "models": [
+        {
+          "id": "gemini-2.5-flash",
+          "context": 32768,
+          "tools": true
+        }
+      ]
+    }
+  },
+  "permissions": {
+    "network": false,
+    "install": false
+  },
+  "automation": {
+    "browser": false,
+    "desktop": false,
+    "clipboard": false,
+    "applications": []
+  }
+}

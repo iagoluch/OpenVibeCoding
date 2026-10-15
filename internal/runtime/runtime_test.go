@@ -1,0 +1,175 @@
+package runtime
+
+import (
+	"context"
+	"encoding/json"
+	"github.com/iagoluch/OpenVibeCoding/internal/agent"
+	"github.com/iagoluch/OpenVibeCoding/internal/config"
+	"github.com/iagoluch/OpenVibeCoding/internal/workspace"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+	"time"
+)
+
+func startFixture(t *testing.T, c config.Config) (string, *Client) {
+	t.Helper()
+	dir := t.TempDir()
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() { done <- Serve(ctx, dir, c) }()
+	t.Cleanup(func() {
+		cancel()
+		select {
+		case e := <-done:
+			if e != nil {
+				t.Error(e)
+			}
+		case <-time.After(12 * time.Second):
+			t.Error("daemon shutdown timed out")
+		}
+	})
+	deadline := time.Now().Add(3 * time.Second)
+	for time.Now().Before(deadline) {
+		if client, e := Connect(dir); e == nil {
+			return dir, client
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	t.Fatal("runtime not ready")
+	return "", nil
+}
+func TestRuntimeAuthReuseAndSessions(t *testing.T) {
+	dir, c := startFixture(t, config.Default())
+	other, e := Connect(dir)
+	if e != nil {
+		t.Fatal(e)
+	}
+	if other.Meta.PID != c.Meta.PID || other.ID == c.ID {
+		t.Fatal("runtime not shared or identities reused")
+	}
+	id, e := c.New(t.TempDir())
+	if e != nil {
+		t.Fatal(e)
+	}
+	if e = other.Rename(id, "shared"); e != nil {
+		t.Fatal(e)
+	}
+	s, e := c.Get(id)
+	if e != nil || s.Title != "shared" {
+		t.Fatal(s, e)
+	}
+	r, e := http.Post(c.Meta.URL+"/health", "application/json", strings.NewReader("{}"))
+	if e != nil {
+		t.Fatal(e)
+	}
+	r.Body.Close()
+	if r.StatusCode != 401 {
+		t.Fatal("unauthenticated IPC accepted")
+	}
+	if e = Serve(context.Background(), dir, config.Default()); e == nil {
+		t.Fatal("duplicate runtime started")
+	}
+}
+func TestRuntimeTurnOwnership(t *testing.T) {
+	entered := make(chan struct{}, 1)
+	release := make(chan struct{})
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		select {
+		case entered <- struct{}{}:
+		default:
+		}
+		select {
+		case <-release:
+		case <-r.Context().Done():
+			return
+		}
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.Write([]byte("data: {\"choices\":[{\"delta\":{\"content\":\"Observed done\"}}]}\n\ndata: [DONE]\n\n"))
+	}))
+	defer provider.Close()
+	cfg := config.Default()
+	p := cfg.Providers["local"]
+	p.BaseURL = provider.URL
+	cfg.Providers["local"] = p
+	cfg.Provider = "local"
+	cfg.Model = "qwen3:8b"
+	dir, c := startFixture(t, cfg)
+	other, _ := Connect(dir)
+	ws, e := workspace.Open(t.TempDir(), false)
+	if e != nil {
+		t.Fatal(e)
+	}
+	defer ws.Close()
+	id, _ := c.New(ws.Path)
+	engine := &agent.Engine{Config: cfg, Store: c, Workspace: ws, Session: id}
+	done := make(chan error, 1)
+	go func() { done <- c.Run(context.Background(), engine, "inspect", func(agent.Event) {}) }()
+	<-entered
+	if e = other.Run(context.Background(), engine, "conflict", func(agent.Event) {}); e == nil {
+		t.Fatal("concurrent session accepted")
+	}
+	if e = other.Delete(id); e == nil {
+		t.Fatal("deleted running session")
+	}
+	close(release)
+	if e = <-done; e != nil {
+		t.Fatal(e)
+	}
+	b, e := c.Export(id)
+	if e != nil || !json.Valid(b) {
+		t.Fatal("export failed", e)
+	}
+}
+
+func TestRemoteApprovalAppliesOnlyAfterDecision(t *testing.T) {
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var b struct{ Messages []struct{ Role string } }
+		json.NewDecoder(r.Body).Decode(&b)
+		hasTool := false
+		for _, m := range b.Messages {
+			if m.Role == "tool" {
+				hasTool = true
+			}
+		}
+		w.Header().Set("Content-Type", "text/event-stream")
+		if !hasTool {
+			w.Write([]byte("data: {\"choices\":[{\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"review1\",\"function\":{\"name\":\"write_file\",\"arguments\":\"{\\\"path\\\":\\\"approved.txt\\\",\\\"content\\\":\\\"approved\\\"}\"}}]}}]}\n\ndata: [DONE]\n\n"))
+		} else {
+			w.Write([]byte("data: {\"choices\":[{\"delta\":{\"content\":\"Observed file write\"}}]}\n\ndata: [DONE]\n\n"))
+		}
+	}))
+	defer provider.Close()
+	cfg := config.Default()
+	p := cfg.Providers["local"]
+	p.BaseURL = provider.URL
+	cfg.Providers["local"] = p
+	cfg.Provider = "local"
+	cfg.Model = "qwen3:8b"
+	_, c := startFixture(t, cfg)
+	ws, e := workspace.Open(t.TempDir(), false)
+	if e != nil {
+		t.Fatal(e)
+	}
+	defer ws.Close()
+	id, _ := c.New(ws.Path)
+	engine := &agent.Engine{Config: cfg, Store: c, Workspace: ws, Session: id}
+	approved := false
+	e = c.Run(context.Background(), engine, "write", func(event agent.Event) {
+		if event.Decision != nil {
+			if _, e := ws.Read("approved.txt"); e == nil {
+				t.Error("file written before remote approval")
+			}
+			approved = true
+			event.Decision <- true
+		}
+	})
+	if e != nil {
+		t.Fatal(e)
+	}
+	text, e := ws.Read("approved.txt")
+	if !approved || e != nil || text != "approved" {
+		t.Fatal("remote approved operation failed", e)
+	}
+}
