@@ -65,7 +65,7 @@ func Run(ctx context.Context, dir string, c config.Config) error {
 		choice{provider: "zai", title: "Z.AI", detail: i18n.T(c.Language, "setup.zaiDetail"), keyURL: "https://z.ai"},
 		choice{provider: "nvidia", title: "NVIDIA NIM", detail: i18n.T(c.Language, "setup.nvidiaDetail"), keyURL: "https://build.nvidia.com"},
 		choice{provider: "cerebras", title: "Cerebras", detail: i18n.T(c.Language, "setup.cerebrasDetail"), keyURL: "https://cloud.cerebras.ai"},
-		choice{provider: "import", title: "Import credentials from OpenCode", detail: i18n.T(c.Language, "setup.importDetail")},
+		choice{provider: "import", title: i18n.T(c.Language, "setup.importTitle"), detail: i18n.T(c.Language, "setup.importDetail")},
 	)
 
 	for i, o := range options {
