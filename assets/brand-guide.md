@@ -36,3 +36,10 @@ Byte is represented as a small, angular, seed-like creature with a folded silhou
 ## Avoid
 
 Generic AI gradients, decorative glowing orbs, excessive glassmorphism, robot mascots, random neon wireframes, stock icon grids, and fake product screenshots presented as real. Originality should come from the Byte silhouette, strong typography, negative space and a consistent blue-on-black system.
+
+
+## Approved primary logo
+
+The primary symbol is the blue interlocking open-circle mark displayed on a white circular disc. Use `assets/logo.svg` as the canonical vector source. Do not add the OVC letters inside the symbol. The compact Byte mascot remains a separate secondary brand element and appears alongside the wordmark or in small supporting positions.
+
+The README banners place the symbol prominently on the right and Byte as a smaller companion. They are localized by README language.
