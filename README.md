@@ -1,8 +1,16 @@
-<p align="center"><img src="assets/banner-pt-br.svg" alt="OpenVibeCoding — Da intenção à mudança verificada" width="100%"></p>
+<p align="center">
+  <img src="assets/banner-pt-br.svg" alt="OpenVibeCoding — da intenção à mudança verificada" width="100%">
+</p>
 
 <p align="center">
-  <strong>Um agente de programação que trabalha no seu terminal — com você no controle.</strong><br>
-  Entenda o projeto. Revise as mudanças. Execute os testes. Confira o resultado.
+  <strong>Programação com IA, no seu terminal — sem abrir mão do controle.</strong><br>
+  Peça uma tarefa. Entenda o que será alterado. Revise. Aprove. Verifique o resultado.
+</p>
+
+<p align="center">
+  <a href="https://github.com/iagoluch/OpenVibeCoding/releases/latest">⬇️ Baixar para Windows, Linux ou macOS</a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/iagoluch/OpenVibeCoding">⭐ Apoiar com uma estrela</a>
 </p>
 
 <p align="center">
@@ -13,158 +21,162 @@
 </p>
 
 <p align="center">
-  <a href="#instalação">Instalar</a> ·
-  <a href="docs/guide.md">Guia</a> ·
-  <a href="docs/security.md">Segurança</a> ·
-  <a href="docs/architecture.md">Arquitetura</a>
+  <img src="https://img.shields.io/badge/código%20aberto- MIT-brightgreen" alt="Código aberto MIT">
+  <img src="https://img.shields.io/badge/feito%20em-Go-00ADD8?logo=go&logoColor=white" alt="Feito em Go">
+  <img src="https://img.shields.io/badge/Windows-Linux-macOS-informational" alt="Windows, Linux e macOS">
 </p>
 
-<p align="center">
-  <a href="https://github.com/iagoluch/OpenVibeCoding/stargazers">⭐ Gostou da proposta? Dê uma estrela ao projeto</a>
-</p>
-
-<p align="center">
-  <img src="https://img.shields.io/badge/Go-1.26.2%2B-00ADD8?logo=go&logoColor=white" alt="Go 1.26.2 ou superior">
-  <img src="https://img.shields.io/badge/licença-MIT-brightgreen" alt="Licença MIT">
-  <img src="https://img.shields.io/badge/Linux-macOS-Windows-informational" alt="Linux, macOS e Windows">
-</p>
+---
 
 ## O que é o OpenVibeCoding?
 
-O **OpenVibeCoding (OVC)** é um agente de programação de código aberto, escrito em Go, que reúne conversa com modelos de IA e ferramentas de desenvolvimento em um fluxo de trabalho revisável no terminal.
+O **OpenVibeCoding (OVC)** é um agente de programação com inteligência artificial que trabalha na pasta do seu projeto e usa ferramentas reais de desenvolvimento.
 
-Em vez de apenas sugerir código, o OVC pode inspecionar um projeto, propor mudanças em arquivos, pedir sua aprovação antes de aplicá-las e executar comandos aprovados para verificar o resultado. As sessões ficam salvas localmente para que o contexto e as evidências não desapareçam ao fechar o terminal.
+Em vez de apenas responder com trechos de código, ele pode explorar os arquivos, entender a estrutura do projeto, propor alterações, pedir sua aprovação e executar comandos para conferir o que aconteceu. O histórico das conversas e das tarefas fica salvo localmente.
 
-**A ideia central é simples:** o modelo propõe, você revisa, o programa executa a operação autorizada e o resultado observado fica disponível.
+**Você continua no comando:** o OVC mostra mudanças para revisão antes de aplicá-las e não deve dizer que algo funcionou sem observar o resultado.
 
-## Por que experimentar?
+## O que dá para fazer com ele?
 
-| Entender | Alterar com controle | Verificar |
-| --- | --- | --- |
-| Ler arquivos, pesquisar código, consultar instruções do projeto e inspecionar o Git | Revisar diffs e aprovar ou rejeitar operações individuais em arquivos | Executar comandos aprovados e consultar o código de saída e a saída real |
-| Manter sessões e contexto persistentes | Restringir ferramentas de arquivo à pasta de trabalho configurada | Usar fluxos de navegador com Playwright e integrações de desktop quando configurados |
+- **Entender um projeto existente:** ler arquivos, procurar código, consultar instruções do projeto e inspecionar o estado do Git.
+- **Trabalhar no código:** propor a criação, substituição, movimentação ou remoção de arquivos e apresentar as alterações para revisão.
+- **Conferir o resultado:** executar comandos autorizados, incluindo comandos de testes, e observar a saída e o código de retorno.
+- **Retomar de onde parou:** manter conversas, contexto e registros das tarefas em armazenamento local.
+- **Automatizar tarefas compatíveis:** usar fluxos de navegador com Playwright ou integrações de desktop quando estiverem configurados e autorizados.
+- **Escolher a IA:** conectar provedores diferentes, endpoints compatíveis com a API da OpenAI ou modelos locais.
 
-### Escolha o modelo e o provedor
+## Como funciona na prática?
 
-O OVC não exige que você use um único fornecedor. Há adaptadores nativos para OpenAI, Anthropic/Claude e Google Gemini, além de suporte a endpoints compatíveis com a API da OpenAI — incluindo opções para DeepSeek, Kimi, Qwen, Mistral e modelos locais.
+<ol>
+  <li><strong>Você descreve a tarefa.</strong> Por exemplo: “Investigue por que este teste falha e proponha uma correção pequena”.</li>
+  <li><strong>O OVC investiga.</strong> Ele consulta os arquivos e as instruções relevantes do projeto.</li>
+  <li><strong>Você revisa a mudança.</strong> Veja o diff proposto e aprove ou rejeite a operação. A aprovação vale para aquela operação, não para tudo que vier depois.</li>
+  <li><strong>Você confere o resultado.</strong> Quando autorizado, o agente executa a verificação e informa a saída observada.</li>
+</ol>
 
-O assistente de configuração `ovc --setup` lista opções de provedores e presets gratuitos disponíveis no momento, detecta servidores Ollama e LM Studio e pode importar credenciais já configuradas no OpenCode. A disponibilidade, os limites e as condições de cada provedor podem mudar.
+O exemplo acima descreve o fluxo de trabalho; não é uma demonstração gravada nem uma promessa de que toda tarefa será resolvida automaticamente.
 
-### Sessões persistentes e evidências
+## Instale o OVC
 
-O histórico é armazenado localmente em SQLite, incluindo conversas, resumos de contexto, auditoria e uso. Os resultados devem refletir o que realmente aconteceu: um comando reprovado não é tratado como aprovado, e um processo com código de saída diferente de zero não deve ser apresentado como sucesso.
+**Você não precisa instalar Go para usar os binários prontos.** Baixe uma versão para o seu sistema na página de [Releases](https://github.com/iagoluch/OpenVibeCoding/releases/latest). Os arquivos publicados incluem o programa e um arquivo de checksums SHA-256.
 
-### Automação com aprovação
+### Windows (opção simples)
 
-O OVC inclui fluxos de QA de navegador com Playwright e integrações de desktop dependentes do sistema operacional. Configure apenas as capacidades necessárias para a tarefa. Ações de automação exigem concessões explícitas e aprovação conforme o contrato de cada ferramenta.
+1. Abra [Releases — baixar OVC](https://github.com/iagoluch/OpenVibeCoding/releases/latest).
+2. Baixe `openvibecoding-windows-amd64.zip` para a maioria dos PCs Windows com processador Intel ou AMD. Em dispositivos Windows com processador ARM, escolha `openvibecoding-windows-arm64.zip`.
+3. Extraia o ZIP para uma pasta.
+4. Abra o PowerShell nessa pasta e execute:
 
-## Instalação
+```powershell
+.\ovc.exe --setup
+```
 
-### Linux e macOS
+O assistente ajuda a escolher um provedor de IA e configurar a credencial. Depois, abra seu projeto:
 
-O instalador baixa o pacote correspondente ao sistema e à arquitetura e verifica seu checksum SHA-256. Não é necessário instalar Go para usar um binário de release.
+```powershell
+.\ovc.exe --workspace "C:\caminho\do\seu\projeto"
+```
+
+Troque o caminho de exemplo pela pasta real do projeto. Esses comandos executam o programa a partir da pasta em que você extraiu o arquivo.
+
+### Linux
+
+Na página de [Releases](https://github.com/iagoluch/OpenVibeCoding/releases/latest), baixe `openvibecoding-linux-amd64.tar.gz` para a maioria dos PCs Linux ou `openvibecoding-linux-arm64.tar.gz` para sistemas ARM64. No terminal, entre na pasta onde o arquivo foi baixado e execute, usando o nome do arquivo correspondente:
+
+```sh
+tar -xzf openvibecoding-linux-amd64.tar.gz
+./ovc --setup
+./ovc --workspace "/caminho/do/seu/projeto"
+```
+
+### macOS
+
+Baixe na página de [Releases](https://github.com/iagoluch/OpenVibeCoding/releases/latest):
+
+- `openvibecoding-darwin-arm64.tar.gz` para Macs com Apple Silicon.
+- `openvibecoding-darwin-amd64.tar.gz` para Macs com processador Intel.
+
+No terminal, entre na pasta de download, extraia o arquivo correspondente e inicie o assistente:
+
+```sh
+tar -xzf openvibecoding-darwin-arm64.tar.gz
+./ovc --setup
+./ovc --workspace "/caminho/do/seu/projeto"
+```
+
+No Mac Intel, substitua o nome do arquivo pelo pacote `darwin-amd64`.
+
+### Quer instalar o comando no PATH?
+
+O repositório também contém instaladores que baixam o pacote correto, verificam o SHA-256 e instalam o comando no diretório do usuário. Essa opção requer Git para obter os scripts; **não requer Go**.
+
+Linux/macOS:
 
 ```sh
 git clone https://github.com/iagoluch/OpenVibeCoding.git
 cd OpenVibeCoding
 bash scripts/install.sh
-ovc --setup
-ovc --workspace /caminho/do/seu/projeto
 ```
 
-Se o comando `ovc` não for encontrado, adicione `~/.local/bin` ao `PATH` e abra um novo terminal.
-
-### Windows (PowerShell)
-
-Na pasta do repositório, execute:
+Windows (PowerShell):
 
 ```powershell
+git clone https://github.com/iagoluch/OpenVibeCoding.git
+cd OpenVibeCoding
 ./scripts/install.ps1 -AddToPath
 ```
 
-Feche e reabra o PowerShell após a instalação. Se a política de execução bloquear o script, execute explicitamente:
+Depois de instalar pelo script, feche e abra novamente o terminal. No Windows, se a política de execução bloquear o instalador, execute `powershell -ExecutionPolicy Bypass -File scripts/install.ps1 -AddToPath` dentro da pasta do repositório.
 
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/install.ps1 -AddToPath
-```
+### Primeiro uso: configure a IA
 
-Também é possível baixar o pacote pronto para seu sistema na página de [Releases](https://github.com/iagoluch/OpenVibeCoding/releases/latest).
+Execute `ovc --setup` para abrir o assistente de configuração. Ele apresenta opções de provedores, pode detectar servidores locais do Ollama e LM Studio e permite importar credenciais compatíveis já configuradas no OpenCode.
 
-### Primeira execução
-
-`ovc --setup` orienta a configuração de provedores, credenciais e modelo. Depois, aponte o agente para a pasta de um projeto:
+Depois, abra a pasta do projeto em que deseja trabalhar:
 
 ```sh
-ovc --workspace /caminho/do/seu/projeto
+ovc --workspace "/caminho/do/seu/projeto"
 ```
 
-Para verificar a configuração sem exibir chaves, use `ovc --doctor`.
+No Windows, usando um binário que você extraiu, execute `.\ovc.exe --workspace "C:\caminho\do\seu\projeto"`.
 
-### Compilar a partir do código-fonte
+**Sobre custos:** o OVC é código aberto e há opções de provedores com planos gratuitos ou modelos locais. Isso não significa que toda IA seja gratuita: cada provedor define suas próprias cotas, cobranças e condições, que podem mudar. O assistente de configuração mostra as alternativas disponíveis na versão instalada.
 
-É necessário Go **1.26.2 ou superior**:
+## Qual modelo de IA preciso usar?
 
-```sh
-go build -o ovc ./cmd/ovc
-```
+Nenhum modelo específico é obrigatório. O OVC oferece adaptadores nativos para OpenAI, Anthropic/Claude e Google Gemini, além de endpoints compatíveis com a API da OpenAI. Isso permite conectar serviços como DeepSeek, Kimi, Qwen, Mistral e servidores locais compatíveis.
 
-No Linux/macOS, instale o binário gerado com `bash scripts/install.sh ./ovc`. No Windows, compile como `ovc.exe` e use `./scripts/install.ps1 -Binary ./ovc.exe -AddToPath`.
+Você escolhe o provedor e o modelo conforme disponibilidade, orçamento e necessidade. Os nomes, limites e planos podem mudar nos serviços externos.
 
-## Um ciclo típico de trabalho
+## Segurança e limites, sem maquiagem
 
-```text
-❯ Investigue este parser, proponha uma correção pequena e verifique-a.
+- As ferramentas comuns de arquivos ficam restritas ao workspace configurado e aplicam exclusões para caminhos sensíveis.
+- As alterações de arquivo são mostradas para revisão e precisam de aprovação individual antes de serem aplicadas.
+- No Linux, a execução padrão de comandos usa Bubblewrap e falha de forma fechada quando o isolamento necessário não está disponível.
+- **No Windows e no macOS, o OVC não possui o mesmo sandbox de processos integrado.** Comandos que exigem esse confinamento são recusados. A opção explícita `--allow-unsandboxed-shell` permite execução com os privilégios da sua conta no sistema e não é isolamento.
+- Automação de navegador e desktop depende de configuração e permissões da plataforma. Ações externas nem sempre são reversíveis.
 
-ENTENDER   Leia a implementação, as instruções e os testes relevantes.
-REVISAR    Examine o diff proposto antes de qualquer alteração.
-APROVAR    Confirme ou rejeite a operação individual.
-VERIFICAR  Execute o comando autorizado e confira o resultado real.
-```
+Leia [Segurança e limites de execução](docs/security.md) para entender os detalhes antes de habilitar shell ou automação.
 
-Esse exemplo ilustra o fluxo; não representa uma execução real nem garante que qualquer alteração será bem-sucedida.
+## Documentação e ajuda
 
-Atalhos e comandos úteis:
-
-```text
-/model <provedor/modelo>   /harness inspect
-/sessions                  /resume <id>
-/context                   /cost
-/changes                   /permissions
-/capabilities              /help
-/init · /undo · /doctor
-```
-
-As instruções do projeto em `AGENTS.md` são incluídas no contexto de trabalho. Consulte `/help` para os comandos disponíveis na versão instalada.
-
-## Segurança: saiba os limites
-
-- As ferramentas comuns de leitura e escrita de arquivos são restritas ao workspace configurado e aplicam políticas de exclusão para caminhos sensíveis.
-- Alterações de arquivos são apresentadas para revisão e exigem aprovação individual antes de serem aplicadas.
-- No Linux, a execução de comandos usa Bubblewrap por padrão e falha de forma fechada se o sandbox exigido não estiver disponível.
-- **O sandbox de processos integrado é somente para Linux.** No macOS e Windows, comandos que exigem confinamento falham de forma fechada. A opção `--allow-unsandboxed-shell` habilita explicitamente execução com os privilégios do usuário do sistema e não deve ser confundida com isolamento.
-- As integrações de desktop dependem de permissões e capacidades específicas de cada plataforma. A compilação cruzada não comprova o comportamento nativo.
-
-Leia [Segurança e limites de execução](docs/security.md) antes de habilitar shell ou automação. Não há garantia de que operações externas, processos destacados ou ações em aplicativos sejam sempre reversíveis.
-
-## Documentação
-
-| Documento | Conteúdo |
+| Quero... | Consulte |
 | --- | --- |
-| [Guia do usuário](docs/guide.md) | Instalação, configuração, provedores e comandos |
-| [Arquitetura](docs/architecture.md) | Módulos, ciclo do agente, persistência e responsabilidades por plataforma |
-| [Segurança](docs/security.md) | Aprovações, limites de confinamento, credenciais e execução |
-| [Automação](docs/automation.md) | Fluxos de navegador, ações de desktop e adaptadores |
-| [Testes e diagnóstico](docs/testing.md) | Testes automatizados, validação de ambiente e solução de problemas |
-| [Site de apresentação](site/) | Código da landing page estática; a publicação no GitHub Pages requer configuração própria |
+| Começar, configurar um provedor e conhecer os comandos | [Guia do usuário](docs/guide.md) |
+| Entender como o projeto foi organizado | [Arquitetura](docs/architecture.md) |
+| Conhecer proteções e limitações reais | [Segurança](docs/security.md) |
+| Configurar navegador ou ações de desktop | [Automação](docs/automation.md) |
+| Executar testes e diagnosticar problemas | [Testes e diagnóstico](docs/testing.md) |
+| Ver o código-fonte da página de apresentação | [Site](site/) |
 
-## Como ajudar
+## Gostou da ideia? Ajude o projeto a chegar a mais gente.
 
-- **Experimente e dê uma estrela:** [⭐ OpenVibeCoding no GitHub](https://github.com/iagoluch/OpenVibeCoding/stargazers).
-- **Reporte um problema:** [abra uma issue](https://github.com/iagoluch/OpenVibeCoding/issues).
-- **Explore o código e proponha melhorias:** pull requests são bem-vindos; consulte as instruções do repositório antes de contribuir.
+Se o OVC parece útil para você, **[abra a página do OpenVibeCoding e clique em ⭐ Star](https://github.com/iagoluch/OpenVibeCoding)**. A estrela ajuda outras pessoas a descobrir o projeto e mostra que existe interesse na ferramenta.
 
-O projeto é distribuído sob a licença [MIT](LICENSE).
+Também é possível [relatar um problema](https://github.com/iagoluch/OpenVibeCoding/issues) ou contribuir com código por meio de pull requests. O projeto usa a [licença MIT](LICENSE).
 
----
-
-<p align="center"><sub>OpenVibeCoding — do pedido à mudança verificada, com aprovação humana no fluxo.</sub></p>
+<p align="center">
+  <strong>OpenVibeCoding — a IA propõe, você revisa, o resultado é conferido.</strong><br>
+  <a href="https://github.com/iagoluch/OpenVibeCoding/releases/latest">Baixe o OVC</a> ·
+  <a href="https://github.com/iagoluch/OpenVibeCoding">Dê uma estrela no GitHub</a>
+</p>
