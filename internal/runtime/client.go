@@ -142,7 +142,7 @@ func (c *Client) SaveSummary(string, store.Summary) error {
 }
 func (c *Client) AddUsage(string, store.Usage) error { return errors.New("runtime owns usage") }
 func (c *Client) Run(ctx context.Context, e *agent.Engine, prompt string, emit func(agent.Event)) error {
-	resp, err := c.request(ctx, "/run", turn{Session: e.Session, Prompt: prompt, Provider: e.Config.Provider, Model: e.Config.Model, Harness: e.Config.Harness, Workspace: e.Workspace.Path, Shell: e.Workspace.AllowShell, Automation: e.Config.Automation, Permissions: e.Config.Permissions})
+	resp, err := c.request(ctx, "/run", turn{Session: e.Session, Prompt: prompt, Provider: e.Config.Provider, Model: e.Config.Model, Harness: e.Config.Harness, Language: e.Config.Language, Workspace: e.Workspace.Path, Shell: e.Workspace.AllowShell, Automation: e.Config.Automation, Permissions: e.Config.Permissions})
 	if err != nil {
 		return err
 	}
