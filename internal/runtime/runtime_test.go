@@ -186,6 +186,96 @@ func TestRemoteApprovalAppliesOnlyAfterDecision(t *testing.T) {
 	}
 }
 
+// TestApprovalSurvivesAnotherTurnOfTheSameClient covers the end of a turn: it
+// must retire only the approvals it handed out. The same client may have two
+// sessions running, and dropping the other one's pending approval answers its
+// /approve with a 403 and leaves that turn waiting.
+func TestApprovalSurvivesAnotherTurnOfTheSameClient(t *testing.T) {
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var b struct{ Messages []struct{ Role string } }
+		json.NewDecoder(r.Body).Decode(&b)
+		hasTool := false
+		for _, m := range b.Messages {
+			if m.Role == "tool" {
+				hasTool = true
+			}
+		}
+		w.Header().Set("Content-Type", "text/event-stream")
+		if !hasTool {
+			w.Write([]byte("data: {\"choices\":[{\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"p1\",\"function\":{\"name\":\"write_file\",\"arguments\":\"{\\\"path\\\":\\\"approved.txt\\\",\\\"content\\\":\\\"approved\\\"}\"}}]}}]}\n\ndata: [DONE]\n\n"))
+			return
+		}
+		w.Write([]byte("data: {\"choices\":[{\"delta\":{\"content\":\"Observed write\"}}]}\n\ndata: [DONE]\n\n"))
+	}))
+	defer provider.Close()
+	cfg := config.Default()
+	p := cfg.Providers["local"]
+	p.BaseURL = provider.URL
+	cfg.Providers["local"] = p
+	cfg.Provider = "local"
+	cfg.Model = "qwen3:8b"
+	_, c := startFixture(t, cfg)
+	spaces := make([]*workspace.Workspace, 2)
+	for i := range spaces {
+		ws, e := workspace.Open(t.TempDir(), false)
+		if e != nil {
+			t.Fatal(e)
+		}
+		defer ws.Close()
+		spaces[i] = ws
+	}
+	// waiting reports which turn reached its approval; release answers it.
+	waiting := make(chan string, len(spaces))
+	release := make([]chan struct{}, len(spaces))
+	done := make([]chan error, len(spaces))
+	for i, ws := range spaces {
+		session, e := c.New(ws.Path)
+		if e != nil {
+			t.Fatal(e)
+		}
+		engine := &agent.Engine{Config: cfg, Store: c, Workspace: ws, Session: session}
+		release[i] = make(chan struct{})
+		done[i] = make(chan error, 1)
+		go func(engine *agent.Engine, release chan struct{}, done chan error) {
+			done <- c.Run(context.Background(), engine, "write", func(event agent.Event) {
+				if event.Decision == nil {
+					return
+				}
+				waiting <- engine.Session
+				<-release
+				event.Decision <- true
+			})
+		}(engine, release[i], done[i])
+	}
+	// Both turns are parked on their own approval before either one ends.
+	parked := map[string]bool{}
+	for range spaces {
+		select {
+		case session := <-waiting:
+			parked[session] = true
+		case <-time.After(20 * time.Second):
+			t.Fatal("a turn never asked for approval")
+		}
+	}
+	if len(parked) != len(spaces) {
+		t.Fatalf("the two turns did not park separately: %v", parked)
+	}
+	close(release[0])
+	if e := <-done[0]; e != nil {
+		t.Fatalf("first turn failed: %v", e)
+	}
+	// The first turn ended and cleaned up after itself; the second approval is
+	// still pending and its owner is still allowed to answer it.
+	close(release[1])
+	if e := <-done[1]; e != nil {
+		t.Fatalf("the second turn lost its approval to the first one's cleanup: %v", e)
+	}
+	for i, ws := range spaces {
+		if text, e := ws.Read("approved.txt"); e != nil || text != "approved" {
+			t.Fatalf("turn %d did not apply the approved write: %q %v", i, text, e)
+		}
+	}
+}
 
 func TestRemoteUndoReversesAppliedChange(t *testing.T) {
 	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

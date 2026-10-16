@@ -77,6 +77,26 @@ func TestHandlerServesBinaryIcons(t *testing.T) {
 	}
 }
 
+// TestContentTypeFallsBackToOpaqueBytes keeps the pinned type honest for a file
+// the table does not know: serving it unset would let the runtime sniff a type
+// the browser then trusts under nosniff.
+func TestContentTypeFallsBackToOpaqueBytes(t *testing.T) {
+	for name, want := range map[string]string{
+		"index.html":           "text/html; charset=utf-8",
+		"app.js":               "text/javascript; charset=utf-8",
+		"icon.svg":             "image/svg+xml",
+		"manifest.webmanifest": "application/manifest+json; charset=utf-8",
+		"notes.bin":            "application/octet-stream",
+		"archive.tar.gz":       "application/octet-stream",
+		"LICENSE":              "application/octet-stream",
+	} {
+		if got := contentType(name); got != want {
+			t.Fatalf("%s: %q, want %q", name, got, want)
+		}
+	}
+}
+
+// TestHandlerRefusesEscapesAndUnknownPaths keeps unknown paths out of the tree.
 func TestHandlerRefusesEscapesAndUnknownPaths(t *testing.T) {
 	h, e := Handler()
 	if e != nil {

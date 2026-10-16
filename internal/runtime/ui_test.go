@@ -4,12 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -129,6 +131,7 @@ func TestRuntimeCookieNeedsOwnOrigin(t *testing.T) {
 	}{
 		{"cross-origin page", map[string]string{"Cookie": "ovc_ui=" + cookie, "X-OpenVibeCoding-Client": "tab-1", "Origin": "http://evil.example"}},
 		{"cross-site fetch metadata", map[string]string{"Cookie": "ovc_ui=" + cookie, "X-OpenVibeCoding-Client": "tab-1", "Origin": c.Meta.URL, "Sec-Fetch-Site": "cross-site"}},
+		{"same-site fetch metadata", map[string]string{"Cookie": "ovc_ui=" + cookie, "X-OpenVibeCoding-Client": "tab-1", "Origin": c.Meta.URL, "Sec-Fetch-Site": "same-site"}},
 		{"foreign cookie", map[string]string{"Cookie": "ovc_ui=forged", "X-OpenVibeCoding-Client": "tab-1", "Origin": c.Meta.URL}},
 		{"no credential at all", map[string]string{"X-OpenVibeCoding-Client": "tab-1", "Origin": c.Meta.URL}},
 		{"bearer from a foreign page", map[string]string{"Authorization": "Bearer " + c.Meta.Token, "X-OpenVibeCoding-Client": "tab-1", "Origin": "http://evil.example"}},
@@ -317,6 +320,327 @@ func TestDiscoverReportsNotRunning(t *testing.T) {
 	}
 	if _, e := Connect(t.TempDir()); !errors.Is(e, ErrNotRunning) {
 		t.Fatalf("connect must report the sentinel, got %v", e)
+	}
+}
+
+// TestRuntimeCookieAuthAcceptsAnyMatchingCookie covers a page served from
+// another loopback port: it can send its own ovc_ui cookie, and whichever one
+// the browser presents first must not turn the paired tab into a silent 401.
+func TestRuntimeCookieAuthAcceptsAnyMatchingCookie(t *testing.T) {
+	_, c := startFixture(t, config.Default())
+	link, e := c.Pair(context.Background(), t.TempDir())
+	if e != nil {
+		t.Fatal(e)
+	}
+	resp, cookie := pairBrowser(t, c, link)
+	if resp.StatusCode != http.StatusSeeOther || cookie == "" {
+		t.Fatalf("pairing failed: %d", resp.StatusCode)
+	}
+	headers := map[string]string{"X-OpenVibeCoding-Client": "tab-1", "Origin": c.Meta.URL, "Sec-Fetch-Site": "same-origin"}
+	for _, raw := range []string{
+		"ovc_ui=forged; ovc_ui=" + cookie,
+		"ovc_ui=" + cookie + "; ovc_ui=forged",
+		"ovc_ui=forged; ovc_ui=" + cookie + "; ovc_ui=also-forged",
+	} {
+		headers["Cookie"] = raw
+		if got := ask(t, c, "POST", "/ui/info", headers, "{}"); got.StatusCode != 200 {
+			t.Fatalf("cookie %q rejected: %d", raw, got.StatusCode)
+		}
+	}
+	headers["Cookie"] = "ovc_ui=forged; ovc_ui=also-forged"
+	if got := ask(t, c, "POST", "/ui/info", headers, "{}"); got.StatusCode != 401 {
+		t.Fatalf("forged cookies accepted: %d", got.StatusCode)
+	}
+}
+
+// TestRuntimePairingCookieIsHostOnlyAndStrict pins the attributes the browser
+// enforces: a Domain or an expiry here would outlive the bond between one tab
+// and this runtime.
+func TestRuntimePairingCookieIsHostOnlyAndStrict(t *testing.T) {
+	_, c := startFixture(t, config.Default())
+	link, e := c.Pair(context.Background(), t.TempDir())
+	if e != nil {
+		t.Fatal(e)
+	}
+	resp, cookie := pairBrowser(t, c, link)
+	if resp.StatusCode != http.StatusSeeOther || cookie == "" {
+		t.Fatalf("pairing failed: %d", resp.StatusCode)
+	}
+	set := ""
+	for _, v := range resp.Header.Values("Set-Cookie") {
+		if strings.HasPrefix(v, "ovc_ui=") {
+			set = v
+		}
+	}
+	if set == "" {
+		t.Fatal("pairing did not set the ovc_ui cookie")
+	}
+	for _, want := range []string{"HttpOnly", "SameSite=Strict", "Path=/"} {
+		if !strings.Contains(set, want) {
+			t.Fatalf("Set-Cookie %q lacks %s", set, want)
+		}
+	}
+	for _, unwanted := range []string{"Domain=", "Max-Age", "Expires"} {
+		if strings.Contains(set, unwanted) {
+			t.Fatalf("Set-Cookie %q carries %s", set, unwanted)
+		}
+	}
+}
+
+// TestRuntimeCrossSiteNavigationIsRejectedWithoutBurningTheCode checks the
+// refusal happens before the pairing code is spent: a page that tries to steal
+// the link must not be able to invalidate it for the user.
+func TestRuntimeCrossSiteNavigationIsRejectedWithoutBurningTheCode(t *testing.T) {
+	_, c := startFixture(t, config.Default())
+	link, e := c.Pair(context.Background(), t.TempDir())
+	if e != nil {
+		t.Fatal(e)
+	}
+	cross := map[string]string{"Sec-Fetch-Site": "cross-site", "Origin": "http://evil.example"}
+	for _, target := range []string{"/", strings.TrimPrefix(link, c.Meta.URL)} {
+		if got := ask(t, c, "GET", target, cross, ""); got.StatusCode != 401 {
+			t.Fatalf("cross-site GET %s accepted: %d", target, got.StatusCode)
+		}
+	}
+	if resp, cookie := pairBrowser(t, c, link); resp.StatusCode != http.StatusSeeOther || cookie == "" {
+		t.Fatalf("a refused attempt spent the single-use code: %d", resp.StatusCode)
+	}
+}
+
+// TestRuntimePairingCodeIsSingleUseUnderConcurrency races the exchange itself:
+// two tabs opening the same link at once must yield exactly one cookie.
+func TestRuntimePairingCodeIsSingleUseUnderConcurrency(t *testing.T) {
+	_, c := startFixture(t, config.Default())
+	link, e := c.Pair(context.Background(), t.TempDir())
+	if e != nil {
+		t.Fatal(e)
+	}
+	path := strings.TrimPrefix(link, c.Meta.URL)
+	const attempts = 8
+	results := make(chan int, attempts)
+	var wg sync.WaitGroup
+	for i := 0; i < attempts; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			req, err := http.NewRequest("GET", c.Meta.URL+path, nil)
+			if err != nil {
+				results <- 0
+				return
+			}
+			req.Header.Set("Sec-Fetch-Site", "none")
+			resp, err := browser.Do(req)
+			if err != nil {
+				results <- 0
+				return
+			}
+			resp.Body.Close()
+			results <- resp.StatusCode
+		}()
+	}
+	wg.Wait()
+	close(results)
+	accepted, refused := 0, 0
+	for code := range results {
+		switch code {
+		case http.StatusSeeOther:
+			accepted++
+		case http.StatusGone:
+			refused++
+		default:
+			t.Fatalf("unexpected pairing status %d", code)
+		}
+	}
+	if accepted != 1 || refused != attempts-1 {
+		t.Fatalf("%d accepted and %d refused, want 1 and %d", accepted, refused, attempts-1)
+	}
+}
+
+// TestRuntimeRejectsRequestsWithoutClientIdentity keeps every authenticated
+// call bound to a client: without the identity header an approval cannot be
+// attributed to the turn that asked for it.
+func TestRuntimeRejectsRequestsWithoutClientIdentity(t *testing.T) {
+	_, c := startFixture(t, config.Default())
+	link, e := c.Pair(context.Background(), t.TempDir())
+	if e != nil {
+		t.Fatal(e)
+	}
+	_, cookie := pairBrowser(t, c, link)
+	cases := []struct {
+		name    string
+		headers map[string]string
+	}{
+		{"cookie", map[string]string{"Cookie": "ovc_ui=" + cookie, "Origin": c.Meta.URL, "Sec-Fetch-Site": "same-origin"}},
+		{"bearer", map[string]string{"Authorization": "Bearer " + c.Meta.Token}},
+	}
+	for _, tc := range cases {
+		if got := ask(t, c, "POST", "/ui/info", tc.headers, "{}"); got.StatusCode != 400 {
+			t.Fatalf("%s without a client identity accepted: %d", tc.name, got.StatusCode)
+		}
+	}
+}
+
+// TestRuntimeAPICarriesDefenceHeaders checks the API answers with the browser
+// defence headers on every path, errors included: no stored response, no
+// sniffing, no referrer leaving the daemon.
+func TestRuntimeAPICarriesDefenceHeaders(t *testing.T) {
+	_, c := startFixture(t, config.Default())
+	unauthenticated := map[string]string{"X-OpenVibeCoding-Client": "tui"}
+	token := map[string]string{"Authorization": "Bearer " + c.Meta.Token}
+	authenticated := map[string]string{"Authorization": "Bearer " + c.Meta.Token, "X-OpenVibeCoding-Client": "tui"}
+	cases := []struct {
+		name       string
+		method     string
+		path       string
+		headers    map[string]string
+		wantStatus int
+	}{
+		{"health", "POST", "/health", authenticated, 200},
+		{"unauthenticated", "POST", "/health", unauthenticated, 401},
+		{"missing identity", "POST", "/health", token, 400},
+		{"unknown path", "POST", "/missing", authenticated, 404},
+		{"page on POST", "POST", "/", authenticated, 404},
+		{"POST-only path on GET", "GET", "/health", nil, 405},
+		{"missing page", "GET", "/missing", nil, 404},
+	}
+	for _, tc := range cases {
+		got := ask(t, c, tc.method, tc.path, tc.headers, "{}")
+		if got.StatusCode != tc.wantStatus {
+			t.Fatalf("%s: status %d, want %d", tc.name, got.StatusCode, tc.wantStatus)
+		}
+		for header, want := range map[string]string{
+			"Cache-Control":          "no-store",
+			"X-Content-Type-Options": "nosniff",
+			"Referrer-Policy":        "no-referrer",
+		} {
+			if v := got.Header.Get(header); v != want {
+				t.Fatalf("%s: %s = %q, want %q", tc.name, header, v, want)
+			}
+		}
+	}
+}
+
+// TestRuntimeLogsOmitPairingSecrets is the regression guard for the runtime
+// log: the pairing code and the runtime token are credentials and never belong
+// to a file that outlives the process.
+func TestRuntimeLogsOmitPairingSecrets(t *testing.T) {
+	dir, c := startFixture(t, config.Default())
+	link, e := c.Pair(context.Background(), t.TempDir())
+	if e != nil {
+		t.Fatal(e)
+	}
+	code := strings.TrimPrefix(link, c.Meta.URL+"/pair?token=")
+	resp, cookie := pairBrowser(t, c, link)
+	if resp.StatusCode != http.StatusSeeOther || cookie == "" {
+		t.Fatalf("pairing failed: %d", resp.StatusCode)
+	}
+	logs, e := os.ReadFile(filepath.Join(dir, "runtime.log"))
+	if e != nil {
+		t.Fatal(e)
+	}
+	for name, secret := range map[string]string{"pairing code": code, "runtime token": c.Meta.Token} {
+		if strings.Contains(string(logs), secret) {
+			t.Fatalf("runtime.log leaked the %s", name)
+		}
+	}
+}
+
+// TestRuntimeApprovalOwnership drives one turn that needs an approval over raw
+// HTTP: someone else's identity, an unknown ID and a replayed ID are refused,
+// and only the owner's first answer decides the turn.
+func TestRuntimeApprovalOwnership(t *testing.T) {
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var b struct{ Messages []struct{ Role string } }
+		json.NewDecoder(r.Body).Decode(&b)
+		hasTool := false
+		for _, m := range b.Messages {
+			if m.Role == "tool" {
+				hasTool = true
+			}
+		}
+		w.Header().Set("Content-Type", "text/event-stream")
+		if !hasTool {
+			io.WriteString(w, "data: {\"choices\":[{\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"o1\",\"function\":{\"name\":\"write_file\",\"arguments\":\"{\\\"path\\\":\\\"owned.txt\\\",\\\"content\\\":\\\"owned\\\"}\"}}]}}]}\n\ndata: [DONE]\n\n")
+			return
+		}
+		io.WriteString(w, "data: {\"choices\":[{\"delta\":{\"content\":\"Observed write\"}}]}\n\ndata: [DONE]\n\n")
+	}))
+	defer provider.Close()
+	cfg := config.Default()
+	p := cfg.Providers["local"]
+	p.BaseURL = provider.URL
+	cfg.Providers["local"] = p
+	cfg.Provider = "local"
+	cfg.Model = "qwen3:8b"
+	_, c := startFixture(t, cfg)
+	ws, e := workspace.Open(t.TempDir(), false)
+	if e != nil {
+		t.Fatal(e)
+	}
+	defer ws.Close()
+	session, e := c.New(ws.Path)
+	if e != nil {
+		t.Fatal(e)
+	}
+	body, e := json.Marshal(turn{Session: session, Prompt: "write owned.txt", Provider: cfg.Provider, Model: cfg.Model, Harness: cfg.Harness, Workspace: ws.Path, Shell: ws.AllowShell, Permissions: cfg.Permissions, Automation: cfg.Automation})
+	if e != nil {
+		t.Fatal(e)
+	}
+	owner := "tab-owner"
+	run := ask(t, c, "POST", "/run", map[string]string{"Authorization": "Bearer " + c.Meta.Token, "X-OpenVibeCoding-Client": owner}, string(body))
+	if run.StatusCode != 200 {
+		t.Fatalf("turn refused: %d", run.StatusCode)
+	}
+	for header, want := range map[string]string{
+		"Cache-Control":          "no-store",
+		"X-Content-Type-Options": "nosniff",
+		"Referrer-Policy":        "no-referrer",
+	} {
+		if got := run.Header.Get(header); got != want {
+			t.Fatalf("stream %s = %q, want %q", header, got, want)
+		}
+	}
+	// The approval event is read while the turn is blocked on it, which is also
+	// what proves the stream reaches the client without buffering the turn.
+	stream := json.NewDecoder(run.Body)
+	approval := ""
+	for approval == "" {
+		var event wireEvent
+		if e := stream.Decode(&event); e != nil {
+			t.Fatal(e)
+		}
+		if event.Kind == "done" {
+			t.Fatal("turn finished without asking for approval")
+		}
+		approval = event.Approval
+	}
+	approve := func(client, id string) int {
+		resp := ask(t, c, "POST", "/approve", map[string]string{"Authorization": "Bearer " + c.Meta.Token, "X-OpenVibeCoding-Client": client}, fmt.Sprintf(`{"ID":%q,"Allow":true}`, id))
+		return resp.StatusCode
+	}
+	if got := approve("another-tab", approval); got != 403 {
+		t.Fatalf("another client approved: %d", got)
+	}
+	if got := approve(owner, "no-such-approval"); got != 403 {
+		t.Fatalf("unknown approval accepted: %d", got)
+	}
+	if got := approve(owner, approval); got != 200 {
+		t.Fatalf("owner refused: %d", got)
+	}
+	if got := approve(owner, approval); got != 403 {
+		t.Fatalf("approval replayed: %d", got)
+	}
+	for {
+		var event wireEvent
+		if e := stream.Decode(&event); e != nil {
+			t.Fatal(e)
+		}
+		if event.Kind == "done" {
+			break
+		}
+	}
+	if text, e := ws.Read("owned.txt"); e != nil || text != "owned" {
+		t.Fatalf("approved write did not land: %q %v", text, e)
 	}
 }
 

@@ -23,7 +23,8 @@ var embedded embed.FS
 const policy = "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
 
 // contentTypes pins the types we ship. Relying on the operating system's table
-// could make the browser refuse to execute scripts under nosniff.
+// could make the browser refuse to execute scripts under nosniff; anything the
+// table does not list is served as opaque bytes by contentType.
 var contentTypes = map[string]string{
 	".html":        "text/html; charset=utf-8",
 	".js":          "text/javascript; charset=utf-8",
@@ -69,11 +70,19 @@ func Handler() (http.Handler, error) {
 			http.NotFound(w, r)
 			return
 		}
-		if t, ok := contentTypes[path.Ext(name)]; ok {
-			w.Header().Set("Content-Type", t)
-		}
+		w.Header().Set("Content-Type", contentType(name))
 		w.Write(b)
 	}), nil
+}
+
+// contentType pins the type of one shipped file. A type that is not listed is
+// served as opaque bytes instead of left unset: the runtime must not guess by
+// sniffing, which is what nosniff asks of it.
+func contentType(name string) string {
+	if t, ok := contentTypes[path.Ext(name)]; ok {
+		return t
+	}
+	return "application/octet-stream"
 }
 
 // PairInvalid returns the page shown when a pairing link is expired, already

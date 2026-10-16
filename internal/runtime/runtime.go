@@ -156,6 +156,13 @@ func Serve(ctx context.Context, dir string, c config.Config) error {
 	return httpServer.Shutdown(shutdown)
 }
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// The browser defence headers are applied once, here, so error paths and
+	// the /run stream carry them too. The UI handler refines Cache-Control for
+	// the page and its assets, which may be revalidated instead of stored.
+	h := w.Header()
+	h.Set("Cache-Control", "no-store")
+	h.Set("X-Content-Type-Options", "nosniff")
+	h.Set("Referrer-Policy", "no-referrer")
 	if r.Host != s.addr {
 		http.Error(w, "forbidden host", 403)
 		return
@@ -266,10 +273,17 @@ func sameOrigin(r *http.Request) bool {
 }
 
 // cookieAuth reports whether the request carries the cookie minted by a pairing
-// link. It is only consulted after the origin policy passed.
+// link. It is only consulted after the origin policy passed. Another local page
+// can send a cookie of the same name from its own port, and browsers disagree
+// on which one comes first, so every ovc_ui cookie is considered and any value
+// matching the token authenticates.
 func (s *Server) cookieAuth(r *http.Request) bool {
-	c, e := r.Cookie("ovc_ui")
-	return e == nil && subtle.ConstantTimeCompare([]byte(c.Value), []byte(s.token)) == 1
+	for _, c := range r.CookiesNamed("ovc_ui") {
+		if subtle.ConstantTimeCompare([]byte(c.Value), []byte(s.token)) == 1 {
+			return true
+		}
+	}
+	return false
 }
 func (s *Server) storage(w http.ResponseWriter, r *http.Request) {
 	var req request
@@ -426,12 +440,17 @@ func (s *Server) run(w http.ResponseWriter, r *http.Request, owner string) {
 	w.Header().Set("Content-Type", "application/x-ndjson")
 	w.WriteHeader(200)
 	flusher.Flush()
+	// issued collects the approvals this turn handed out: the same client may
+	// run another session at the same time, and clearing its pending approvals
+	// would answer its /approve with a 403 and leave that turn waiting.
+	var issued []string
 	e = engine.Run(ctx, req.Prompt, func(event agent.Event) {
 		out := wireEvent{Kind: event.Kind, Text: c.Redact(event.Text), Usage: event.Usage}
 		if event.Decision != nil {
 			out.Approval = random()
 			s.mu.Lock()
 			s.approvals[out.Approval] = approval{owner, event.Decision}
+			issued = append(issued, out.Approval)
 			s.mu.Unlock()
 			defer func() {
 				if ctx.Err() != nil {
@@ -447,10 +466,8 @@ func (s *Server) run(w http.ResponseWriter, r *http.Request, owner string) {
 		flusher.Flush()
 	})
 	s.mu.Lock()
-	for id, a := range s.approvals {
-		if a.owner == owner {
-			delete(s.approvals, id)
-		}
+	for _, id := range issued {
+		delete(s.approvals, id)
 	}
 	s.mu.Unlock()
 	if auditErr := s.db.Audit(req.Session, fmt.Sprintf("task_finished success=%t", e == nil)); auditErr != nil && e == nil {
