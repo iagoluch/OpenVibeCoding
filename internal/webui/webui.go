@@ -1,8 +1,8 @@
 // Package webui serves the browser client of the authenticated loopback
 // runtime over the port the daemon already owns. The shipped page is a
-// deliberately minimal, offline placeholder for a polished interface: it holds
-// the security contract (own-origin only, no inline code, no remote code) while
-// the runtime keeps the real authority.
+// self-contained offline interface: it holds the security contract (own-origin
+// only, no inline code, no remote code) while the runtime keeps the real
+// authority over sessions, models and approvals.
 package webui
 
 import (
@@ -25,9 +25,12 @@ const policy = "default-src 'self'; script-src 'self'; style-src 'self'; connect
 // contentTypes pins the types we ship. Relying on the operating system's table
 // could make the browser refuse to execute scripts under nosniff.
 var contentTypes = map[string]string{
-	".html": "text/html; charset=utf-8",
-	".js":   "text/javascript; charset=utf-8",
-	".css":  "text/css; charset=utf-8",
+	".html":        "text/html; charset=utf-8",
+	".js":          "text/javascript; charset=utf-8",
+	".css":         "text/css; charset=utf-8",
+	".svg":         "image/svg+xml",
+	".png":         "image/png",
+	".webmanifest": "application/manifest+json; charset=utf-8",
 }
 
 // Secure applies the header policy to every UI response, including the pairing

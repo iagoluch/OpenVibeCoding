@@ -1,6 +1,7 @@
 package webui
 
 import (
+	"bytes"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -18,6 +19,8 @@ func TestHandlerServesPageAndAssets(t *testing.T) {
 		{"/", "text/html; charset=utf-8", "/assets/app.js"},
 		{"/assets/app.js", "text/javascript; charset=utf-8", "crypto.randomUUID"},
 		{"/assets/style.css", "text/css; charset=utf-8", "color-scheme"},
+		{"/assets/icon.svg", "image/svg+xml", "<svg"},
+		{"/assets/manifest.webmanifest", "application/manifest+json; charset=utf-8", `"name"`},
 	}
 	for _, c := range cases {
 		r := httptest.NewRequest("GET", c.path, nil)
@@ -46,6 +49,30 @@ func TestHandlerServesPageAndAssets(t *testing.T) {
 		}
 		if w.Header().Get("Access-Control-Allow-Origin") != "" {
 			t.Fatalf("%s: CORS header served", c.path)
+		}
+	}
+}
+
+// TestHandlerServesBinaryIcons checks the PNG route: the handler must pin the
+// type even though the bytes carry no readable text.
+func TestHandlerServesBinaryIcons(t *testing.T) {
+	h, e := Handler()
+	if e != nil {
+		t.Fatal(e)
+	}
+	magic := []byte{0x89, 'P', 'N', 'G', 0x0d, 0x0a, 0x1a, 0x0a}
+	for _, path := range []string{"/assets/icon-192.png", "/assets/icon-512.png", "/assets/icon-maskable-512.png"} {
+		r := httptest.NewRequest("GET", path, nil)
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, r)
+		if w.Code != 200 {
+			t.Fatalf("%s: %d", path, w.Code)
+		}
+		if got := w.Header().Get("Content-Type"); got != "image/png" {
+			t.Fatalf("%s: content type %q", path, got)
+		}
+		if !bytes.HasPrefix(w.Body.Bytes(), magic) {
+			t.Fatalf("%s: not a PNG", path)
 		}
 	}
 }

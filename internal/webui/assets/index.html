@@ -1,42 +1,311 @@
 <!doctype html>
-<html lang="en">
+<html lang="pt-BR" data-theme="dark" data-motion="system" data-density="comfortable">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>OpenVibeCoding</title>
+<title>OpenVibeCoding — painel</title>
+<meta name="description" content="Painel local do OpenVibeCoding: converse com o agente, aprove cada operação e acompanhe o que muda no seu projeto.">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#111418">
+<link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/assets/icon-192.png">
+<link rel="manifest" href="/assets/manifest.webmanifest">
 <link rel="stylesheet" href="/assets/style.css">
 </head>
 <body>
-<h1>OpenVibeCoding</h1>
-<p id="notice" hidden></p>
+<a class="skip-link" href="#main">Ir para o conteúdo</a>
 
-<section id="setup" hidden>
-  <h2>Connect a model provider</h2>
-  <p class="muted">Pick a provider, paste its API key, then connect. Local servers need no key.</p>
-  <select id="providers"></select>
-  <p><label for="key">API key</label>
-  <input id="key" type="password" autocomplete="off" spellcheck="false"></p>
-  <button id="connect" type="button">Connect</button>
-  <p id="setup-status" class="muted"></p>
-</section>
-
-<section id="work" hidden>
-  <h2>Sessions</h2>
-  <p class="muted" id="session-meta"></p>
-  <div class="row">
-    <select id="sessions"></select>
-    <button id="new" type="button">New session</button>
+<header class="topbar">
+  <button id="menu-button" class="icon-button" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="Mostrar sessões">
+    <span aria-hidden="true">≡</span>
+  </button>
+  <p class="brand"><span class="brand-mark" aria-hidden="true">›_</span><span class="brand-name">Open<span class="brand-light">VibeCoding</span></span></p>
+  <div class="topbar-actions">
+    <button id="model-button" class="chip-button" type="button" aria-haspopup="dialog">Modelo</button>
+    <button id="palette-button" class="chip-button" type="button" aria-haspopup="dialog">Comandos <kbd>Ctrl</kbd><kbd>K</kbd></button>
+    <button id="help-button" class="icon-button" type="button" aria-haspopup="dialog" aria-label="Ajuda e atalhos"><span aria-hidden="true">?</span></button>
+    <button id="settings-button" class="icon-button" type="button" aria-haspopup="dialog" aria-label="Ajustes"><span aria-hidden="true">⚙</span></button>
   </div>
-  <div id="transcript"></div>
-  <form id="composer">
-    <textarea id="prompt" rows="3" placeholder="Describe the change you want in this workspace"></textarea>
-    <div class="row">
-      <button id="send" type="submit">Send</button>
-      <button id="stop" type="button" disabled>Stop</button>
-    </div>
-  </form>
-</section>
+</header>
 
-<script src="/assets/app.js"></script>
+<div class="layout">
+  <aside id="sidebar" class="sidebar" aria-label="Sessões">
+    <div class="sidebar-head">
+      <h2>Sessões</h2>
+      <button id="new-session-button" class="secondary-button" type="button">Nova sessão</button>
+    </div>
+    <p class="field">
+      <label class="field-label" for="session-filter">Filtrar por nome ou pasta</label>
+      <input id="session-filter" type="search" autocomplete="off" spellcheck="false" placeholder="ex.: leitor de CSV">
+    </p>
+    <ul id="session-list" class="session-list" role="list"></ul>
+    <p id="session-empty" class="empty" hidden>Nenhuma sessão ainda. Use <strong>Nova sessão</strong> para começar um trabalho.</p>
+  </aside>
+
+  <main id="main" class="main" tabindex="-1">
+    <section id="view-gate" class="view gate" hidden aria-labelledby="gate-title">
+      <div class="card gate-card">
+        <p class="eyebrow"><span class="dot" aria-hidden="true"></span> Painel local</p>
+        <h2 id="gate-title">Conecte esta aba ao OpenVibeCoding</h2>
+        <p class="lede">Este painel roda dentro do seu computador, ao lado do que você já usa no terminal. Para abrir aqui, o terminal libera esta aba uma única vez.</p>
+        <ol class="gate-steps">
+          <li>
+            <p>No terminal, rode o comando:</p>
+            <p class="code-line"><code>ovc --ui</code><button id="copy-command" class="link-button" type="button">Copiar</button></p>
+          </li>
+          <li><p>O navegador abre um link de uso único, válido por 5 minutos.</p></li>
+          <li><p>Assim que o link abrir, esta página entra sozinha.</p></li>
+        </ol>
+        <p id="gate-status" class="muted" role="status"></p>
+        <div class="buttons">
+          <button id="gate-retry" class="primary-button" type="button">Já abri o link, tentar de novo</button>
+          <button id="gate-help" class="secondary-button" type="button" aria-expanded="false" aria-controls="gate-help-body">Não funcionou</button>
+        </div>
+        <div id="gate-help-body" class="panel-inset" hidden>
+          <h3>O que costuma resolver</h3>
+          <ul class="checklist">
+            <li><strong>O link expirou ou já foi usado.</strong> Cada link vale para uma abertura. Rode <code>ovc --ui</code> outra vez para gerar um novo.</li>
+            <li><strong>O link foi aberto em outro navegador.</strong> A autorização vale para o navegador que abriu o link. Rode <code>ovc --ui</code> e abra o novo link aqui.</li>
+            <li><strong>O serviço parou.</strong> Se você fechou o terminal onde o <code>ovc</code> rodava, rode <code>ovc --ui</code> de novo: ele sobe o serviço e imprime um link novo.</li>
+            <li><strong>Você está no endereço errado.</strong> O painel responde apenas no endereço <code>127.0.0.1</code> desta máquina.</li>
+          </ul>
+        </div>
+        <p class="muted small" id="gate-address"></p>
+      </div>
+    </section>
+
+    <section id="view-onboarding" class="view onboarding" hidden aria-labelledby="onboarding-title">
+      <div class="card">
+        <p class="eyebrow"><span class="dot" aria-hidden="true"></span> Primeiro acesso</p>
+        <h2 id="onboarding-title">Escolha um modelo gratuito para começar</h2>
+        <p class="lede">Um modelo é o "cérebro" que conversa com você. Comece por um com plano gratuito: você cola uma chave, testamos com um pedido real e só então ele passa a valer.</p>
+        <ol class="steps" id="onboarding-steps">
+          <li data-step="provider"><span class="step-number">1</span> Escolher o provedor</li>
+          <li data-step="key"><span class="step-number">2</span> Colar a chave</li>
+          <li data-step="test"><span class="step-number">3</span> Testar e ativar</li>
+        </ol>
+        <div id="onboarding-body"></div>
+      </div>
+    </section>
+
+    <section id="view-chat" class="view chat" hidden aria-labelledby="chat-title">
+      <header class="chat-head">
+        <div class="chat-title-row">
+          <h2 id="chat-title">Sessão</h2>
+          <button id="rename-button" class="link-button" type="button">Renomear</button>
+          <button id="details-button" class="link-button" type="button">Detalhes</button>
+        </div>
+        <p id="chat-workspace" class="muted small"></p>
+        <p class="chips">
+          <span id="status-chip" class="chip" role="status">Pronta</span>
+          <span id="usage-chip" class="chip">tokens: —</span>
+          <span id="context-chip" class="chip">contexto: —</span>
+          <span id="cost-chip" class="chip" hidden>custo: —</span>
+        </p>
+      </header>
+
+      <div class="search-row">
+        <label class="field-label" for="transcript-search">Buscar nesta conversa</label>
+        <input id="transcript-search" type="search" autocomplete="off" spellcheck="false" placeholder="procurar no texto">
+        <span id="search-count" class="muted small" role="status"></span>
+        <button id="search-prev" class="secondary-button" type="button" aria-label="Resultado anterior">↑</button>
+        <button id="search-next" class="secondary-button" type="button" aria-label="Próximo resultado">↓</button>
+      </div>
+
+      <div id="recover-banner" class="banner" hidden>
+        <div>
+          <strong>Esta sessão foi interrompida no meio de uma operação.</strong>
+          <p class="muted small">Ao continuar, o agente registra que a operação anterior ficou sem resultado e segue sem repeti-la. Confira o projeto antes de mandar a próxima mensagem.</p>
+        </div>
+        <button id="recover-button" class="secondary-button" type="button">Retomar a sessão</button>
+      </div>
+
+      <ol id="transcript" class="transcript" role="log" aria-label="Conversa" tabindex="0"></ol>
+
+      <div id="queue" class="queue" hidden>
+        <p class="queue-title">Na fila <span class="muted small">(o próximo é enviado quando a resposta atual terminar)</span></p>
+        <ul id="queue-list" role="list"></ul>
+      </div>
+
+      <form id="composer" class="composer">
+        <p class="composer-model small muted">Conversando com <span id="composer-model">—</span> · <button id="composer-model-button" class="link-button" type="button">trocar</button></p>
+        <label class="field-label" for="prompt">Sua mensagem para o agente</label>
+        <textarea id="prompt" rows="3" placeholder="Ex.: leia o README e me diga como rodar os testes deste projeto" spellcheck="true"></textarea>
+        <div class="composer-actions">
+          <p class="hint" id="composer-hint"><kbd>Enter</kbd> envia · <kbd>Shift</kbd>+<kbd>Enter</kbd> quebra a linha · <kbd>Esc</kbd> interrompe</p>
+          <div class="buttons">
+            <button id="stop-button" class="danger-button" type="button" hidden>Parar</button>
+            <button id="send-button" class="primary-button" type="submit">Enviar</button>
+          </div>
+        </div>
+        <p id="composer-status" class="muted small" role="status"></p>
+      </form>
+    </section>
+  </main>
+</div>
+
+<footer class="statusbar">
+  <p id="status-local" class="muted small">Onde estou? Serviço local desta máquina</p>
+  <div class="statusbar-actions">
+    <button id="status-button" class="link-button" type="button" aria-haspopup="dialog">Onde ficam meus dados</button>
+    <button id="help-button-2" class="link-button" type="button" aria-haspopup="dialog">Atalhos</button>
+  </div>
+</footer>
+
+<div id="announcer" class="sr-only" role="status" aria-live="polite"></div>
+<div id="toasts" class="toasts" role="status" aria-live="polite"></div>
+
+<dialog id="dialog-model" class="dialog" aria-labelledby="dialog-model-title">
+  <div class="dialog-head">
+    <h2 id="dialog-model-title">Trocar de modelo</h2>
+    <button class="icon-button dialog-close" type="button" aria-label="Fechar" data-close><span aria-hidden="true">×</span></button>
+  </div>
+  <div id="dialog-model-body" class="dialog-body"></div>
+</dialog>
+
+<dialog id="dialog-palette" class="dialog dialog-palette" aria-labelledby="dialog-palette-title">
+  <div class="dialog-head">
+    <h2 id="dialog-palette-title">Comandos</h2>
+    <button class="icon-button dialog-close" type="button" aria-label="Fechar" data-close><span aria-hidden="true">×</span></button>
+  </div>
+  <div class="dialog-body">
+    <label class="field-label" for="palette-input">Procurar um comando</label>
+    <input id="palette-input" type="text" autocomplete="off" placeholder="digite para filtrar">
+    <ul id="palette-list" class="palette-list" role="listbox" aria-label="Comandos disponíveis"></ul>
+    <p id="palette-empty" class="muted small" hidden>Nenhum comando com esse nome.</p>
+  </div>
+</dialog>
+
+<dialog id="dialog-help" class="dialog" aria-labelledby="dialog-help-title">
+  <div class="dialog-head">
+    <h2 id="dialog-help-title">Como este painel funciona</h2>
+    <button class="icon-button dialog-close" type="button" aria-label="Fechar" data-close><span aria-hidden="true">×</span></button>
+  </div>
+  <div class="dialog-body">
+    <h3>Atalhos</h3>
+    <ul class="checklist">
+      <li><kbd>Enter</kbd> envia a mensagem · <kbd>Shift</kbd>+<kbd>Enter</kbd> quebra a linha.</li>
+      <li><kbd>Esc</kbd> interrompe o que estiver rodando; com uma aprovação na tela, ela é recusada.</li>
+      <li><kbd>Ctrl</kbd>+<kbd>K</kbd> abre os comandos · <kbd>?</kbd> abre esta ajuda.</li>
+      <li><kbd>Ctrl</kbd>+<kbd>F</kbd> vai para a busca da conversa.</li>
+    </ul>
+    <h3>O que o agente pode fazer sozinho</h3>
+    <p>Ler arquivos, listar o projeto, procurar texto e inspecionar o Git acontecem sem interromper você. Tudo que <strong>muda</strong> o projeto — escrever, apagar, mover, rodar comando, usar navegador ou desktop — para numa aprovação e espera a sua resposta.</p>
+    <h3>Aprovações</h3>
+    <p>Cada pedido mostra o que será feito e o texto exato que o agente enviou. <strong>Permitir</strong> executa aquela operação uma vez; <strong>Recusar</strong> devolve a recusa ao agente, que segue por outro caminho. Aprovar aqui vale só para esta operação.</p>
+    <h3>Limites</h3>
+    <ul class="checklist">
+      <li>O agente trabalha dentro da pasta da sessão e não alcança caminhos protegidos como <code>.git</code>, chaves e <code>.env</code>.</li>
+      <li>Comandos rodam em modo confinado quando o sistema oferece isolamento; sem isolamento, o comando é recusado em vez de rodar sem proteção.</li>
+      <li>A conversa, os usos e a auditoria ficam no computador que roda o <code>ovc</code>. Só o texto enviado ao modelo sai daqui.</li>
+    </ul>
+  </div>
+</dialog>
+
+<dialog id="dialog-settings" class="dialog" aria-labelledby="dialog-settings-title">
+  <div class="dialog-head">
+    <h2 id="dialog-settings-title">Ajustes</h2>
+    <button class="icon-button dialog-close" type="button" aria-label="Fechar" data-close><span aria-hidden="true">×</span></button>
+  </div>
+  <div class="dialog-body">
+    <h3>Aparência</h3>
+    <p class="field">
+      <label class="field-label" for="setting-theme">Tema</label>
+      <select id="setting-theme">
+        <option value="dark">Escuro (padrão da marca)</option>
+        <option value="light">Claro</option>
+        <option value="system">Seguir o sistema</option>
+      </select>
+      <span class="field-help">O tema muda na hora e fica guardado neste navegador.</span>
+    </p>
+    <p class="field">
+      <label class="field-label" for="setting-density">Densidade</label>
+      <select id="setting-density">
+        <option value="comfortable">Confortável</option>
+        <option value="compact">Compacta</option>
+      </select>
+      <span class="field-help">Compacta mostra mais linhas de conversa na mesma tela.</span>
+    </p>
+    <p class="field">
+      <label class="field-label" for="setting-scale">Tamanho do texto</label>
+      <select id="setting-scale">
+        <option value="small">Menor</option>
+        <option value="medium">Médio</option>
+        <option value="large">Maior</option>
+      </select>
+      <span class="field-help">Útil em telas grandes ou quando a leitura cansa.</span>
+    </p>
+    <p class="field">
+      <label class="field-label" for="setting-motion">Animações</label>
+      <select id="setting-motion">
+        <option value="system">Seguir o sistema</option>
+        <option value="reduced">Reduzidas</option>
+        <option value="full">Completas</option>
+      </select>
+      <span class="field-help">Reduzidas removem transições e indicadores animados.</span>
+    </p>
+    <h3>Comportamento</h3>
+    <p class="field checkbox-field">
+      <input id="setting-send-enter" type="checkbox">
+      <label for="setting-send-enter">Enviar com <kbd>Enter</kbd> (desligado: <kbd>Ctrl</kbd>+<kbd>Enter</kbd> envia)</label>
+    </p>
+    <p class="field checkbox-field">
+      <input id="setting-notify" type="checkbox">
+      <label for="setting-notify">Avisar quando a aba estiver em segundo plano e o agente precisar de você</label>
+    </p>
+    <p class="field-help" id="setting-notify-help">O navegador pergunta uma vez se pode mostrar avisos.</p>
+    <h3>Estado do serviço</h3>
+    <div id="setting-status" class="panel-inset"></div>
+    <div class="buttons">
+      <button id="settings-reset" class="secondary-button" type="button">Restaurar os ajustes padrão</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="dialog-session" class="dialog" aria-labelledby="dialog-session-title">
+  <div class="dialog-head">
+    <h2 id="dialog-session-title">Detalhes da sessão</h2>
+    <button class="icon-button dialog-close" type="button" aria-label="Fechar" data-close><span aria-hidden="true">×</span></button>
+  </div>
+  <div id="dialog-session-body" class="dialog-body"></div>
+</dialog>
+
+<dialog id="dialog-text" class="dialog" aria-labelledby="dialog-text-title">
+  <div class="dialog-head">
+    <h2 id="dialog-text-title">Editar</h2>
+    <button class="icon-button dialog-close" type="button" aria-label="Fechar" data-close><span aria-hidden="true">×</span></button>
+  </div>
+  <div class="dialog-body">
+    <form id="dialog-text-form">
+      <p class="field">
+        <label class="field-label" for="dialog-text-input" id="dialog-text-label">Valor</label>
+        <input id="dialog-text-input" type="text" autocomplete="off">
+      </p>
+      <p id="dialog-text-error" class="error-text" hidden></p>
+      <p id="dialog-text-help" class="field-help"></p>
+      <div class="buttons">
+        <button class="secondary-button" type="button" data-close>Cancelar</button>
+        <button class="primary-button" type="submit" id="dialog-text-submit">Salvar</button>
+      </div>
+    </form>
+  </div>
+</dialog>
+
+<dialog id="dialog-confirm" class="dialog" aria-labelledby="dialog-confirm-title">
+  <div class="dialog-head">
+    <h2 id="dialog-confirm-title">Confirmar</h2>
+    <button class="icon-button dialog-close" type="button" aria-label="Fechar" data-close><span aria-hidden="true">×</span></button>
+  </div>
+  <div class="dialog-body">
+    <p id="dialog-confirm-body"></p>
+    <p id="dialog-confirm-note" class="field-help"></p>
+    <div class="buttons">
+      <button class="secondary-button" type="button" id="dialog-confirm-cancel">Cancelar</button>
+      <button class="danger-button" type="button" id="dialog-confirm-accept">Confirmar</button>
+    </div>
+  </div>
+</dialog>
+
+<script type="module" src="/assets/app.js"></script>
 </body>
 </html>

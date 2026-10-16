@@ -1,13 +1,25 @@
 <!doctype html>
-<html lang="en">
+<html lang="pt-BR" data-theme="dark">
 <head>
 <meta charset="utf-8">
-<title>Pairing link no longer valid</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenVibeCoding — link de abertura inválido</title>
+<meta name="color-scheme" content="dark light">
+<meta name="description" content="O link de abertura do painel do OpenVibeCoding expirou ou já foi usado. Rode ovc --ui para gerar um link novo.">
+<link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/assets/style.css">
 </head>
 <body>
-<h1>Pairing link no longer valid</h1>
-<p>Pairing links are single use and expire after five minutes.</p>
-<p>Run <code>ovc --ui</code> again to print and open a fresh link.</p>
+<main class="standalone">
+  <div class="card gate-card">
+    <p class="brand"><span class="brand-mark" aria-hidden="true">›_</span><span class="brand-name">Open<span class="brand-light">VibeCoding</span></span></p>
+    <p class="eyebrow"><span class="dot" aria-hidden="true"></span> Link de abertura</p>
+    <h1>Este link não vale mais</h1>
+    <p class="lede">Cada link de abertura serve para uma única entrada e expira em 5 minutos. Isso é o que mantém o painel restrito a quem está no seu computador.</p>
+    <p>Para abrir o painel, rode no terminal:</p>
+    <p class="code-line"><code>ovc --ui</code></p>
+    <p class="muted small">O comando imprime um link novo e abre o navegador. Vale para o navegador que abriu o link; se você usa outro, rode o comando de novo e abra o link nele.</p>
+  </div>
+</main>
 </body>
 </html>
