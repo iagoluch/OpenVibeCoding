@@ -20,6 +20,7 @@ import (
 
 	"github.com/iagoluch/OpenVibeCoding/internal/config"
 	"github.com/iagoluch/OpenVibeCoding/internal/credentials"
+	"github.com/iagoluch/OpenVibeCoding/internal/i18n"
 	"github.com/iagoluch/OpenVibeCoding/internal/provider"
 )
 
@@ -44,41 +45,41 @@ type choice struct {
 
 func Run(ctx context.Context, dir string, c config.Config) error {
 	in := bufio.NewReader(os.Stdin)
-	fmt.Println("OpenVibeCoding setup")
-	fmt.Println("Connect one model provider. Credentials go to your OS keychain; nothing is echoed.")
+	fmt.Println(i18n.T(c.Language, "setup.title"))
+	fmt.Println(i18n.T(c.Language, "setup.connect"))
 	fmt.Println()
 
 	var options []choice
 	ollama := detectModels("http://127.0.0.1:11434/api/tags", "models", "name")
 	if len(ollama) > 0 {
-		options = append(options, choice{provider: "local", title: fmt.Sprintf("Ollama (running, %d model(s))", len(ollama)), detail: "free, runs on this machine"})
+		options = append(options, choice{provider: "local", title: fmt.Sprintf(i18n.T(c.Language, "setup.ollamaTitle"), len(ollama)), detail: i18n.T(c.Language, "setup.localFreeDetail")})
 	}
 	lmstudio := detectModels("http://127.0.0.1:1234/v1/models", "data", "id")
 	if len(lmstudio) > 0 {
-		options = append(options, choice{provider: "lmstudio", title: fmt.Sprintf("LM Studio (running, %d model(s))", len(lmstudio)), detail: "free, runs on this machine"})
+		options = append(options, choice{provider: "lmstudio", title: fmt.Sprintf(i18n.T(c.Language, "setup.lmstudioTitle"), len(lmstudio)), detail: i18n.T(c.Language, "setup.localFreeDetail")})
 	}
 	options = append(options,
-		choice{provider: "openrouter", title: "OpenRouter", detail: "includes free models (:free); key at openrouter.ai/keys", keyURL: "https://openrouter.ai/keys"},
-		choice{provider: "groq", title: "Groq", detail: "free developer tier with rate limits; key at console.groq.com/keys", keyURL: "https://console.groq.com/keys"},
-		choice{provider: "gemini", title: "Google Gemini", detail: "AI Studio free tier; key at aistudio.google.com/apikey", keyURL: "https://aistudio.google.com/apikey"},
-		choice{provider: "zai", title: "Z.AI", detail: "free glm flash models; key at z.ai", keyURL: "https://z.ai"},
-		choice{provider: "nvidia", title: "NVIDIA NIM", detail: "free credits on build.nvidia.com", keyURL: "https://build.nvidia.com"},
-		choice{provider: "cerebras", title: "Cerebras", detail: "free trial tier; key at cloud.cerebras.ai", keyURL: "https://cloud.cerebras.ai"},
-		choice{provider: "import", title: "Import credentials from OpenCode", detail: "uses accounts already configured in OpenCode (google, nvidia)"},
+		choice{provider: "openrouter", title: "OpenRouter", detail: i18n.T(c.Language, "setup.openrouterDetail"), keyURL: "https://openrouter.ai/keys"},
+		choice{provider: "groq", title: "Groq", detail: i18n.T(c.Language, "setup.groqDetail"), keyURL: "https://console.groq.com/keys"},
+		choice{provider: "gemini", title: "Google Gemini", detail: i18n.T(c.Language, "setup.geminiDetail"), keyURL: "https://aistudio.google.com/apikey"},
+		choice{provider: "zai", title: "Z.AI", detail: i18n.T(c.Language, "setup.zaiDetail"), keyURL: "https://z.ai"},
+		choice{provider: "nvidia", title: "NVIDIA NIM", detail: i18n.T(c.Language, "setup.nvidiaDetail"), keyURL: "https://build.nvidia.com"},
+		choice{provider: "cerebras", title: "Cerebras", detail: i18n.T(c.Language, "setup.cerebrasDetail"), keyURL: "https://cloud.cerebras.ai"},
+		choice{provider: "import", title: "Import credentials from OpenCode", detail: i18n.T(c.Language, "setup.importDetail")},
 	)
 
 	for i, o := range options {
 		fmt.Printf("  %d. %s — %s\n", i+1, o.title, o.detail)
 	}
-	fmt.Println("  0. Exit without changes")
+	fmt.Println("  0. " + i18n.T(c.Language, "setup.exit"))
 	fmt.Println()
 
-	pick, err := choose(in, len(options))
+	pick, err := choose(in, len(options), c.Language)
 	if err != nil {
 		return err
 	}
 	if pick == 0 {
-		fmt.Println("No changes made.")
+		fmt.Println(i18n.T(c.Language, "setup.noChanges"))
 		return nil
 	}
 	selected := options[pick-1]
@@ -89,8 +90,9 @@ func Run(ctx context.Context, dir string, c config.Config) error {
 	}
 	if selected.provider == "local" || selected.provider == "lmstudio" {
 		if activateLocal(ctx, dir, c, in, selected.provider, ollama, lmstudio) {
-			fmt.Println("\nSetup complete. Next:")
-			fmt.Println("  cd <your project>")
+			fmt.Println("
+" + i18n.T(c.Language, "setup.complete"))
+			fmt.Println("  " + i18n.T(c.Language, "setup.projectCommand"))
 			fmt.Println("  ovc")
 		}
 		return nil
@@ -98,17 +100,17 @@ func Run(ctx context.Context, dir string, c config.Config) error {
 
 	fmt.Println()
 	if selected.keyURL != "" {
-		fmt.Printf("Create or copy an API key: %s\n", selected.keyURL)
+		fmt.Println(fmt.Sprintf(i18n.T(c.Language, "setup.keyURL"), selected.keyURL))
 	}
-	key, err := readSecret("Paste the API key (hidden): ")
+	key, err := readSecret(i18n.T(c.Language, "setup.keyPrompt"), c.Language)
 	if err != nil {
 		return err
 	}
 	if key == "" {
-		return fmt.Errorf("empty credential; nothing was changed")
+		return fmt.Errorf("%s", i18n.T(c.Language, "setup.emptyCredential"))
 	}
 	if err := credentials.Set(dir, selected.provider, key, false); err != nil {
-		return fmt.Errorf("storing the credential: %w", err)
+		return fmt.Errorf("%s: %w", i18n.T(c.Language, "setup.storingCredential"), err)
 	}
 	// The configuration was loaded before the credential existed; refresh it so
 	// the smoke test authenticates with the key that was just stored.
@@ -118,8 +120,9 @@ func Run(ctx context.Context, dir string, c config.Config) error {
 	if !activate(ctx, dir, c, in, selected.provider, "") {
 		return nil
 	}
-	fmt.Println("\nSetup complete. Next:")
-	fmt.Println("  cd <your project>")
+	fmt.Println("
+" + i18n.T(c.Language, "setup.complete"))
+	fmt.Println("  " + i18n.T(c.Language, "setup.projectCommand"))
 	fmt.Println("  ovc")
 	return nil
 }
@@ -131,11 +134,11 @@ func Run(ctx context.Context, dir string, c config.Config) error {
 func activate(ctx context.Context, dir string, c config.Config, in *bufio.Reader, name, model string) bool {
 	p, ok := c.Providers[name]
 	if !ok {
-		fmt.Fprintf(os.Stderr, "Unknown provider %q.\n", name)
+		fmt.Fprintf(os.Stderr, "%s\n", fmt.Sprintf(i18n.T(c.Language, "setup.unknownProvider"), name))
 		return false
 	}
 	if len(p.Models) == 0 {
-		fmt.Fprintf(os.Stderr, "Provider %q has no models configured.\n", name)
+		fmt.Fprintf(os.Stderr, "%s\n", fmt.Sprintf(i18n.T(c.Language, "setup.noModels"), name))
 		return false
 	}
 	first := model
@@ -152,31 +155,31 @@ func activate(ctx context.Context, dir string, c config.Config, in *bufio.Reader
 		if timeout <= 0 {
 			break
 		}
-		fmt.Printf("Testing %s/%s with a real request...\n", name, candidate)
+		fmt.Println(fmt.Sprintf(i18n.T(c.Language, "setup.testing"), name, candidate))
 		err := smoke(ctx, p, candidate, timeout)
 		if err == nil {
 			active = candidate
 			break
 		}
-		fmt.Fprintf(os.Stderr, "Smoke test failed: %v\n", err)
+		fmt.Fprintf(os.Stderr, "%s: %v\n", i18n.T(c.Language, "setup.smokeFailed"), err)
 		if !provider.ModelUnavailable(err) && !errors.Is(err, errNoResponse) {
 			break
 		}
 	}
 	if active == "" {
-		if !confirm(in, "Activate this provider anyway?") {
+		if !confirm(in, i18n.T(c.Language, "setup.activateAnyway")) {
 			return false
 		}
 		active = first
 	} else {
-		fmt.Println("Smoke test passed.")
+		fmt.Println(i18n.T(c.Language, "setup.smokePassed"))
 	}
 	c.Provider, c.Model = name, active
 	if err := config.Save(dir, c); err != nil {
-		fmt.Fprintf(os.Stderr, "Saving configuration: %v\n", err)
+		fmt.Fprintf(os.Stderr, "%s: %v\n", i18n.T(c.Language, "setup.saving"), err)
 		return false
 	}
-	fmt.Printf("Active provider: %s/%s\n", name, active)
+	fmt.Println(fmt.Sprintf(i18n.T(c.Language, "setup.activeProvider"), name, active))
 	return true
 }
 
@@ -263,12 +266,12 @@ func importOpenCode(ctx context.Context, dir string, c config.Config, in *bufio.
 			continue
 		}
 		if found = parseOpenCodeAuth(b); len(found) > 0 {
-			fmt.Printf("Found OpenCode credentials at %s\n", candidate)
+			fmt.Println(fmt.Sprintf(i18n.T(c.Language, "setup.opencodeFound"), candidate))
 			break
 		}
 	}
 	if len(found) == 0 {
-		fmt.Println("No importable OpenCode credentials found (expected google and/or nvidia).")
+		fmt.Println(i18n.T(c.Language, "setup.noOpenCodeCredentials"))
 		return nil
 	}
 	imported := ""
@@ -277,11 +280,11 @@ func importOpenCode(ctx context.Context, dir string, c config.Config, in *bufio.
 		if !ok || key == "" {
 			continue
 		}
-		if !confirm(in, fmt.Sprintf("Import the %s credential into OpenVibeCoding?", name)) {
+		if !confirm(in, fmt.Sprintf(i18n.T(c.Language, "setup.importPrompt"), name)) {
 			continue
 		}
 		if err := credentials.Set(dir, name, key, false); err != nil {
-			fmt.Fprintf(os.Stderr, "Importing %s: %v\n", name, err)
+			fmt.Fprintf(os.Stderr, "%s: %v\n", fmt.Sprintf(i18n.T(c.Language, "setup.importing"), name), err)
 			continue
 		}
 		// Keep the in-memory configuration consistent with the stored credential
@@ -289,20 +292,21 @@ func importOpenCode(ctx context.Context, dir string, c config.Config, in *bufio.
 		stored := c.Providers[name]
 		stored.Secret = key
 		c.Providers[name] = stored
-		fmt.Printf("Imported %s.\n", name)
+		fmt.Println(fmt.Sprintf(i18n.T(c.Language, "setup.imported"), name))
 		if imported == "" {
 			imported = name
 		}
 	}
 	if imported == "" {
-		fmt.Println("Nothing imported.")
+		fmt.Println(i18n.T(c.Language, "setup.nothingImported"))
 		return nil
 	}
 	if !activate(ctx, dir, c, in, imported, "") {
 		return nil
 	}
-	fmt.Println("\nSetup complete. Next:")
-	fmt.Println("  cd <your project>")
+	fmt.Println("
+" + i18n.T(c.Language, "setup.complete"))
+	fmt.Println("  " + i18n.T(c.Language, "setup.projectCommand"))
 	fmt.Println("  ovc")
 	return nil
 }
@@ -357,9 +361,9 @@ func detectModels(url, listKey, nameKey string) []string {
 	return names
 }
 
-func choose(in *bufio.Reader, n int) (int, error) {
+func choose(in *bufio.Reader, n int, language string) (int, error) {
 	for {
-		fmt.Printf("Choose [1-%d] (0 to exit): ", n)
+		fmt.Print(fmt.Sprintf(i18n.T(language, "setup.choose"), n))
 		line, err := in.ReadString('\n')
 		if err != nil {
 			return 0, err
@@ -368,7 +372,7 @@ func choose(in *bufio.Reader, n int) (int, error) {
 		if err == nil && v >= 0 && v <= n {
 			return v, nil
 		}
-		fmt.Println("Enter a number between 0 and", n)
+		fmt.Println(fmt.Sprintf(i18n.T(language, "setup.invalidChoice"), n))
 	}
 }
 
@@ -379,18 +383,18 @@ func confirm(in *bufio.Reader, prompt string) bool {
 		return false
 	}
 	answer := strings.ToLower(strings.TrimSpace(line))
-	return answer == "y" || answer == "yes"
+	return answer == "y" || answer == "yes" || answer == "s" || answer == "sim" || answer == "si" || answer == "sí" || answer == "oui" || answer == "ja" || answer == "是" || answer == "是的"
 }
 
-func readSecret(prompt string) (string, error) {
+func readSecret(prompt, language string) (string, error) {
 	if !term.IsTerminal(int(os.Stdin.Fd())) {
-		return "", fmt.Errorf("credential input requires a terminal")
+		return "", fmt.Errorf("%s", i18n.T(language, "setup.credentialTerminal"))
 	}
 	fmt.Fprint(os.Stderr, prompt)
 	b, err := term.ReadPassword(int(os.Stdin.Fd()))
 	fmt.Fprintln(os.Stderr)
 	if err != nil {
-		return "", fmt.Errorf("reading credential: %w", err)
+		return "", fmt.Errorf("%s: %w", i18n.T(language, "setup.readingCredential"), err)
 	}
 	return strings.TrimSpace(string(b)), nil
 }
