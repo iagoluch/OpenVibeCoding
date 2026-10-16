@@ -165,7 +165,7 @@ func activate(ctx context.Context, dir string, c config.Config, in *bufio.Reader
 		}
 	}
 	if active == "" {
-		if !confirm(in, i18n.T(c.Language, "setup.activateAnyway")) {
+		if !confirm(in, i18n.T(c.Language, "setup.activateAnyway"), c.Language) {
 			return false
 		}
 		active = first
@@ -278,7 +278,7 @@ func importOpenCode(ctx context.Context, dir string, c config.Config, in *bufio.
 		if !ok || key == "" {
 			continue
 		}
-		if !confirm(in, fmt.Sprintf(i18n.T(c.Language, "setup.importPrompt"), name)) {
+		if !confirm(in, fmt.Sprintf(i18n.T(c.Language, "setup.importPrompt"), name), c.Language) {
 			continue
 		}
 		if err := credentials.Set(dir, name, key, false); err != nil {
@@ -373,8 +373,15 @@ func choose(in *bufio.Reader, n int, language string) (int, error) {
 	}
 }
 
-func confirm(in *bufio.Reader, prompt string) bool {
-	fmt.Printf("%s [y/N]: ", prompt)
+func confirm(in *bufio.Reader, prompt, language string) bool {
+	label := "[y/N]"
+	switch i18n.Resolve(language) {
+	case "pt-BR", "es":
+		label = "[s/N]"
+	case "zh-CN":
+		label = "[是/否]"
+	}
+	fmt.Printf("%s %s: ", prompt, label)
 	line, err := in.ReadString('\n')
 	if err != nil {
 		return false
