@@ -195,6 +195,7 @@ func TestNegativePriceRejected(t *testing.T) {
 
 
 func TestLanguagePreferenceRoundTrip(t *testing.T) {
+	t.Setenv("OPENVIBECODING_LANGUAGE", "")
 	dir := t.TempDir()
 	c := Default()
 	c.Language = "pt-BR"
