@@ -1,4 +1,8 @@
 <p align="center">
+  <img src="assets/banner-es.svg" alt="Identidad visual de OpenVibeCoding — desarrollo con IA bajo tu control" width="100%">
+</p>
+
+<p align="center">
   <strong>Un entorno de desarrollo con IA pensado para una experiencia de aplicación de escritorio.</strong><br>
   Revisa cambios, aprueba operaciones y comprueba resultados: tú mantienes el control.
 </p>
@@ -28,8 +32,8 @@
 <p align="center"><a href="https://github.com/iagoluch/OpenVibeCoding/stargazers">⭐ ¿Te resulta útil? Dale una estrella al proyecto</a></p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Go-1.26.2%2B-00ADD8?logo=go&logoColor=white" alt="Go 1.26.2 o posterior">
-  <img src="https://img.shields.io/badge/licencia-MIT-brightgreen" alt="Licencia MIT">
+  <img src="https://img.shields.io/badge/Go-1.26.2%2B-69CFFF?logo=go&logoColor=white" alt="Go 1.26.2 o posterior">
+  <img src="https://img.shields.io/badge/licencia-MIT-69CFFF" alt="Licencia MIT">
   <img src="https://img.shields.io/badge/plataformas-Linux%20%7C%20macOS%20%7C%20Windows-informational" alt="Linux, macOS y Windows">
 </p>
 

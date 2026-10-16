@@ -1,4 +1,8 @@
 <p align="center">
+  <img src="assets/banner.svg" alt="OpenVibeCoding visual identity — AI development, with you in control" width="100%">
+</p>
+
+<p align="center">
   <strong>An AI development workspace designed around a desktop app.</strong><br>
   Review changes, approve operations, and verify results—with you in control.
 </p>
@@ -28,8 +32,8 @@
 <p align="center"><a href="https://github.com/iagoluch/OpenVibeCoding/stargazers">⭐ Find this useful? Star the project</a></p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Go-1.26.2%2B-00ADD8?logo=go&logoColor=white" alt="Go 1.26.2 or later">
-  <img src="https://img.shields.io/badge/license-MIT-brightgreen" alt="MIT license">
+  <img src="https://img.shields.io/badge/Go-1.26.2%2B-69CFFF?logo=go&logoColor=white" alt="Go 1.26.2 or later">
+  <img src="https://img.shields.io/badge/license-MIT-69CFFF" alt="MIT license">
   <img src="https://img.shields.io/badge/platforms-Linux%20%7C%20macOS%20%7C%20Windows-informational" alt="Linux, macOS and Windows">
 </p>
 
