@@ -16,6 +16,7 @@ import (
 	"github.com/iagoluch/OpenVibeCoding/internal/agent"
 	"github.com/iagoluch/OpenVibeCoding/internal/automation"
 	"github.com/iagoluch/OpenVibeCoding/internal/config"
+	"github.com/iagoluch/OpenVibeCoding/internal/i18n"
 
 	"github.com/iagoluch/OpenVibeCoding/internal/setup"
 	"github.com/iagoluch/OpenVibeCoding/internal/tui"
@@ -37,6 +38,7 @@ func run() error {
 	setupBrowser := flag.Bool("setup-browser", false, "install pinned Playwright and Chromium into application data directory")
 	setupWizard := flag.Bool("setup", false, "interactive provider setup: detect local models, store a credential, smoke test")
 	debug := flag.Bool("debug", false, "enable runtime diagnostic metadata logging")
+	language := flag.String("language", "", "set interface language: auto, en, pt-BR, es, zh-CN")
 	flag.Parse()
 	if *debug {
 		os.Setenv("OPENVIBECODING_DEBUG", "1")
@@ -52,6 +54,16 @@ func run() error {
 	c, e := config.Load(dir)
 	if e != nil {
 		return fmt.Errorf("configuration: %w", e)
+	}
+	if *language != "" {
+		selected, ok := i18n.Normalize(*language)
+		if !ok {
+			return fmt.Errorf("unsupported interface language %q (choose auto, en, pt-BR, es, or zh-CN)", *language)
+		}
+		c.Language = selected
+		if err := config.Save(dir, c); err != nil {
+			return fmt.Errorf("saving interface language: %w", err)
+		}
 	}
 	if *setupWizard {
 		return setup.Run(context.Background(), dir, c)
