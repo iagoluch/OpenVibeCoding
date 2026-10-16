@@ -1,8 +1,14 @@
-<p align="center"><img src="assets/banner.svg" alt="OpenVibeCoding — From intent to verified change" width="100%"></p>
+<p align="center">
+  <strong>An AI development workspace designed around a desktop app.</strong><br>
+  Review changes, approve operations, and verify results—with you in control.
+</p>
+
+<p align="center"><strong>Integrated desktop app: not published yet · CLI/TUI: available today</strong></p>
 
 <p align="center">
-  <strong>An AI coding agent that works in your terminal—with you in control.</strong><br>
-  Understand the project. Review changes. Run tests. Inspect the result.
+  <a href="https://github.com/iagoluch/OpenVibeCoding/releases/latest">⬇️ Try the current CLI/TUI release</a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/iagoluch/OpenVibeCoding/stargazers">⭐ Star the project</a>
 </p>
 
 <p align="center">
@@ -29,13 +35,17 @@
 
 ## What is OpenVibeCoding?
 
-**OpenVibeCoding (OVC)** is an open-source coding agent written in Go. It brings AI model conversations and development tools into a reviewable terminal workflow.
+**OpenVibeCoding (OVC)** is an open-source AI development workspace evolving toward an integrated desktop application. The goal is to give developers one place to work with an agent, review proposed changes, and inspect execution evidence.
 
-Instead of only suggesting code, OVC can inspect a project, propose file changes, ask for your approval before applying them, and run approved commands to check the outcome. Sessions are stored locally so context and evidence can survive beyond a single terminal window.
+**Current status, clearly stated:** the integrated desktop app does not yet have a published binary or installer. The public version available today is **CLI/TUI** (the command-line interface with a terminal UI). The download and installation instructions below are for that current version, not a desktop app that has already shipped.
 
-**The core idea:** the model proposes, you review, the program performs the authorized operation, and the observed result stays available.
+## The desktop experience we're building
 
-## Why try it?
+The planned desktop experience is intended to bring together project selection, agent conversations, diff review, per-operation approval, task history, and result verification in one interface. Browser and desktop integrations depend on platform support and user-granted permissions.
+
+This describes the product direction, not features of a published desktop GUI.
+
+## What the current CLI/TUI already offers
 
 | Understand | Change with control | Verify |
 | --- | --- | --- |
@@ -56,7 +66,7 @@ Conversations, context summaries, audit records and usage are stored locally in 
 
 OVC includes Playwright browser QA and operating-system-dependent desktop integrations. Enable only the capabilities your task needs. Automation actions are subject to explicit grants and approval according to each tool's contract.
 
-## Installation
+## Try the current public release (CLI/TUI)
 
 ### Linux and macOS
 
@@ -153,7 +163,7 @@ Read [Security and execution limits](docs/security.md) before enabling shell or 
 | [Security](docs/security.md) | Approvals, execution boundaries, credentials and limitations |
 | [Automation](docs/automation.md) | Browser workflows, desktop actions and adapters |
 | [Testing and troubleshooting](docs/testing.md) | Automated checks, environment validation and troubleshooting |
-| [Presentation site](site/) | Static landing-page source; GitHub Pages requires separate configuration |
+| Official technical references | [Official technical references](docs/sources.md) |
 
 ## Contribute
 

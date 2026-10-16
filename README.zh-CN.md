@@ -1,8 +1,14 @@
-<p align="center"><img src="assets/banner.svg" alt="OpenVibeCoding — From intent to verified change" width="100%"></p>
+<p align="center">
+  <strong>面向桌面应用体验打造的 AI 开发工作空间。</strong><br>
+  审查修改、批准操作、验证结果——始终由你掌控。
+</p>
+
+<p align="center"><strong>集成桌面应用：尚未发布 · CLI/TUI：目前可用</strong></p>
 
 <p align="center">
-  <strong>运行在终端中的 AI 编程代理，由你掌控每一次操作。</strong><br>
-  理解项目、审查修改、运行测试，并检查实际结果。
+  <a href="https://github.com/iagoluch/OpenVibeCoding/releases/latest">⬇️ 体验当前版本（CLI/TUI）</a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/iagoluch/OpenVibeCoding/stargazers">⭐ 为项目点亮 Star</a>
 </p>
 
 <p align="center">
@@ -14,9 +20,9 @@
 
 <p align="center">
   <a href="#安装">安装</a> ·
-  <a href="docs/guide.md">使用指南</a> ·
-  <a href="docs/security.md">安全</a> ·
-  <a href="docs/architecture.md">架构</a>
+  <a href="docs/zh-CN/guide.md">使用指南</a> ·
+  <a href="docs/zh-CN/security.md">安全</a> ·
+  <a href="docs/zh-CN/architecture.md">架构</a>
 </p>
 
 <p align="center"><a href="https://github.com/iagoluch/OpenVibeCoding/stargazers">⭐ 如果它对你有帮助，请为项目点亮 Star</a></p>
@@ -29,13 +35,17 @@
 
 ## OpenVibeCoding 是什么？
 
-**OpenVibeCoding（OVC）** 是一个使用 Go 编写的开源编程代理。它将 AI 模型对话与开发工具整合到一个可审查的终端工作流中。
+**OpenVibeCoding（OVC）** 是一个开源 AI 开发工作空间，正在朝集成式桌面应用方向发展。目标是让开发者可以在一个统一的环境中与智能体协作、审查修改方案，并查看执行证据。
 
-OVC 不仅提供代码建议，还可以检查项目、提出文件修改方案，在应用修改前请求你的批准，并运行获准的命令来验证结果。会话保存在本地，因此上下文与操作证据不会随着终端窗口关闭而丢失。
+**当前状态说明：** 集成式桌面应用尚未发布二进制文件或安装程序。目前公开可用的版本是 **CLI/TUI**（命令行工具及终端界面）。下文的下载和安装说明仅适用于当前版本，并不代表桌面应用已经发布。
 
-**核心理念：** 模型提出方案，你负责审查；程序只执行获准的操作，并保留实际观察到的结果。
+## 我们正在构建的桌面体验
 
-## 为什么值得试用？
+计划中的桌面体验将把项目选择、与智能体对话、diff 审查、逐项审批、任务历史和结果验证整合到一个界面中。浏览器与桌面自动化取决于平台支持和用户明确授予的权限。
+
+本节描述的是产品方向，并非已发布桌面 GUI 的功能说明。
+
+## 当前 CLI/TUI 已具备的能力
 
 | 理解项目 | 在控制下修改 | 验证结果 |
 | --- | --- | --- |
@@ -56,7 +66,7 @@ OVC 不要求你绑定单一 AI 厂商。它内置 OpenAI、Anthropic/Claude 和
 
 OVC 包含基于 Playwright 的浏览器 QA，以及依赖操作系统的桌面集成。只启用当前任务所需的能力。自动化操作须遵守对应工具的授权与审批规则。
 
-## 安装
+## 体验当前公开版本（CLI/TUI）
 
 ### Linux 和 macOS
 
@@ -142,18 +152,18 @@ go build -o ovc ./cmd/ovc
 - **内置进程沙箱仅支持 Linux。** 在 macOS 和 Windows 上，需要隔离的命令会被拒绝。显式选项 `--allow-unsandboxed-shell` 会启用具有当前主机用户权限的命令执行，这并不等同于沙箱隔离。
 - 桌面集成依赖各平台的权限与能力。交叉编译并不能证明程序在目标系统上的原生运行行为。
 
-启用 shell 或自动化前，请阅读[安全与执行限制](docs/security.md)。外部操作、后台分离进程及其他应用中的操作不保证可以撤销。
+启用 shell 或自动化前，请阅读[安全与执行限制](docs/zh-CN/security.md)。外部操作、后台分离进程及其他应用中的操作不保证可以撤销。
 
 ## 文档
 
 | 文档 | 内容 |
 | --- | --- |
-| [使用指南](docs/guide.md) | 安装、配置、服务提供商和命令 |
-| [架构](docs/architecture.md) | 模块、代理生命周期、持久化和平台职责 |
-| [安全](docs/security.md) | 审批、执行边界、凭据与限制 |
-| [自动化](docs/automation.md) | 浏览器工作流、桌面操作与适配器 |
-| [测试与故障排查](docs/testing.md) | 自动化检查、环境验证和问题排查 |
-| [项目介绍网站](site/) | 静态介绍页面源码；发布到 GitHub Pages 需要额外配置 |
+| [使用指南](docs/zh-CN/guide.md) | 安装、配置、服务提供商和命令 |
+| [架构](docs/zh-CN/architecture.md) | 模块、代理生命周期、持久化和平台职责 |
+| [安全](docs/zh-CN/security.md) | 审批、执行边界、凭据与限制 |
+| [自动化](docs/zh-CN/automation.md) | 浏览器工作流、桌面操作与适配器 |
+| [测试与故障排查](docs/zh-CN/testing.md) | 自动化检查、环境验证和问题排查 |
+| 技术参考 | [技术参考](docs/zh-CN/sources.md) |
 
 ## 参与贡献
 

@@ -1,5 +1,7 @@
 # Security and execution guarantees
 
+[Português](pt-BR/seguranca.md) · [English](security.md) · [Español](es/seguridad.md) · [简体中文](zh-CN/security.md)
+
 ## Workspace file tools
 
 `os.Root` provides traversal-resistant file access. Absolute/parent paths and symlink components are rejected. Secret locations (`.env*`, `.ssh`, `.aws`, credential filenames and private-key extensions), generated directories and `.gitignore` matches are excluded from ordinary read/search/list tools. Reads accept regular UTF-8 text up to 128 KiB. This is a denylist and ignore policy, not a general secret detector. Nested ignore handling is deliberately conservative: an ancestor exclusion cannot be reopened by a nested exception.

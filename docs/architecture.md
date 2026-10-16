@@ -1,5 +1,7 @@
 # Architecture
 
+[Português](pt-BR/arquitetura.md) · [English](architecture.md) · [Español](es/arquitectura.md) · [简体中文](zh-CN/architecture.md)
+
 ## Modules
 
 | Module | Responsibility |

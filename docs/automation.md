@@ -1,5 +1,7 @@
 # Automation contract
 
+[Português](pt-BR/automacao.md) · [English](automation.md) · [Español](es/automatizacion.md) · [简体中文](zh-CN/automation.md)
+
 Browser and native desktop are distinct tools and permissions. Shell execution does not imply either grant. The inspect harness rejects both even if their grants are enabled.
 
 ## Browser request
