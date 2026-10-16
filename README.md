@@ -1,127 +1,170 @@
-<p align="center"><img src="assets/banner.svg" alt="OpenVibeCoding — From intent to verified change" width="100%"></p>
+<p align="center"><img src="assets/banner-pt-br.svg" alt="OpenVibeCoding — Da intenção à mudança verificada" width="100%"></p>
 
 <p align="center">
-  <strong>A terminal workspace for real development work.</strong><br>
-  Inspect projects. Review changes. Run tests. Keep the evidence.
+  <strong>Um agente de programação que trabalha no seu terminal — com você no controle.</strong><br>
+  Entenda o projeto. Revise as mudanças. Execute os testes. Confira o resultado.
 </p>
 
 <p align="center">
-  <a href="#get-started">Get started</a> ·
-  <a href="docs/guide.md">User guide</a> ·
-  <a href="docs/security.md">Security boundaries</a> ·
-  <a href="docs/automation.md">Computer use</a> ·
-  <a href="docs/testing.md">Testing</a>
+  <a href="README.md">🇧🇷 Português</a> ·
+  <a href="README.en.md">🇺🇸 English</a> ·
+  <a href="README.es.md">🇪🇸 Español</a> ·
+  <a href="README.zh-CN.md">🇨🇳 简体中文</a>
 </p>
 
----
+<p align="center">
+  <a href="#instalação">Instalar</a> ·
+  <a href="docs/guide.md">Guia</a> ·
+  <a href="docs/security.md">Segurança</a> ·
+  <a href="docs/architecture.md">Arquitetura</a>
+</p>
 
-## Your terminal. Your models. Your approval.
+<p align="center">
+  <a href="https://github.com/iagoluch/OpenVibeCoding/stargazers">⭐ Gostou da proposta? Dê uma estrela ao projeto</a>
+</p>
 
-OpenVibeCoding is a Go/Bubble Tea coding agent with persistent sessions, native provider adapters, reviewed project tools, a shared local runtime, browser QA and desktop integrations.
+<p align="center">
+  <img src="https://img.shields.io/badge/Go-1.26.2%2B-00ADD8?logo=go&logoColor=white" alt="Go 1.26.2 ou superior">
+  <img src="https://img.shields.io/badge/licença-MIT-brightgreen" alt="Licença MIT">
+  <img src="https://img.shields.io/badge/Linux-macOS-Windows-informational" alt="Linux, macOS e Windows">
+</p>
 
-| Understand | Change | Verify |
-| :--- | :--- | :--- |
-| Read project instructions, search code and inspect Git | Review unified diffs and approve individual operations | Run tests, inspect exit codes and retain observed results |
-| Retrieve earlier evidence and compact long context | Create, replace, move and delete workspace files | Test real websites and inspect screenshots |
+## O que é o OpenVibeCoding?
 
-### Built to carry the work forward
+O **OpenVibeCoding (OVC)** é um agente de programação de código aberto, escrito em Go, que reúne conversa com modelos de IA e ferramentas de desenvolvimento em um fluxo de trabalho revisável no terminal.
 
-- **Your choice of model.** Native OpenAI, Anthropic and Gemini protocols; free-tier presets for OpenRouter, Groq, Cerebras, NVIDIA NIM, Z.AI and Google AI Studio; compatible DeepSeek, Kimi, Qwen, Mistral and local endpoints.
-- **One local runtime.** Multiple terminals reuse an authenticated service with coordinated workspace/session execution.
-- **Persistent context.** SQLite keeps original conversations, incremental summaries, audit records and usage.
-- **Visible control.** File diffs, operation approvals, separate automation/network grants and cancellation.
-- **Beyond the terminal.** Playwright workflows and platform desktop backends, with capability detection and OS permission checks.
-- **Portable binaries.** Linux, macOS and Windows builds for amd64 and arm64. Launch the application with `ovc`.
+Em vez de apenas sugerir código, o OVC pode inspecionar um projeto, propor mudanças em arquivos, pedir sua aprovação antes de aplicá-las e executar comandos aprovados para verificar o resultado. As sessões ficam salvas localmente para que o contexto e as evidências não desapareçam ao fechar o terminal.
 
-## Get started
+**A ideia central é simples:** o modelo propõe, você revisa, o programa executa a operação autorizada e o resultado observado fica disponível.
 
-Install the latest release — the script downloads the archive for your OS/CPU and verifies SHA-256 (no Go required):
+## Por que experimentar?
+
+| Entender | Alterar com controle | Verificar |
+| --- | --- | --- |
+| Ler arquivos, pesquisar código, consultar instruções do projeto e inspecionar o Git | Revisar diffs e aprovar ou rejeitar operações individuais em arquivos | Executar comandos aprovados e consultar o código de saída e a saída real |
+| Manter sessões e contexto persistentes | Restringir ferramentas de arquivo à pasta de trabalho configurada | Usar fluxos de navegador com Playwright e integrações de desktop quando configurados |
+
+### Escolha o modelo e o provedor
+
+O OVC não exige que você use um único fornecedor. Há adaptadores nativos para OpenAI, Anthropic/Claude e Google Gemini, além de suporte a endpoints compatíveis com a API da OpenAI — incluindo opções para DeepSeek, Kimi, Qwen, Mistral e modelos locais.
+
+O assistente de configuração `ovc --setup` lista opções de provedores e presets gratuitos disponíveis no momento, detecta servidores Ollama e LM Studio e pode importar credenciais já configuradas no OpenCode. A disponibilidade, os limites e as condições de cada provedor podem mudar.
+
+### Sessões persistentes e evidências
+
+O histórico é armazenado localmente em SQLite, incluindo conversas, resumos de contexto, auditoria e uso. Os resultados devem refletir o que realmente aconteceu: um comando reprovado não é tratado como aprovado, e um processo com código de saída diferente de zero não deve ser apresentado como sucesso.
+
+### Automação com aprovação
+
+O OVC inclui fluxos de QA de navegador com Playwright e integrações de desktop dependentes do sistema operacional. Configure apenas as capacidades necessárias para a tarefa. Ações de automação exigem concessões explícitas e aprovação conforme o contrato de cada ferramenta.
+
+## Instalação
+
+### Linux e macOS
+
+O instalador baixa o pacote correspondente ao sistema e à arquitetura e verifica seu checksum SHA-256. Não é necessário instalar Go para usar um binário de release.
 
 ```sh
 git clone https://github.com/iagoluch/OpenVibeCoding.git
 cd OpenVibeCoding
 bash scripts/install.sh
-ovc --setup          # guided: local models, free tiers, key storage, real test
-ovc --workspace /path/to/project
+ovc --setup
+ovc --workspace /caminho/do/seu/projeto
 ```
 
-Add `~/.local/bin` to PATH if needed. On Windows, run `./scripts/install.ps1 -AddToPath`, then reopen PowerShell (if script execution is blocked: `powershell -ExecutionPolicy Bypass -File scripts/install.ps1 -AddToPath`). You can also download the archive for your OS/CPU directly from [Releases](https://github.com/iagoluch/OpenVibeCoding/releases/latest). Building from source needs **Go 1.26.2+**: `go build -o ovc ./cmd/ovc`, then `bash scripts/install.sh ./ovc`.
+Se o comando `ovc` não for encontrado, adicione `~/.local/bin` ao `PATH` e abra um novo terminal.
 
-Credentials use the OS keychain by default. `ovc --setup` detects Ollama and LM Studio, offers free-tier providers with the page that issues each key, and can import credentials already configured in OpenCode; it only activates a provider after one real request succeeds. Environment variables are supported; a restricted local credential file requires explicit opt-in. Run `ovc --doctor` to inspect setup without exposing keys.
+### Windows (PowerShell)
 
-Release archives for Linux, macOS and Windows (amd64/arm64) are built by CI from tagged commits and published on [Releases](https://github.com/iagoluch/OpenVibeCoding/releases/latest); the installers verify SHA-256 checksums. See the [installation and upgrade guide](docs/guide.md#install-and-launch).
+Na pasta do repositório, execute:
 
-## The development loop
-
-```text
-❯ Inspect this parser, propose a focused fix, and verify it.
-
-PLAN     Read the implementation and relevant tests.
-REVIEW   Inspect the proposed file diff.
-APPROVE  Ctrl+Y accepts one operation; Ctrl+N rejects it.
-VERIFY   Run the approved command and report its actual result.
+```powershell
+./scripts/install.ps1 -AddToPath
 ```
 
-*Illustrated flow. Actual changes and test results come from your project.*
+Feche e reabra o PowerShell após a instalação. Se a política de execução bloquear o script, execute explicitamente:
 
-Enter sends · Ctrl+J adds a newline · Tab completes commands · PgUp/PgDn scroll · Esc cancels.
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/install.ps1 -AddToPath
+```
+
+Também é possível baixar o pacote pronto para seu sistema na página de [Releases](https://github.com/iagoluch/OpenVibeCoding/releases/latest).
+
+### Primeira execução
+
+`ovc --setup` orienta a configuração de provedores, credenciais e modelo. Depois, aponte o agente para a pasta de um projeto:
+
+```sh
+ovc --workspace /caminho/do/seu/projeto
+```
+
+Para verificar a configuração sem exibir chaves, use `ovc --doctor`.
+
+### Compilar a partir do código-fonte
+
+É necessário Go **1.26.2 ou superior**:
+
+```sh
+go build -o ovc ./cmd/ovc
+```
+
+No Linux/macOS, instale o binário gerado com `bash scripts/install.sh ./ovc`. No Windows, compile como `ovc.exe` e use `./scripts/install.ps1 -Binary ./ovc.exe -AddToPath`.
+
+## Um ciclo típico de trabalho
 
 ```text
-/model anthropic/claude-sonnet-4-5     /harness inspect
-/sessions                            /resume <id>
-/context                             /cost
-/changes                             /permissions
-/capabilities                        /help
+❯ Investigue este parser, proponha uma correção pequena e verifique-a.
+
+ENTENDER   Leia a implementação, as instruções e os testes relevantes.
+REVISAR    Examine o diff proposto antes de qualquer alteração.
+APROVAR    Confirme ou rejeite a operação individual.
+VERIFICAR  Execute o comando autorizado e confira o resultado real.
+```
+
+Esse exemplo ilustra o fluxo; não representa uma execução real nem garante que qualquer alteração será bem-sucedida.
+
+Atalhos e comandos úteis:
+
+```text
+/model <provedor/modelo>   /harness inspect
+/sessions                  /resume <id>
+/context                   /cost
+/changes                   /permissions
+/capabilities              /help
 /init · /undo · /doctor
 ```
 
-Project instructions from `AGENTS.md` ride along in every turn; `/undo` reverses the last applied change.
+As instruções do projeto em `AGENTS.md` são incluídas no contexto de trabalho. Consulte `/help` para os comandos disponíveis na versão instalada.
 
-## Browser and computer use
+## Segurança: saiba os limites
 
-Enable only the capabilities the task needs:
+- As ferramentas comuns de leitura e escrita de arquivos são restritas ao workspace configurado e aplicam políticas de exclusão para caminhos sensíveis.
+- Alterações de arquivos são apresentadas para revisão e exigem aprovação individual antes de serem aplicadas.
+- No Linux, a execução de comandos usa Bubblewrap por padrão e falha de forma fechada se o sandbox exigido não estiver disponível.
+- **O sandbox de processos integrado é somente para Linux.** No macOS e Windows, comandos que exigem confinamento falham de forma fechada. A opção `--allow-unsandboxed-shell` habilita explicitamente execução com os privilégios do usuário do sistema e não deve ser confundida com isolamento.
+- As integrações de desktop dependem de permissões e capacidades específicas de cada plataforma. A compilação cruzada não comprova o comportamento nativo.
 
-```sh
-ovc --setup-browser
-```
+Leia [Segurança e limites de execução](docs/security.md) antes de habilitar shell ou automação. Não há garantia de que operações externas, processos destacados ou ações em aplicativos sejam sempre reversíveis.
 
-```text
-/permissions browser on
-/permissions desktop on
-/permissions clipboard on
-```
+## Documentação
 
-Every workflow/action still requires approval. Browser workflows specify authorized origins and interactions; desktop actions use the real visible desktop. Screenshots are transient model evidence and are not saved in session history. Read the [automation contract](docs/automation.md) before enabling desktop input.
+| Documento | Conteúdo |
+| --- | --- |
+| [Guia do usuário](docs/guide.md) | Instalação, configuração, provedores e comandos |
+| [Arquitetura](docs/architecture.md) | Módulos, ciclo do agente, persistência e responsabilidades por plataforma |
+| [Segurança](docs/security.md) | Aprovações, limites de confinamento, credenciais e execução |
+| [Automação](docs/automation.md) | Fluxos de navegador, ações de desktop e adaptadores |
+| [Testes e diagnóstico](docs/testing.md) | Testes automatizados, validação de ambiente e solução de problemas |
+| [Site de apresentação](site/) | Código da landing page estática; a publicação no GitHub Pages requer configuração própria |
 
-| Environment | Execution boundary |
-| :--- | :--- |
-| Linux | Bubblewrap command isolation; X11 desktop backend. Wayland is unsupported by the built-in backend. |
-| macOS | AppleScript/CoreGraphics desktop backend; Accessibility/Screen Recording grants required. |
-| Windows | PowerShell/Win32 desktop backend; interactive desktop required; secure/UAC desktops excluded. |
+## Como ajudar
 
-The built-in process sandbox is Linux-only. Required isolation fails closed on unsupported hosts. `--allow-unsandboxed-shell` explicitly enables approved commands with host-user privileges. Details: [security guarantees and limitations](docs/security.md).
+- **Experimente e dê uma estrela:** [⭐ OpenVibeCoding no GitHub](https://github.com/iagoluch/OpenVibeCoding/stargazers).
+- **Reporte um problema:** [abra uma issue](https://github.com/iagoluch/OpenVibeCoding/issues).
+- **Explore o código e proponha melhorias:** pull requests são bem-vindos; consulte as instruções do repositório antes de contribuir.
 
-## Verification status
+O projeto é distribuído sob a licença [MIT](LICENSE).
 
-**Verified locally:** automated and race tests, protocol fixtures for all three native adapters, shared-runtime auth/concurrency/approval, SQLite/context recovery, real Linux Chromium workflows, Bubblewrap isolation, and real X11 mouse/keyboard/screenshot operations. Six target builds are generated by the packaging script.
+---
 
-**Requires target environments/accounts:** native macOS/Windows execution and desktop/keychain behavior, plus live paid-provider requests. Cross-compilation does not certify native runtime behavior. See the [validation guide](docs/testing.md).
-
-## Explore the project
-
-| Resource | What you'll find |
-| :--- | :--- |
-| [User guide](docs/guide.md) | Configuration, providers, commands, runtime, installation and removal |
-| [Architecture](docs/architecture.md) | Modules, turn lifecycle, persistence and platform responsibilities |
-| [Security](docs/security.md) | Actual confinement, approvals, credentials, cancellation and limits |
-| [Automation](docs/automation.md) | Browser workflows, desktop action schema and external adapters |
-| [Testing](docs/testing.md) | Automated checks, real-provider acceptance and troubleshooting |
-| [Presentation website](site/) | Responsive static landing page; ready for GitHub Pages |
-
-```sh
-go test -race ./...
-go vet ./...
-bash scripts/package.sh
-```
-
-<p align="center"><sub>An independent terminal coding project. Built around reviewable actions and observed results. MIT licensed.</sub></p>
+<p align="center"><sub>OpenVibeCoding — do pedido à mudança verificada, com aprovação humana no fluxo.</sub></p>
