@@ -40,6 +40,4 @@ Generic AI gradients, decorative glowing orbs, excessive glassmorphism, robot ma
 
 ## Approved primary logo
 
-The primary symbol is the blue interlocking open-circle mark displayed on a white circular disc. Use `assets/logo.svg` as the canonical vector source. Do not add the OVC letters inside the symbol. The compact Byte mascot remains a separate secondary brand element and appears alongside the wordmark or in small supporting positions.
-
-The README banners place the symbol prominently on the right and Byte as a smaller companion. They are localized by README language.
+The primary symbol is the approved blue open-circle and central-loop/check mark on a white circular disc. The canonical vector source is `assets/logo.svg`. The mark has no OVC lettering. The Byte mascot remains a separate secondary element. README banners use the symbol as the dominant visual and Byte as the smaller companion.
