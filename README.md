@@ -49,6 +49,8 @@ Add `~/.local/bin` to PATH if needed. On Windows, run `./scripts/install.ps1 -Ad
 
 Credentials use the OS keychain by default. `ovc --setup` detects Ollama and LM Studio, offers free-tier providers with the page that issues each key, and can import credentials already configured in OpenCode; it only activates a provider after one real request succeeds. Environment variables are supported; a restricted local credential file requires explicit opt-in. Run `ovc --doctor` to inspect setup without exposing keys.
 
+Prefer a browser? `ovc --ui` starts the same runtime, prints one single-use pairing link (valid for five minutes) and opens the local web client — free-model onboarding, streaming replies and the same operation approvals.
+
 Release archives for Linux, macOS and Windows (amd64/arm64) are built by CI from tagged commits and published on [Releases](https://github.com/iagoluch/OpenVibeCoding/releases/latest); the installers verify SHA-256 checksums. See the [installation and upgrade guide](docs/guide.md#install-and-launch).
 
 ## The development loop

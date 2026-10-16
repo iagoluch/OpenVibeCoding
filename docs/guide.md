@@ -84,7 +84,7 @@ Grants do not remove operation approvals. Network and install default off. The p
 
 ## Shared runtime and sessions
 
-The first terminal starts one local runtime; subsequent terminals reuse it. The daemon owns SQLite, provider configuration, audit records and task coordination. IPC uses authenticated loopback HTTP on all three operating systems, with a random token in a private metadata file and an OS lock preventing duplicate daemons. Browsers cannot invoke it via cross-origin requests.
+The first terminal starts one local runtime; subsequent terminals reuse it. The daemon owns SQLite, provider configuration, audit records and task coordination. IPC uses authenticated loopback HTTP on all three operating systems, with a random token in a private metadata file and an OS lock preventing duplicate daemons. Browsers cannot invoke it via cross-origin requests; the browser client of `ovc --ui` is same-origin only.
 
 ```sh
 ovc --runtime start
@@ -99,6 +99,18 @@ Each client has independent identity and approvals. Turns are serialized per ses
 SQLite stores original messages, tool outcomes, approvals, task lifecycle, configuration changes, summaries and token/cost usage. Migrations are transactional. Recovery marks an interrupted tool outcome as uncertain and never replays a mutation automatically. Exports include session history, summary, usage and audit records; running sessions must finish or be cancelled before export. Screenshots are transient and are not stored in the session database.
 
 Context preparation incrementally summarizes older complete exchanges into structured task memory while retaining recent messages. Source IDs support selective retrieval through `recall`, with offsets for large outputs. Original history is preserved. Token estimates are conservative byte-based estimates; exact usage comes from providers when available. Summaries can be imperfect: original evidence remains authoritative, and past approvals never authorize new work. An oversized current user task fails with a useful error rather than discarding it silently.
+
+## Browser UI (`ovc --ui`)
+
+`ovc --ui` opens the same shared runtime in a browser client instead of the terminal interface:
+
+```sh
+ovc --ui --workspace /path/to/project
+```
+
+It starts or reuses the runtime, prints one pairing link and opens it in the default browser. The link carries a 256-bit single-use code that expires after five minutes and is never written to the runtime log; only a client holding the runtime token may mint one. Opening it pairs that browser and redirects to the panel; the runtime keeps running afterwards, so `ovc --runtime stop` is what shuts it down. Pairing governs the handoff, not later requests: every request is authenticated on its own, the panel answers only on this machine's loopback origin, and another browser needs its own link. See [security guarantees](security.md#browser-ui-loopback-web-client).
+
+The first screen is free-first onboarding: it lists local Ollama/LM Studio models and the free-tier providers (each with the page that issues its key), and activates the choice only after one real request succeeds; a secondary option activates without testing. After that the client is the same agent over the same runtime: replies stream in, every operation still requires an approval, and session handling, model switching and cancellation work as in the terminal. The page holds no state of its own — sessions, approvals and configuration stay owned by the runtime — and it registers no service worker, so nothing of it keeps running after the tab closes.
 
 ## Browser QA
 

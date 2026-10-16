@@ -9,16 +9,17 @@
 | `internal/credentials` | OS keychain plus explicit restricted-file fallback |
 | `internal/provider` | OpenAI-compatible, native Anthropic and native Gemini streaming adapters; tools, images, usage, errors/retries |
 | `internal/store` | SQLite migrations, sessions, original exchanges, audit records, summaries, usage and exports |
-| `internal/runtime` | Authenticated local IPC, OS ownership lock, daemon reuse, per-session/workspace coordination and approval routing |
+| `internal/runtime` | Authenticated local IPC, OS ownership lock, daemon reuse, per-session/workspace coordination, approval routing and the browser pairing interface (`ui.go`) |
 | `internal/agent` | Bounded model/tool loop, planning instructions, harness policy, approvals, incremental context and evidence retrieval |
 | `internal/workspace` | Confined file tools, ignore rules, search, Git inspection, reviewed writes/moves/deletes, shell and Linux sandbox |
 | `internal/automation` | Embedded Playwright worker, native platform backends, screenshots, capability checks and external adapter contract |
 | `internal/tui` | Bubble Tea streaming transcript, command input/history, model/harness switches, permissions, reviews and session navigation |
+| `internal/webui` | Embedded browser client served by the daemon on its own origin: page, assets and installable manifest (no service worker); a stateless projection — sessions, approvals and configuration stay in the runtime |
 | `scripts` | Build, archive/checksum generation, binary download/local installation, upgrades and uninstall |
 
 ## Turn lifecycle
 
-A client connects to the existing runtime or starts one. It selects a persisted session and provider/model/harness. The runtime validates selection and owns the workspace/session for the turn. Original messages are saved before requests; context preparation incrementally summarizes older exchanges without deleting them. Provider tool calls are assembled and validated. Read tools execute within their boundary; operations needing approval are streamed to the owning client and remain paused until that client answers. The audit entry precedes execution. Observed outputs and usage are persisted. Cancellation propagates through the service to providers/processes/workers.
+A client (terminal or browser) connects to the existing runtime or starts one. It selects a persisted session and provider/model/harness. The runtime validates selection and owns the workspace/session for the turn. Original messages are saved before requests; context preparation incrementally summarizes older exchanges without deleting them. Provider tool calls are assembled and validated. Read tools execute within their boundary; operations needing approval are streamed to the owning client and remain paused until that client answers. The audit entry precedes execution. Observed outputs and usage are persisted. Cancellation propagates through the service to providers/processes/workers.
 
 The TUI continues handling resize, scrolling, cancellation and review while requests run. Tool workflows are bounded to sixteen model requests per turn. Browser/native steps are actual worker/API operations; unsupported environments return errors. A screenshot is stripped from durable tool output and attached to a later model request only in transient memory.
 
