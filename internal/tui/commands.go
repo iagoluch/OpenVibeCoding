@@ -7,7 +7,7 @@ import (
 	"github.com/iagoluch/OpenVibeCoding/internal/i18n"
 )
 
-var commands = []string{"/changes", "/capabilities", "/help", "/model", "/provider", "/harness", "/sessions", "/resume", "/new", "/clear", "/context", "/cost", "/permissions", "/config", "/status", "/rename", "/delete", "/init", "/undo", "/doctor", "/exit"}
+var commands = []string{"/changes", "/capabilities", "/help", "/language", "/model", "/provider", "/harness", "/sessions", "/resume", "/new", "/clear", "/context", "/cost", "/permissions", "/config", "/status", "/rename", "/delete", "/init", "/undo", "/doctor", "/exit"}
 
 func Parse(s string) (string, string, error) {
 	return ParseLanguage(s, "en")
