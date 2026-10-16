@@ -1,5 +1,7 @@
 # Official implementation references
 
+[Português](pt-BR/referencias.md) · [English](sources.md) · [Español](es/referencias.md) · [简体中文](zh-CN/sources.md)
+
 Consulted on 2026-10-15. Installed module APIs were also checked with `go doc` before using Bubble Tea's v2 `View`, textarea and viewport APIs.
 
 - [Go 1.26 release notes](https://go.dev/doc/go1.26): toolchain and platform support. Go's `os.Root` APIs provide traversal-resistant filesystem operations; they are not process isolation.

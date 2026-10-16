@@ -1,8 +1,14 @@
-<p align="center"><img src="assets/banner.svg" alt="OpenVibeCoding — De la intención al cambio verificado" width="100%"></p>
+<p align="center">
+  <strong>Un entorno de desarrollo con IA pensado para una experiencia de aplicación de escritorio.</strong><br>
+  Revisa cambios, aprueba operaciones y comprueba resultados: tú mantienes el control.
+</p>
+
+<p align="center"><strong>Aplicación de escritorio integrada: aún no publicada · CLI/TUI: disponible hoy</strong></p>
 
 <p align="center">
-  <strong>Un agente de programación con IA que trabaja en tu terminal y te mantiene al mando.</strong><br>
-  Comprende el proyecto. Revisa los cambios. Ejecuta pruebas. Comprueba el resultado.
+  <a href="https://github.com/iagoluch/OpenVibeCoding/releases/latest">⬇️ Probar la versión actual (CLI/TUI)</a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/iagoluch/OpenVibeCoding/stargazers">⭐ Dale una estrella al proyecto</a>
 </p>
 
 <p align="center">
@@ -14,9 +20,9 @@
 
 <p align="center">
   <a href="#instalación">Instalar</a> ·
-  <a href="docs/guide.md">Guía</a> ·
-  <a href="docs/security.md">Seguridad</a> ·
-  <a href="docs/architecture.md">Arquitectura</a>
+  <a href="docs/es/guia.md">Guía</a> ·
+  <a href="docs/es/seguridad.md">Seguridad</a> ·
+  <a href="docs/es/arquitectura.md">Arquitectura</a>
 </p>
 
 <p align="center"><a href="https://github.com/iagoluch/OpenVibeCoding/stargazers">⭐ ¿Te resulta útil? Dale una estrella al proyecto</a></p>
@@ -29,13 +35,17 @@
 
 ## ¿Qué es OpenVibeCoding?
 
-**OpenVibeCoding (OVC)** es un agente de programación de código abierto escrito en Go. Reúne conversaciones con modelos de IA y herramientas de desarrollo en un flujo de trabajo revisable desde la terminal.
+**OpenVibeCoding (OVC)** es un entorno de desarrollo con IA y código abierto que está evolucionando hacia una aplicación de escritorio integrada. El objetivo es ofrecer al desarrollador un único espacio para trabajar con el agente, revisar cambios propuestos y consultar evidencias de ejecución.
 
-En lugar de limitarse a sugerir código, OVC puede inspeccionar un proyecto, proponer cambios en archivos, pedir tu aprobación antes de aplicarlos y ejecutar comandos autorizados para comprobar el resultado. Las sesiones se guardan localmente para conservar el contexto y las evidencias más allá de una única ventana de terminal.
+**Estado actual, sin ambigüedades:** la aplicación de escritorio integrada todavía no tiene un binario ni un instalador publicado. La versión pública disponible hoy es **CLI/TUI** (línea de comandos con interfaz de terminal). Las instrucciones de descarga e instalación siguientes corresponden a esa versión, no a una aplicación de escritorio ya publicada.
 
-**La idea central:** el modelo propone, tú revisas, el programa ejecuta la operación autorizada y el resultado observado queda disponible.
+## La experiencia de escritorio que estamos construyendo
 
-## ¿Por qué probarlo?
+La experiencia de escritorio prevista busca reunir en una sola interfaz la selección de proyectos, las conversaciones con el agente, la revisión de diffs, la aprobación por operación, el historial de tareas y la verificación de resultados. Las integraciones de navegador y escritorio dependen de la plataforma y de los permisos concedidos por el usuario.
+
+Esta sección describe la dirección del producto, no funciones de una GUI de escritorio ya publicada.
+
+## Qué ofrece hoy el CLI/TUI
 
 | Comprender | Cambiar con control | Verificar |
 | --- | --- | --- |
@@ -56,7 +66,7 @@ Las conversaciones, los resúmenes de contexto, los registros de auditoría y el
 
 OVC incluye pruebas de QA de navegador con Playwright e integraciones de escritorio que dependen del sistema operativo. Habilita únicamente las capacidades que necesita tu tarea. Las acciones de automatización están sujetas a permisos explícitos y aprobación según el contrato de cada herramienta.
 
-## Instalación
+## Probar la versión pública actual (CLI/TUI)
 
 ### Linux y macOS
 
@@ -142,18 +152,18 @@ Las instrucciones del proyecto de `AGENTS.md` se incluyen en el contexto de trab
 - **El sandbox de procesos integrado solo funciona en Linux.** En macOS y Windows, los comandos que requieren confinamiento fallan de forma cerrada. La opción explícita `--allow-unsandboxed-shell` habilita comandos con los privilegios del usuario del sistema anfitrión; esto no equivale a aislamiento.
 - Las integraciones de escritorio requieren permisos y capacidades específicas de cada plataforma. La compilación cruzada no certifica el comportamiento nativo.
 
-Lee [Seguridad y límites de ejecución](docs/security.md) antes de habilitar shell o automatización. No se garantiza que las operaciones externas, los procesos separados ni las acciones en otras aplicaciones sean reversibles.
+Lee [Seguridad y límites de ejecución](docs/es/seguridad.md) antes de habilitar shell o automatización. No se garantiza que las operaciones externas, los procesos separados ni las acciones en otras aplicaciones sean reversibles.
 
 ## Documentación
 
 | Documento | Contenido |
 | --- | --- |
-| [Guía de usuario](docs/guide.md) | Instalación, configuración, proveedores y comandos |
-| [Arquitectura](docs/architecture.md) | Módulos, ciclo del agente, persistencia y responsabilidades de cada plataforma |
-| [Seguridad](docs/security.md) | Aprobaciones, límites de ejecución, credenciales y restricciones |
-| [Automatización](docs/automation.md) | Flujos de navegador, acciones de escritorio y adaptadores |
-| [Pruebas y diagnóstico](docs/testing.md) | Comprobaciones automatizadas, validación del entorno y solución de problemas |
-| [Sitio de presentación](site/) | Código de la landing page estática; GitHub Pages requiere configuración adicional |
+| [Guía de usuario](docs/es/guia.md) | Instalación, configuración, proveedores y comandos |
+| [Arquitectura](docs/es/arquitectura.md) | Módulos, ciclo del agente, persistencia y responsabilidades de cada plataforma |
+| [Seguridad](docs/es/seguridad.md) | Aprobaciones, límites de ejecución, credenciales y restricciones |
+| [Automatización](docs/es/automatizacion.md) | Flujos de navegador, acciones de escritorio y adaptadores |
+| [Pruebas y diagnóstico](docs/es/pruebas.md) | Comprobaciones automatizadas, validación del entorno y solución de problemas |
+| Referencias técnicas | [Referencias técnicas](docs/es/referencias.md) |
 
 ## Contribuir
 

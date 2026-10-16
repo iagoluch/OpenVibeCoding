@@ -1,14 +1,12 @@
 <p align="center">
-  <img src="assets/banner-pt-br.svg" alt="OpenVibeCoding — da intenção à mudança verificada" width="100%">
+  <strong>Um ambiente de desenvolvimento com IA, projetado para uma experiência desktop.</strong><br>
+  Revise mudanças, aprove operações e acompanhe resultados — com você no controle.
 </p>
 
-<p align="center">
-  <strong>Programação com IA, no seu terminal — sem abrir mão do controle.</strong><br>
-  Peça uma tarefa. Entenda o que será alterado. Revise. Aprove. Verifique o resultado.
-</p>
+<p align="center"><strong>Aplicativo desktop integrado: ainda em desenvolvimento · CLI/TUI: disponível hoje</strong></p>
 
 <p align="center">
-  <a href="https://github.com/iagoluch/OpenVibeCoding/releases/latest">⬇️ Baixar para Windows, Linux ou macOS</a>
+  <a href="https://github.com/iagoluch/OpenVibeCoding/releases/latest">⬇️ Experimentar a versão atual (CLI/TUI)</a>
   &nbsp;·&nbsp;
   <a href="https://github.com/iagoluch/OpenVibeCoding">⭐ Apoiar com uma estrela</a>
 </p>
@@ -30,13 +28,17 @@
 
 ## O que é o OpenVibeCoding?
 
-O **OpenVibeCoding (OVC)** é um agente de programação com inteligência artificial que trabalha na pasta do seu projeto e usa ferramentas reais de desenvolvimento.
+O **OpenVibeCoding (OVC)** é um ambiente de desenvolvimento com inteligência artificial, de código aberto, pensado para evoluir para um aplicativo desktop integrado. O objetivo é dar ao desenvolvedor um lugar único para trabalhar com o agente, revisar alterações e acompanhar evidências de execução.
 
-Em vez de apenas responder com trechos de código, ele pode explorar os arquivos, entender a estrutura do projeto, propor alterações, pedir sua aprovação e executar comandos para conferir o que aconteceu. O histórico das conversas e das tarefas fica salvo localmente.
+**Status atual, sem ambiguidade:** o aplicativo desktop integrado ainda não tem binário ou instalador publicado. A versão pública disponível hoje é o **CLI/TUI** (linha de comando com interface no terminal). Os passos de download abaixo são dessa versão atual — não de um app desktop já lançado.
 
-**Você continua no comando:** o OVC mostra mudanças para revisão antes de aplicá-las e não deve dizer que algo funcionou sem observar o resultado.
+## Foco do produto: aplicativo desktop
 
-## O que dá para fazer com ele?
+A experiência desktop planejada deve reunir seleção de projeto, conversa com o agente, revisão de diffs, aprovação operação por operação, histórico de tarefas e verificação de resultados em uma interface integrada. Integrações de navegador e desktop dependem das permissões e dos recursos disponíveis no sistema operacional.
+
+Esta seção descreve a direção do produto, não funcionalidades de uma interface desktop já publicada.
+
+## O que a versão CLI/TUI já oferece
 
 - **Entender um projeto existente:** ler arquivos, procurar código, consultar instruções do projeto e inspecionar o estado do Git.
 - **Trabalhar no código:** propor a criação, substituição, movimentação ou remoção de arquivos e apresentar as alterações para revisão.
@@ -56,7 +58,7 @@ Em vez de apenas responder com trechos de código, ele pode explorar os arquivos
 
 O exemplo acima descreve o fluxo de trabalho; não é uma demonstração gravada nem uma promessa de que toda tarefa será resolvida automaticamente.
 
-## Instale o OVC
+## Experimente a versão pública atual (CLI/TUI)
 
 **Você não precisa instalar Go para usar os binários prontos.** Baixe uma versão para o seu sistema na página de [Releases](https://github.com/iagoluch/OpenVibeCoding/releases/latest). Os arquivos publicados incluem o programa e um arquivo de checksums SHA-256.
 
@@ -156,18 +158,18 @@ Você escolhe o provedor e o modelo conforme disponibilidade, orçamento e neces
 - **No Windows e no macOS, o OVC não possui o mesmo sandbox de processos integrado.** Comandos que exigem esse confinamento são recusados. A opção explícita `--allow-unsandboxed-shell` permite execução com os privilégios da sua conta no sistema e não é isolamento.
 - Automação de navegador e desktop depende de configuração e permissões da plataforma. Ações externas nem sempre são reversíveis.
 
-Leia [Segurança e limites de execução](docs/security.md) para entender os detalhes antes de habilitar shell ou automação.
+Leia [Segurança e limites de execução](docs/pt-BR/seguranca.md) para entender os detalhes antes de habilitar shell ou automação.
 
 ## Documentação e ajuda
 
 | Quero... | Consulte |
 | --- | --- |
-| Começar, configurar um provedor e conhecer os comandos | [Guia do usuário](docs/guide.md) |
-| Entender como o projeto foi organizado | [Arquitetura](docs/architecture.md) |
-| Conhecer proteções e limitações reais | [Segurança](docs/security.md) |
-| Configurar navegador ou ações de desktop | [Automação](docs/automation.md) |
-| Executar testes e diagnosticar problemas | [Testes e diagnóstico](docs/testing.md) |
-| Ver o código-fonte da página de apresentação | [Site](site/) |
+| Começar, configurar um provedor e conhecer os comandos | [Guia do usuário](docs/pt-BR/guia.md) |
+| Entender como o projeto foi organizado | [Arquitetura](docs/pt-BR/arquitetura.md) |
+| Conhecer proteções e limitações reais | [Segurança](docs/pt-BR/seguranca.md) |
+| Configurar navegador ou ações de desktop | [Automação](docs/pt-BR/automacao.md) |
+| Executar testes e diagnosticar problemas | [Testes e diagnóstico](docs/pt-BR/testes.md) |
+| Referências técnicas | [Referências técnicas](docs/pt-BR/referencias.md) |
 
 ## Gostou da ideia? Ajude o projeto a chegar a mais gente.
 
