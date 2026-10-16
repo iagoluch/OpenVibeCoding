@@ -23,6 +23,9 @@ func TestNormalize(t *testing.T) {
 	if _, ok := Normalize("fr-FR"); ok {
 		t.Fatal("unsupported locale accepted")
 	}
+	if _, ok := Normalize("pt-PT"); ok {
+		t.Fatal("European Portuguese must not be silently mapped to Brazilian Portuguese")
+	}
 }
 
 func TestResolveFromEnvironment(t *testing.T) {
