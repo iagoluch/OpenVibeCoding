@@ -1,127 +1,182 @@
-<p align="center"><img src="assets/banner.svg" alt="OpenVibeCoding — From intent to verified change" width="100%"></p>
-
 <p align="center">
-  <strong>A terminal workspace for real development work.</strong><br>
-  Inspect projects. Review changes. Run tests. Keep the evidence.
+  <img src="assets/banner-pt-br.svg" alt="OpenVibeCoding — da intenção à mudança verificada" width="100%">
 </p>
 
 <p align="center">
-  <a href="#get-started">Get started</a> ·
-  <a href="docs/guide.md">User guide</a> ·
-  <a href="docs/security.md">Security boundaries</a> ·
-  <a href="docs/automation.md">Computer use</a> ·
-  <a href="docs/testing.md">Testing</a>
+  <strong>Programação com IA, no seu terminal — sem abrir mão do controle.</strong><br>
+  Peça uma tarefa. Entenda o que será alterado. Revise. Aprove. Verifique o resultado.
+</p>
+
+<p align="center">
+  <a href="https://github.com/iagoluch/OpenVibeCoding/releases/latest">⬇️ Baixar para Windows, Linux ou macOS</a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/iagoluch/OpenVibeCoding">⭐ Apoiar com uma estrela</a>
+</p>
+
+<p align="center">
+  <a href="README.md">🇧🇷 Português</a> ·
+  <a href="README.en.md">🇺🇸 English</a> ·
+  <a href="README.es.md">🇪🇸 Español</a> ·
+  <a href="README.zh-CN.md">🇨🇳 简体中文</a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/license-MIT-brightgreen" alt="Licença MIT">
+  <img src="https://img.shields.io/badge/feito%20em-Go-00ADD8?logo=go&logoColor=white" alt="Feito em Go">
+  <img src="https://img.shields.io/badge/Windows-Linux-macOS-informational" alt="Windows, Linux e macOS">
 </p>
 
 ---
 
-## Your terminal. Your models. Your approval.
+## O que é o OpenVibeCoding?
 
-OpenVibeCoding is a Go/Bubble Tea coding agent with persistent sessions, native provider adapters, reviewed project tools, a shared local runtime, browser QA and desktop integrations.
+O **OpenVibeCoding (OVC)** é um agente de programação com inteligência artificial que trabalha na pasta do seu projeto e usa ferramentas reais de desenvolvimento.
 
-| Understand | Change | Verify |
-| :--- | :--- | :--- |
-| Read project instructions, search code and inspect Git | Review unified diffs and approve individual operations | Run tests, inspect exit codes and retain observed results |
-| Retrieve earlier evidence and compact long context | Create, replace, move and delete workspace files | Test real websites and inspect screenshots |
+Em vez de apenas responder com trechos de código, ele pode explorar os arquivos, entender a estrutura do projeto, propor alterações, pedir sua aprovação e executar comandos para conferir o que aconteceu. O histórico das conversas e das tarefas fica salvo localmente.
 
-### Built to carry the work forward
+**Você continua no comando:** o OVC mostra mudanças para revisão antes de aplicá-las e não deve dizer que algo funcionou sem observar o resultado.
 
-- **Your choice of model.** Native OpenAI, Anthropic and Gemini protocols; free-tier presets for OpenRouter, Groq, Cerebras, NVIDIA NIM, Z.AI and Google AI Studio; compatible DeepSeek, Kimi, Qwen, Mistral and local endpoints.
-- **One local runtime.** Multiple terminals reuse an authenticated service with coordinated workspace/session execution.
-- **Persistent context.** SQLite keeps original conversations, incremental summaries, audit records and usage.
-- **Visible control.** File diffs, operation approvals, separate automation/network grants and cancellation.
-- **Beyond the terminal.** Playwright workflows and platform desktop backends, with capability detection and OS permission checks.
-- **Portable binaries.** Linux, macOS and Windows builds for amd64 and arm64. Launch the application with `ovc`.
+## O que dá para fazer com ele?
 
-## Get started
+- **Entender um projeto existente:** ler arquivos, procurar código, consultar instruções do projeto e inspecionar o estado do Git.
+- **Trabalhar no código:** propor a criação, substituição, movimentação ou remoção de arquivos e apresentar as alterações para revisão.
+- **Conferir o resultado:** executar comandos autorizados, incluindo comandos de testes, e observar a saída e o código de retorno.
+- **Retomar de onde parou:** manter conversas, contexto e registros das tarefas em armazenamento local.
+- **Automatizar tarefas compatíveis:** usar fluxos de navegador com Playwright ou integrações de desktop quando estiverem configurados e autorizados.
+- **Escolher a IA:** conectar provedores diferentes, endpoints compatíveis com a API da OpenAI ou modelos locais.
 
-Install the latest release — the script downloads the archive for your OS/CPU and verifies SHA-256 (no Go required):
+## Como funciona na prática?
+
+<ol>
+  <li><strong>Você descreve a tarefa.</strong> Por exemplo: “Investigue por que este teste falha e proponha uma correção pequena”.</li>
+  <li><strong>O OVC investiga.</strong> Ele consulta os arquivos e as instruções relevantes do projeto.</li>
+  <li><strong>Você revisa a mudança.</strong> Veja o diff proposto e aprove ou rejeite a operação. A aprovação vale para aquela operação, não para tudo que vier depois.</li>
+  <li><strong>Você confere o resultado.</strong> Quando autorizado, o agente executa a verificação e informa a saída observada.</li>
+</ol>
+
+O exemplo acima descreve o fluxo de trabalho; não é uma demonstração gravada nem uma promessa de que toda tarefa será resolvida automaticamente.
+
+## Instale o OVC
+
+**Você não precisa instalar Go para usar os binários prontos.** Baixe uma versão para o seu sistema na página de [Releases](https://github.com/iagoluch/OpenVibeCoding/releases/latest). Os arquivos publicados incluem o programa e um arquivo de checksums SHA-256.
+
+### Windows (opção simples)
+
+1. Abra [Releases — baixar OVC](https://github.com/iagoluch/OpenVibeCoding/releases/latest).
+2. Baixe `openvibecoding-windows-amd64.zip` para a maioria dos PCs Windows com processador Intel ou AMD. Em dispositivos Windows com processador ARM, escolha `openvibecoding-windows-arm64.zip`.
+3. Extraia o ZIP para uma pasta.
+4. Abra o PowerShell nessa pasta e execute:
+
+```powershell
+.\ovc.exe --setup
+```
+
+O assistente ajuda a escolher um provedor de IA e configurar a credencial. Depois, abra seu projeto:
+
+```powershell
+.\ovc.exe --workspace "C:\caminho\do\seu\projeto"
+```
+
+Troque o caminho de exemplo pela pasta real do projeto. Esses comandos executam o programa a partir da pasta em que você extraiu o arquivo.
+
+### Linux
+
+Na página de [Releases](https://github.com/iagoluch/OpenVibeCoding/releases/latest), baixe `openvibecoding-linux-amd64.tar.gz` para a maioria dos PCs Linux ou `openvibecoding-linux-arm64.tar.gz` para sistemas ARM64. No terminal, entre na pasta onde o arquivo foi baixado e execute, usando o nome do arquivo correspondente:
+
+```sh
+tar -xzf openvibecoding-linux-amd64.tar.gz
+./ovc --setup
+./ovc --workspace "/caminho/do/seu/projeto"
+```
+
+### macOS
+
+Baixe na página de [Releases](https://github.com/iagoluch/OpenVibeCoding/releases/latest):
+
+- `openvibecoding-darwin-arm64.tar.gz` para Macs com Apple Silicon.
+- `openvibecoding-darwin-amd64.tar.gz` para Macs com processador Intel.
+
+No terminal, entre na pasta de download, extraia o arquivo correspondente e inicie o assistente:
+
+```sh
+tar -xzf openvibecoding-darwin-arm64.tar.gz
+./ovc --setup
+./ovc --workspace "/caminho/do/seu/projeto"
+```
+
+No Mac Intel, substitua o nome do arquivo pelo pacote `darwin-amd64`.
+
+### Quer instalar o comando no PATH?
+
+O repositório também contém instaladores que baixam o pacote correto, verificam o SHA-256 e instalam o comando no diretório do usuário. Essa opção requer Git para obter os scripts; **não requer Go**.
+
+Linux/macOS:
 
 ```sh
 git clone https://github.com/iagoluch/OpenVibeCoding.git
 cd OpenVibeCoding
 bash scripts/install.sh
-ovc --setup          # guided: local models, free tiers, key storage, real test
-ovc --workspace /path/to/project
 ```
 
-Add `~/.local/bin` to PATH if needed. On Windows, run `./scripts/install.ps1 -AddToPath`, then reopen PowerShell (if script execution is blocked: `powershell -ExecutionPolicy Bypass -File scripts/install.ps1 -AddToPath`). You can also download the archive for your OS/CPU directly from [Releases](https://github.com/iagoluch/OpenVibeCoding/releases/latest). Building from source needs **Go 1.26.2+**: `go build -o ovc ./cmd/ovc`, then `bash scripts/install.sh ./ovc`.
+Windows (PowerShell):
 
-Credentials use the OS keychain by default. `ovc --setup` detects Ollama and LM Studio, offers free-tier providers with the page that issues each key, and can import credentials already configured in OpenCode; it only activates a provider after one real request succeeds. Environment variables are supported; a restricted local credential file requires explicit opt-in. Run `ovc --doctor` to inspect setup without exposing keys.
-
-Release archives for Linux, macOS and Windows (amd64/arm64) are built by CI from tagged commits and published on [Releases](https://github.com/iagoluch/OpenVibeCoding/releases/latest); the installers verify SHA-256 checksums. See the [installation and upgrade guide](docs/guide.md#install-and-launch).
-
-## The development loop
-
-```text
-❯ Inspect this parser, propose a focused fix, and verify it.
-
-PLAN     Read the implementation and relevant tests.
-REVIEW   Inspect the proposed file diff.
-APPROVE  Ctrl+Y accepts one operation; Ctrl+N rejects it.
-VERIFY   Run the approved command and report its actual result.
+```powershell
+git clone https://github.com/iagoluch/OpenVibeCoding.git
+cd OpenVibeCoding
+./scripts/install.ps1 -AddToPath
 ```
 
-*Illustrated flow. Actual changes and test results come from your project.*
+Depois de instalar pelo script, feche e abra novamente o terminal. No Windows, se a política de execução bloquear o instalador, execute `powershell -ExecutionPolicy Bypass -File scripts/install.ps1 -AddToPath` dentro da pasta do repositório.
 
-Enter sends · Ctrl+J adds a newline · Tab completes commands · PgUp/PgDn scroll · Esc cancels.
+### Primeiro uso: configure a IA
 
-```text
-/model anthropic/claude-sonnet-4-5     /harness inspect
-/sessions                            /resume <id>
-/context                             /cost
-/changes                             /permissions
-/capabilities                        /help
-/init · /undo · /doctor
-```
+Execute `ovc --setup` para abrir o assistente de configuração. Ele apresenta opções de provedores, pode detectar servidores locais do Ollama e LM Studio e permite importar credenciais compatíveis já configuradas no OpenCode.
 
-Project instructions from `AGENTS.md` ride along in every turn; `/undo` reverses the last applied change.
-
-## Browser and computer use
-
-Enable only the capabilities the task needs:
+Depois, abra a pasta do projeto em que deseja trabalhar:
 
 ```sh
-ovc --setup-browser
+ovc --workspace "/caminho/do/seu/projeto"
 ```
 
-```text
-/permissions browser on
-/permissions desktop on
-/permissions clipboard on
-```
+No Windows, usando um binário que você extraiu, execute `.\ovc.exe --workspace "C:\caminho\do\seu\projeto"`.
 
-Every workflow/action still requires approval. Browser workflows specify authorized origins and interactions; desktop actions use the real visible desktop. Screenshots are transient model evidence and are not saved in session history. Read the [automation contract](docs/automation.md) before enabling desktop input.
+**Sobre custos:** o OVC é código aberto e há opções de provedores com planos gratuitos ou modelos locais. Isso não significa que toda IA seja gratuita: cada provedor define suas próprias cotas, cobranças e condições, que podem mudar. O assistente de configuração mostra as alternativas disponíveis na versão instalada.
 
-| Environment | Execution boundary |
-| :--- | :--- |
-| Linux | Bubblewrap command isolation; X11 desktop backend. Wayland is unsupported by the built-in backend. |
-| macOS | AppleScript/CoreGraphics desktop backend; Accessibility/Screen Recording grants required. |
-| Windows | PowerShell/Win32 desktop backend; interactive desktop required; secure/UAC desktops excluded. |
+## Qual modelo de IA preciso usar?
 
-The built-in process sandbox is Linux-only. Required isolation fails closed on unsupported hosts. `--allow-unsandboxed-shell` explicitly enables approved commands with host-user privileges. Details: [security guarantees and limitations](docs/security.md).
+Nenhum modelo específico é obrigatório. O OVC oferece adaptadores nativos para OpenAI, Anthropic/Claude e Google Gemini, além de endpoints compatíveis com a API da OpenAI. Isso permite conectar serviços como DeepSeek, Kimi, Qwen, Mistral e servidores locais compatíveis.
 
-## Verification status
+Você escolhe o provedor e o modelo conforme disponibilidade, orçamento e necessidade. Os nomes, limites e planos podem mudar nos serviços externos.
 
-**Verified locally:** automated and race tests, protocol fixtures for all three native adapters, shared-runtime auth/concurrency/approval, SQLite/context recovery, real Linux Chromium workflows, Bubblewrap isolation, and real X11 mouse/keyboard/screenshot operations. Six target builds are generated by the packaging script.
+## Segurança e limites, sem maquiagem
 
-**Requires target environments/accounts:** native macOS/Windows execution and desktop/keychain behavior, plus live paid-provider requests. Cross-compilation does not certify native runtime behavior. See the [validation guide](docs/testing.md).
+- As ferramentas comuns de arquivos ficam restritas ao workspace configurado e aplicam exclusões para caminhos sensíveis.
+- As alterações de arquivo são mostradas para revisão e precisam de aprovação individual antes de serem aplicadas.
+- No Linux, a execução padrão de comandos usa Bubblewrap e falha de forma fechada quando o isolamento necessário não está disponível.
+- **No Windows e no macOS, o OVC não possui o mesmo sandbox de processos integrado.** Comandos que exigem esse confinamento são recusados. A opção explícita `--allow-unsandboxed-shell` permite execução com os privilégios da sua conta no sistema e não é isolamento.
+- Automação de navegador e desktop depende de configuração e permissões da plataforma. Ações externas nem sempre são reversíveis.
 
-## Explore the project
+Leia [Segurança e limites de execução](docs/security.md) para entender os detalhes antes de habilitar shell ou automação.
 
-| Resource | What you'll find |
-| :--- | :--- |
-| [User guide](docs/guide.md) | Configuration, providers, commands, runtime, installation and removal |
-| [Architecture](docs/architecture.md) | Modules, turn lifecycle, persistence and platform responsibilities |
-| [Security](docs/security.md) | Actual confinement, approvals, credentials, cancellation and limits |
-| [Automation](docs/automation.md) | Browser workflows, desktop action schema and external adapters |
-| [Testing](docs/testing.md) | Automated checks, real-provider acceptance and troubleshooting |
-| [Presentation website](site/) | Responsive static landing page; ready for GitHub Pages |
+## Documentação e ajuda
 
-```sh
-go test -race ./...
-go vet ./...
-bash scripts/package.sh
-```
+| Quero... | Consulte |
+| --- | --- |
+| Começar, configurar um provedor e conhecer os comandos | [Guia do usuário](docs/guide.md) |
+| Entender como o projeto foi organizado | [Arquitetura](docs/architecture.md) |
+| Conhecer proteções e limitações reais | [Segurança](docs/security.md) |
+| Configurar navegador ou ações de desktop | [Automação](docs/automation.md) |
+| Executar testes e diagnosticar problemas | [Testes e diagnóstico](docs/testing.md) |
+| Ver o código-fonte da página de apresentação | [Site](site/) |
 
-<p align="center"><sub>An independent terminal coding project. Built around reviewable actions and observed results. MIT licensed.</sub></p>
+## Gostou da ideia? Ajude o projeto a chegar a mais gente.
+
+Se o OVC parece útil para você, **[abra a página do OpenVibeCoding e clique em ⭐ Star](https://github.com/iagoluch/OpenVibeCoding)**. A estrela ajuda outras pessoas a descobrir o projeto e mostra que existe interesse na ferramenta.
+
+Também é possível [relatar um problema](https://github.com/iagoluch/OpenVibeCoding/issues) ou contribuir com código por meio de pull requests. O projeto usa a [licença MIT](LICENSE).
+
+<p align="center">
+  <strong>OpenVibeCoding — a IA propõe, você revisa, o resultado é conferido.</strong><br>
+  <a href="https://github.com/iagoluch/OpenVibeCoding/releases/latest">Baixe o OVC</a> ·
+  <a href="https://github.com/iagoluch/OpenVibeCoding">Dê uma estrela no GitHub</a>
+</p>
