@@ -3,6 +3,11 @@
 // turns, renders the stream, answers approvals and reads or mutates storage
 // through /store.
 //
+// A aparência replica o TUI do OpenCode (docs/research/opencode-tui-visual-contract.md):
+// a moldura ┃ da mensagem do usuário, a trilha de 42 colunas, a caixa de entrada
+// com base em ▀ e os rodapés de 1 linha. O idioma continua pt-BR e os glifos vêm
+// do contrato — nada aqui monta HTML.
+//
 // Rendering rule: every value that comes from the runtime, the model or the
 // user's files is inserted with textContent/createElement. Nothing here parses
 // markup, evaluates code or builds HTML strings.
@@ -41,7 +46,6 @@ identify(clientIdentity());
 const PREF_KEY = "ovc.prefs";
 const DRAFT_PREFIX = "ovc.draft.";
 const PREFERENCES = {
-  theme: "dark",
   density: "comfortable",
   scale: "medium",
   motion: "system",
@@ -66,21 +70,14 @@ function savePrefs() {
   }
 }
 
-function resolvedTheme() {
-  if (prefs.theme === "system") {
-    return window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
-  }
-  return prefs.theme === "light" ? "light" : "dark";
-}
-
 function applyPrefs() {
   const root = document.documentElement;
-  root.dataset.theme = resolvedTheme();
+  // O clone é o tema dracula/dark (§0): não existe paleta clara verificada, então
+  // data-theme fica fixo e o seletor de tema saiu dos Ajustes.
+  root.dataset.theme = "dark";
   root.dataset.density = prefs.density;
   root.dataset.scale = prefs.scale;
   root.dataset.motion = prefs.motion;
-  const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute("content", resolvedTheme() === "light" ? "#f6f7f3" : "#111418");
 }
 
 // ---------- state ----------
@@ -88,6 +85,7 @@ function applyPrefs() {
 const state = {
   info: null,
   protocol: null,
+  activeTasks: 0,
   sessions: [],
   session: null,
   running: null,
@@ -121,10 +119,87 @@ function view(name) {
   if (name !== "chat") closeSidebar();
 }
 
+// O status é derivado, nunca forçado pelo que acabou de ser desenhado: o painel
+// só diz "Trabalhando" quando há turno nesta aba ou tarefa viva no serviço.
 function setStatus(text, kind = "idle") {
   const chip = $("status-chip");
   chip.textContent = text;
-  chip.className = `chip chip-${kind}`;
+  const pill = $("status-pill");
+  pill.className = `pill pill-${kind}`;
+  pill.dataset.kind = kind;
+  setIndicator(kind);
+  paintRailDot(kind);
+}
+
+const SPINNER = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]; // §6, 80 ms por quadro
+let spinnerHandle = 0;
+
+function motionReduced() {
+  if (prefs.motion === "reduced") return true;
+  if (prefs.motion !== "system" || !window.matchMedia) return false;
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+/** Indicadores vivos: o do status e o da sessão aberta na trilha. */
+function liveDots() {
+  const dots = [];
+  const pill = $("status-dot");
+  if (pill) dots.push(pill);
+  const rail = document.querySelector('.rail-item[aria-current="true"] .rail-dot');
+  if (rail) dots.push(rail);
+  return dots;
+}
+
+function stopIndicator() {
+  if (spinnerHandle && typeof cancelAnimationFrame === "function") cancelAnimationFrame(spinnerHandle);
+  spinnerHandle = 0;
+}
+
+/** Único movimento estrutural do clone (§10.4); sem rAF (ou reduzido) fica no 1º quadro. */
+function startIndicator() {
+  const paint = (glyph) => {
+    for (const node of liveDots()) node.textContent = glyph;
+  };
+  if (motionReduced() || typeof requestAnimationFrame !== "function") {
+    paint(SPINNER[0]);
+    return;
+  }
+  const tick = (now) => {
+    paint(SPINNER[Math.floor(now / 80) % SPINNER.length]);
+    spinnerHandle = requestAnimationFrame(tick);
+  };
+  spinnerHandle = requestAnimationFrame(tick);
+}
+
+function setIndicator(kind) {
+  stopIndicator();
+  if (kind === "working") {
+    startIndicator();
+    return;
+  }
+  const dot = $("status-dot");
+  dot.textContent = kind === "waiting" ? "!" : "▪";
+}
+
+/** Marca de estado na trilha: `!` precisa de decisão, `●` é a sessão aberta. */
+function paintRailDot(kind) {
+  const dot = document.querySelector('.rail-item[aria-current="true"] .rail-dot');
+  if (dot) dot.className = kind === "idle" ? "rail-dot" : "rail-dot rail-dot-live";
+}
+
+function renderStatus() {
+  const waiting = pendingApprovals().length > 0;
+  const working = !waiting && Boolean(state.running || state.activeTasks > 0);
+  const kind = waiting ? "waiting" : working ? "working" : "idle";
+  setStatus(waiting ? "Aguardando você" : working ? "Trabalhando" : "Pronta", kind);
+  const hint = $("composer-hint");
+  const usage = $("composer-usage");
+  if (hint) hint.hidden = working;
+  if (usage) usage.hidden = !working;
+  // A linha do composer segue o mesmo estado: parada esperando a sua decisão, ela
+  // diz o que o agente espera em vez de repetir o último passo já concluído.
+  if (waiting) composerStatus("Aguardando sua decisão para continuar.");
+  else if (!working) composerStatus("");
 }
 
 function composerStatus(text) {
@@ -142,6 +217,14 @@ function truncate(text, limit) {
   return { text: value.slice(0, limit), truncated: true };
 }
 
+const TITLE_COLUMNS = 40; // §6/§10.6: título de sessão cortado em 40 colunas com …
+
+/** Corta em N colunas mantendo o … do TUI. */
+function clip(text, columns = TITLE_COLUMNS) {
+  const value = String(text || "");
+  return value.length > columns ? `${value.slice(0, columns - 1)}…` : value;
+}
+
 /** Splits "tool → result" exactly as the runtime writes it. */
 function splitToolEvent(text) {
   const raw = String(text || "");
@@ -152,22 +235,21 @@ function splitToolEvent(text) {
 
 function describeTool(name) {
   const table = {
-    list_files: ["Listou os arquivos do projeto", "◫"],
-    read_file: ["Leu um arquivo", "◳"],
-    search: ["Procurou no projeto", "⌕"],
-    git: ["Inspecionou o Git", "⑂"],
-    capabilities: ["Conferiu o que esta máquina oferece", "◎"],
-    recall: ["Recuperou uma mensagem anterior", "↺"],
-    write_file: ["Alterou um arquivo", "✎"],
-    delete_file: ["Apagou um arquivo", "✖"],
-    move_file: ["Moveu um arquivo", "→"],
-    shell: ["Rodou um comando", "▸"],
-    install_packages: ["Instalou dependências", "□"],
-    browser: ["Usou o navegador automatizado", "◎"],
-    desktop: ["Agiu na sua área de trabalho", "▣"],
+    list_files: "Listou os arquivos do projeto",
+    read_file: "Leu um arquivo",
+    search: "Procurou no projeto",
+    git: "Inspecionou o Git",
+    capabilities: "Conferiu o que esta máquina oferece",
+    recall: "Recuperou uma mensagem anterior",
+    write_file: "Alterou um arquivo",
+    delete_file: "Apagou um arquivo",
+    move_file: "Moveu um arquivo",
+    shell: "Rodou um comando",
+    install_packages: "Instalou dependências",
+    browser: "Usou o navegador automatizado",
+    desktop: "Agiu na sua área de trabalho",
   };
-  const [label, icon] = table[name] || [`Usou a ferramenta ${name || "desconhecida"}`, "•"];
-  return { label, icon };
+  return { label: table[name] || `Usou a ferramenta ${name || "desconhecida"}` };
 }
 
 /** Turns a raw tool result into a subject, a hint and the full evidence. */
@@ -258,17 +340,18 @@ function addError(error, context) {
   announce(info.title);
 }
 
-/** Tool results are the agent's evidence: compact line, full text on demand. */
+/** Resultado de ferramenta: linha compacta com o ícone de 2 células do TUI (§7.4). */
 function addToolTurn(text) {
   const { name, result } = splitToolEvent(text);
-  const { label, icon } = describeTool(name);
+  const { label } = describeTool(name);
   const values = splitToolResult(name, result);
+  const failed = /^(error|erro|failed|falha|rejected by user|operação recusada)/i.test(String(values.body || "").trim());
   const details = el("details");
   const summary = el("summary", {},
-    el("span", { class: "tool-icon", "aria-hidden": "true" }, icon),
+    el("span", { class: failed ? "tool-icon tool-icon-error" : "tool-icon", "aria-hidden": "true" }, failed ? "✗" : "✓"),
     el("strong", {}, label));
   if (values.subject) summary.append(el("span", { class: "mono" }, values.subject));
-  if (values.hint) summary.append(el("span", { class: "muted small" }, values.hint));
+  if (values.hint) summary.append(el("span", { class: "tool-hint" }, values.hint));
   details.append(summary);
 
   const shown = truncate(values.body, MAX_TOOL_OUTPUT);
@@ -280,7 +363,6 @@ function addToolTurn(text) {
   transcript().append(node);
   registerSearchable(node, `${label} ${values.subject}`);
   follow();
-  setStatus("Trabalhando", "working");
 }
 
 // ---------- approvals ----------
@@ -414,13 +496,13 @@ function addApprovalTurn(event) {
       note.classList.add("error-text");
     } finally {
       state.pending = state.pending.filter((item) => item !== record);
-      setStatus(state.running ? "Trabalhando" : "Pronta", state.running ? "working" : "idle");
+      renderStatus();
     }
   }
 
   transcript().append(node);
   follow();
-  setStatus("Aguardando você", "waiting");
+  renderStatus();
   node.focus();
   announce(`O agente precisa da sua decisão: ${copy.badge}.`);
   notify("O agente precisa da sua decisão", `${copy.badge}${info.target ? ` · ${info.target}` : ""}`);
@@ -471,6 +553,48 @@ function renderCounters() {
   const costChip = $("cost-chip");
   costChip.hidden = !usage.hasCost;
   if (usage.hasCost) costChip.textContent = `custo: US$ ${usage.cost.toFixed(4)}`;
+  // §8.2: com trabalho vivo, o rodapé do composer troca os atalhos pelo uso.
+  const live = $("composer-usage");
+  if (live) {
+    live.textContent = state.context
+      ? `${count(state.context)} tokens${model && model.context ? ` (${Math.min(99, Math.round((state.context / model.context) * 100))}%)` : ""}`
+      : "";
+  }
+}
+
+/** Cabeçalho da sessão: título, pasta real e números do contexto (§6). */
+function renderHead() {
+  const session = state.session;
+  $("chat-title").textContent = session ? session.Title || "Sem título" : "Sessão";
+  $("chat-workspace").textContent = session ? `${basename(session.Workspace)} · ${session.Workspace}` : "";
+  const place = $("composer-place");
+  if (place) place.textContent = session ? shorten(session.Workspace, 44) : "";
+  if (!session) {
+    state.usage = { input: 0, output: 0, cost: 0, hasCost: false };
+    state.context = 0;
+  }
+  renderCounters();
+}
+
+/** Linha de metadados do composer: agente · modelo provider · harness (§8.3). */
+function composerMeta() {
+  const active = state.info && state.info.active;
+  const button = $("model-button");
+  const provider = $("composer-provider");
+  const variant = $("composer-variant");
+  if (!active || !active.model) {
+    button.textContent = "—";
+    button.setAttribute("aria-label", "Escolher um modelo");
+    provider.textContent = "";
+    variant.textContent = "";
+    variant.hidden = true;
+    return;
+  }
+  button.textContent = active.model;
+  button.setAttribute("aria-label", `Trocar de modelo (em uso: ${active.model})`);
+  provider.textContent = active.provider || "";
+  variant.textContent = active.harness ? `· ${active.harness}` : "";
+  variant.hidden = !active.harness;
 }
 
 async function loadUsage() {
@@ -520,13 +644,8 @@ function setRunning(running) {
   state.running = running;
   $("stop-button").hidden = !running;
   $("send-button").textContent = running ? "Adicionar à fila" : "Enviar";
-  if (running) {
-    setStatus("Trabalhando", "working");
-    composerStatus("Trabalhando… o texto aparece conforme o agente responde.");
-  } else {
-    setStatus("Pronta", "idle");
-    composerStatus("");
-  }
+  composerStatus(running ? "Trabalhando… o texto aparece conforme o agente responde." : "");
+  renderStatus();
   renderQueue();
 }
 
@@ -595,6 +714,7 @@ async function runPrompt(prompt) {
     state.currentAssistant = null;
     setRunning(null);
     notify("O agente terminou", firstLine(prompt, 80));
+    await refreshHealth();
     await refreshSessions();
     await loadUsage();
     if (state.queue.length) {
@@ -603,6 +723,17 @@ async function runPrompt(prompt) {
       runPrompt(next);
     }
   }
+}
+
+// A D3 do QA: o motor emite um código estável (agent.Event.Code) e o painel pt-BR
+// escolhe a frase aqui — nenhuma string em inglês chega ao composer.
+const STATUS_COPY = {
+  requesting: "Preparando o pedido ao modelo…",
+  summarizing: "Resumindo a conversa antes de continuar…",
+};
+
+function statusLine(event) {
+  return STATUS_COPY[event.Code] || "Trabalhando…";
 }
 
 function handleEvent(event) {
@@ -632,7 +763,7 @@ function handleEvent(event) {
       addApprovalTurn(event);
       break;
     case "status":
-      composerStatus(`Trabalhando… ${event.Text}`);
+      composerStatus(statusLine(event));
       break;
     case "done":
       if (event.Text) addError(new ApiError({ message: event.Text, status: 200 }), "run");
@@ -719,25 +850,66 @@ function focusHit(index) {
 
 // ---------- sessions ----------
 
+/** Trilha de 42 colunas: cabeçalho por pasta e título cortado em 40 (§6). */
 function renderSessions() {
   const list = clear($("session-list"));
   const filter = $("session-filter").value.trim().toLowerCase();
   const shown = state.sessions.filter((session) => !filter || `${session.Title} ${session.Workspace}`.toLowerCase().includes(filter));
+  const groups = new Map();
   for (const session of shown) {
-    const current = Boolean(state.session && state.session.ID === session.ID);
-    const button = el("button", { class: "session-item", type: "button", title: session.Workspace },
-      el("strong", {}, session.Title || "Sem título"),
-      el("span", {}, shorten(session.Workspace) || "pasta não informada"),
-      el("span", {}, [when(session.Created), current ? "aberta agora" : ""].filter(Boolean).join(" · ")));
-    if (current) button.setAttribute("aria-current", "true");
-    button.addEventListener("click", () => openSession(session.ID));
-    list.append(el("li", {}, button));
+    const key = session.Workspace || "";
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(session);
+  }
+  for (const [workspace, items] of groups) {
+    const group = el("li", { class: "rail-group" });
+    group.append(el("p", { class: "rail-group-name", title: workspace }, basename(workspace) || "sem pasta"));
+    const sub = el("ul", { class: "rail-items", role: "list" });
+    for (const session of items) sub.append(el("li", {}, railItem(session)));
+    group.append(sub);
+    list.append(group);
   }
   const empty = $("session-empty");
   empty.hidden = shown.length > 0;
   empty.textContent = state.sessions.length
     ? "Nenhuma sessão combina com esse filtro."
     : "Nenhuma sessão ainda. Use Nova sessão para começar um trabalho.";
+}
+
+/** Item da trilha: `▪`/`●` de estado, título em 40 colunas e ✕ para fechar (§6). */
+function railItem(session) {
+  const current = Boolean(state.session && state.session.ID === session.ID);
+  const title = session.Title || "Sem título";
+  const button = el("button", { class: "rail-item", type: "button", title: `${title} · ${session.Workspace || "pasta não informada"}` });
+  if (current) button.setAttribute("aria-current", "true");
+  button.append(el("span", { class: "rail-dot", "aria-hidden": "true" }, current ? "●" : "▪"));
+  button.append(el("span", { class: "rail-item-title" }, clip(title)));
+  button.append(el("span", { class: "rail-close", "aria-hidden": "true" }, "✕"));
+  button.addEventListener("click", (event) => {
+    if (event.target && event.target.className === "rail-close") {
+      closeSession();
+      return;
+    }
+    openSession(session.ID);
+  });
+  return button;
+}
+
+/** ✕ fecha o painel; a sessão continua guardada (apagar é ação do diálogo). */
+function closeSession() {
+  if (state.running) {
+    toast("info", "Há um pedido em andamento nesta aba: espere terminar ou use Parar.");
+    return;
+  }
+  state.session = null;
+  state.search.raw.clear();
+  state.search.hits = [];
+  clear(transcript());
+  renderHead();
+  renderWelcome();
+  renderSessions();
+  renderStatus();
+  announce("Sessão fechada neste painel. Ela continua guardada na trilha.");
 }
 
 async function refreshSessions() {
@@ -771,11 +943,8 @@ async function openSession(id) {
   state.following = true;
   view("chat");
   renderSessions();
-  $("chat-title").textContent = session.Title || "Sem título";
-  $("chat-workspace").textContent = `${basename(session.Workspace)} · ${session.Workspace}`;
-  const active = state.info.active;
-  $("composer-model").textContent = `${active.provider} / ${active.model}${active.harness ? ` · ${active.harness}` : ""}`;
-  renderCounters();
+  renderHead();
+  composerMeta();
   const box = clear(transcript());
   let entries = [];
   try {
@@ -788,6 +957,10 @@ async function openSession(id) {
   restoreDraft();
   await loadUsage();
   applySearch();
+  // D1: o estado do painel vem do que existe (turno nesta aba ou tarefa viva no
+  // serviço), nunca do que acabou de ser desenhado — abrir uma sessão com
+  // ferramentas no histórico não pode dizer "Trabalhando".
+  renderStatus();
   box.scrollTop = box.scrollHeight;
   announce(`Sessão ${session.Title || "sem título"} aberta.`);
 }
@@ -826,29 +999,73 @@ function detectInterruption(entries) {
   $("recover-banner").hidden = pending.size === 0;
 }
 
+const WORDMARK = {
+  left: ["                   ", "█▀▀█ █▀▀█ █▀▀█ █▀▀▄", "█__█ █__█ █^^^ █__█", "▀▀▀▀ █▀▀▀ ▀▀▀▀ ▀~~▀"],
+  right: ["             ▄     ", "█▀▀▀ █▀▀█ █▀▀█ █▀▀█", "█___ █__█ █__█ █^^^", "▀▀▀▀ ▀▀▀▀ ▀▀▀▀ ▀▀▀▀"],
+};
+
+/** Wordmark literal do TUI (§5.1): árvore muted à esquerda, nome em destaque à direita. */
+function wordmark() {
+  const box = el("div", { class: "wordmark", "aria-hidden": "true" });
+  for (let line = 0; line < WORDMARK.left.length; line++) {
+    const row = el("p");
+    paintHalf(row, WORDMARK.left[line], "left");
+    row.append(" ");
+    paintHalf(row, WORDMARK.right[line], "right");
+    box.append(row);
+  }
+  return box;
+}
+
+/** `_` = célula vazia com fundo de sombra; `^` = ▀ na cor; `~`/`,` = ▀/▄ na sombra. */
+function paintHalf(row, art, half) {
+  const cells = [];
+  for (const char of art.padEnd(21, " ")) {
+    if (char === "_") cells.push([" ", `wm-bg-${half}`]);
+    else if (char === "^") cells.push(["▀", `wm-${half}`]);
+    else if (char === "~") cells.push(["▀", `wm-fg-${half}`]);
+    else if (char === ",") cells.push(["▄", `wm-fg-${half}`]);
+    else cells.push([char, `wm-${half}`]);
+  }
+  let index = 0;
+  while (index < cells.length) {
+    let end = index;
+    while (end + 1 < cells.length && cells[end + 1][1] === cells[index][1]) end++;
+    let text = "";
+    for (let i = index; i <= end; i++) text += cells[i][0];
+    row.append(el("span", { class: cells[index][1] }, text));
+    index = end + 1;
+  }
+}
+
 function renderWelcome() {
   const box = transcript();
-  const card = el("li", { class: "turn turn-note" });
-  const body = el("div", { class: "turn-body" });
+  const card = el("li", { class: "turn turn-note home" });
+  card.append(el("p", { class: "home-blank-3" }));
+  card.append(wordmark());
+  card.append(el("p", { class: "home-blank" }));
+  const body = el("div", { class: "turn-body home-body" });
   if (!state.session) {
-    body.append(el("h3", {}, "Escolha a pasta do projeto para a primeira sessão"));
-    body.append(el("p", {}, "Uma sessão trabalha dentro de uma pasta: é o limite que o agente respeita, e é de lá que ele lê e altera arquivos."));
+    body.append(el("p", {}, "Escolha a pasta do projeto para a primeira sessão: é o limite que o agente respeita, e é de lá que ele lê e altera arquivos."));
     body.append(el("div", { class: "buttons" }, action("Nova sessão", "primary-button", () => openSessionDialog("create"))));
   } else {
-    body.append(el("h3", {}, "Tudo pronto para começar"));
     body.append(el("p", {}, "Descreva o que você quer neste projeto. O agente lê os arquivos, propõe mudanças e para para você aprovar."));
     const examples = [
       "Leia o README deste projeto e me explique, em poucas linhas, o que ele faz.",
       "Rode os testes do projeto e me diga o que passou e o que falhou.",
       "Liste os arquivos com mais linhas e diga por onde o código começa.",
     ];
-    const list = el("div", { class: "buttons" });
+    const list = el("div", { class: "home-actions" });
     for (const example of examples) {
-      list.append(action(example, "secondary-button", () => {
+      const item = el("button", { class: "home-action", type: "button" },
+        el("span", { class: "home-mark", "aria-hidden": "true" }, "›"),
+        el("span", {}, example));
+      item.addEventListener("click", () => {
         const area = $("prompt");
         area.value = example;
         area.focus();
-      }));
+      });
+      list.append(item);
     }
     body.append(list);
   }
@@ -890,10 +1107,10 @@ async function deleteSession(id) {
     if (state.session && state.session.ID === id) {
       state.session = null;
       clear(transcript());
-      $("chat-title").textContent = "Sessão";
-      $("chat-workspace").textContent = "";
-      $("composer-model").textContent = "—";
+      renderHead();
+      composerMeta();
       renderWelcome();
+      renderStatus();
     }
     await refreshSessions();
     toast("ok", "Sessão apagada.");
@@ -945,6 +1162,24 @@ async function exportSession(id, title) {
 }
 
 // ---------- sidebar ----------
+
+/** A busca do transcript mora atrás do `⌕` do cabeçalho, como no TUI (§6). */
+function showSearch() {
+  $("search-row").hidden = false;
+  $("transcript-search-button").setAttribute("aria-expanded", "true");
+  $("transcript-search").focus();
+}
+
+function toggleSearch() {
+  if ($("search-row").hidden) {
+    showSearch();
+    return;
+  }
+  $("search-row").hidden = true;
+  $("transcript-search-button").setAttribute("aria-expanded", "false");
+  $("transcript-search").value = "";
+  applySearch();
+}
 
 function openSidebar() {
   $("sidebar").hidden = false;
@@ -1127,9 +1362,7 @@ async function finishOnboarding(result) {
   toast("ok", `Modelo ativo: ${result.provider} / ${result.model}.`);
   announce("Modelo conectado.");
   state.info = await uiInfo();
-  const active = state.info.active;
-  $("model-button").textContent = `Modelo: ${active.model}`;
-  $("composer-model").textContent = `${active.provider} / ${active.model}${active.harness ? ` · ${active.harness}` : ""}`;
+  composerMeta();
   view("chat");
   await refreshSessions();
   if (state.sessions.length) await openSession(state.sessions[0].ID);
@@ -1269,9 +1502,7 @@ function renderModelDialog() {
 
 async function adoptModel(result) {
   state.info = await uiInfo();
-  const active = state.info.active;
-  $("model-button").textContent = `Modelo: ${active.model}`;
-  $("composer-model").textContent = `${active.provider} / ${active.model}${active.harness ? ` · ${active.harness}` : ""}`;
+  composerMeta();
   renderCounters();
   renderSettings();
   renderStatusPanel();
@@ -1283,7 +1514,6 @@ async function adoptModel(result) {
 // ---------- settings ----------
 
 function renderSettings() {
-  $("setting-theme").value = prefs.theme;
   $("setting-density").value = prefs.density;
   $("setting-scale").value = prefs.scale;
   $("setting-motion").value = prefs.motion;
@@ -1465,21 +1695,15 @@ function paletteActions() {
   return [
     { label: "Nova sessão", description: "Escolher a pasta e começar um trabalho", run: () => openSessionDialog("create") },
     { label: "Trocar de modelo", description: "Provedor, modelo e teste de conexão", run: openModelDialog },
-    { label: "Buscar nesta conversa", description: "Procurar um texto no histórico da sessão aberta", keys: "Ctrl+F", run: () => $("transcript-search").focus() },
+    { label: "Buscar nesta conversa", description: "Procurar um texto no histórico da sessão aberta", keys: "Ctrl+F", run: showSearch },
     { label: "Detalhes da sessão", description: "Pasta, tokens, desfazer, apagar, salvar cópia", run: () => openSessionDialog("details") },
     { label: "Parar o trabalho atual", description: "Encerra o pedido em andamento e libera a sessão", keys: "Esc", run: stopTurn, enabled: () => Boolean(state.running) || pendingApprovals().length > 0 },
-    { label: "Ajustes", description: "Tema, densidade, avisos e estado do serviço", run: () => {
+    { label: "Ajustes", description: "Densidade, movimento, avisos e estado do serviço", run: () => {
       renderSettings();
       renderStatusPanel();
       showDialog("dialog-settings");
     } },
     { label: "Ajuda e atalhos", description: "Como o agente trabalha, aprovações e limites", run: () => showDialog("dialog-help") },
-    { label: "Alternar tema claro e escuro", description: "Muda a aparência e guarda a escolha", run: () => {
-      prefs.theme = resolvedTheme() === "dark" ? "light" : "dark";
-      savePrefs();
-      applyPrefs();
-      renderSettings();
-    } },
     { label: "Recarregar dados do serviço", description: "Reler modelo ativo, sessões e permissões", run: refreshAll },
   ];
 }
@@ -1529,7 +1753,7 @@ function wireKeyboard() {
     if (meta && event.key.toLowerCase() === "f") {
       if (state.session) {
         event.preventDefault();
-        $("transcript-search").focus();
+        showSearch();
       }
       return;
     }
@@ -1570,6 +1794,13 @@ function wireKeyboard() {
 
 function wire() {
   $("menu-button").addEventListener("click", toggleSidebar);
+  $("transcript-search-button").addEventListener("click", toggleSearch);
+  $("rail-search").addEventListener("click", () => {
+    const row = $("rail-filter-row");
+    row.hidden = !row.hidden;
+    $("rail-search").setAttribute("aria-expanded", String(!row.hidden));
+    if (!row.hidden) $("session-filter").focus();
+  });
   $("new-session-button").addEventListener("click", () => openSessionDialog("create"));
   $("session-filter").addEventListener("input", renderSessions);
   $("model-button").addEventListener("click", openModelDialog);
@@ -1597,7 +1828,6 @@ function wire() {
   $("recover-button").addEventListener("click", () => {
     if (state.session) recoverSession(state.session.ID);
   });
-  $("composer-model-button").addEventListener("click", openModelDialog);
   $("stop-button").addEventListener("click", stopTurn);
   $("transcript").addEventListener("scroll", () => {
     state.following = atBottom(transcript());
@@ -1648,11 +1878,6 @@ function wire() {
   });
 
   const onPref = (id, apply) => $(id).addEventListener("change", apply);
-  onPref("setting-theme", (event) => {
-    prefs.theme = event.target.value;
-    savePrefs();
-    applyPrefs();
-  });
   onPref("setting-density", (event) => {
     prefs.density = event.target.value;
     savePrefs();
@@ -1696,15 +1921,16 @@ function wire() {
     toast("ok", "Ajustes restaurados.");
   });
 
-  if (window.matchMedia) {
-    window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", () => {
-      if (prefs.theme === "system") applyPrefs();
-    });
-  }
-
   wireDialogs();
   wireKeyboard();
   renderQueue();
+  fillBase();
+}
+
+/** Base do composer: ▀ de meia célula na cor do fill, uma vez por boot (§8.1). */
+function fillBase() {
+  const run = $("composer-base-fill");
+  if (run) run.textContent = "▀".repeat(240);
 }
 
 // ---------- refresh and boot ----------
@@ -1712,15 +1938,12 @@ function wire() {
 async function refreshAll() {
   try {
     state.info = await uiInfo();
-    const summary = await health().catch(() => null);
-    state.protocol = summary ? summary.protocol : null;
   } catch (error) {
     showGate(error instanceof ApiError && error.kind === "unpaired" ? "unpaired" : "offline");
     return;
   }
-  const active = state.info.active;
-  $("model-button").textContent = `Modelo: ${active.model}`;
-  $("composer-model").textContent = `${active.provider} / ${active.model}${active.harness ? ` · ${active.harness}` : ""}`;
+  composerMeta();
+  await refreshHealth();
   if (!state.info.configured) {
     view("onboarding");
     renderOnboarding();
@@ -1730,12 +1953,26 @@ async function refreshAll() {
   await refreshSessions();
   if (state.sessions.length) await openSession(state.sessions[0].ID);
   else renderWelcome();
+  renderStatus();
+}
+
+/** Estado do serviço: protocolo e tarefas vivas (D1 lê active_tasks). */
+async function refreshHealth() {
+  const summary = await health().catch(() => null);
+  if (summary) {
+    state.protocol = summary.protocol;
+    state.activeTasks = Number(summary.active_tasks) || 0;
+  }
+  renderStatus();
 }
 
 function boot() {
   applyPrefs();
   wire();
-  if (!window.matchMedia("(max-width: 980px)").matches) $("sidebar").hidden = false;
+  if (!window.matchMedia("(max-width: 980px)").matches) {
+    $("sidebar").hidden = false;
+    $("menu-button").setAttribute("aria-expanded", "true");
+  }
   refreshAll();
 }
 

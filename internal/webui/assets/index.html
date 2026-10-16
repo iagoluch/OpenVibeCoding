@@ -1,12 +1,12 @@
 <!doctype html>
-<html lang="pt-BR" data-theme="dark" data-motion="system" data-density="comfortable">
+<html lang="pt-BR" data-theme="dark" data-motion="system" data-density="comfortable" data-scale="medium">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>OpenVibeCoding — painel</title>
 <meta name="description" content="Painel local do OpenVibeCoding: converse com o agente, aprove cada operação e acompanhe o que muda no seu projeto.">
-<meta name="color-scheme" content="dark light">
-<meta name="theme-color" content="#111418">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#282a36">
 <link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/assets/icon-192.png">
 <link rel="manifest" href="/assets/manifest.webmanifest">
@@ -15,43 +15,31 @@
 <body>
 <a class="skip-link" href="#main">Ir para o conteúdo</a>
 
-<header class="topbar">
-  <button id="menu-button" class="icon-button" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="Mostrar sessões">
-    <span aria-hidden="true">≡</span>
-  </button>
-  <p class="brand"><span class="brand-mark" aria-hidden="true">›_</span><span class="brand-name">Open<span class="brand-light">VibeCoding</span></span></p>
-  <div class="topbar-actions">
-    <button id="model-button" class="chip-button" type="button" aria-haspopup="dialog">Modelo</button>
-    <button id="palette-button" class="chip-button" type="button" aria-haspopup="dialog">Comandos <kbd>Ctrl</kbd><kbd>K</kbd></button>
-    <button id="help-button" class="icon-button" type="button" aria-haspopup="dialog" aria-label="Ajuda e atalhos"><span aria-hidden="true">?</span></button>
-    <button id="settings-button" class="icon-button" type="button" aria-haspopup="dialog" aria-label="Ajustes"><span aria-hidden="true">⚙</span></button>
-  </div>
-</header>
-
-<div class="layout">
-  <aside id="sidebar" class="sidebar" aria-label="Sessões">
-    <div class="sidebar-head">
-      <h2>Sessões</h2>
-      <button id="new-session-button" class="secondary-button" type="button">Nova sessão</button>
+<div class="app">
+  <aside id="sidebar" class="rail" aria-label="Sessões">
+    <div class="rail-controls">
+      <button id="rail-search" class="rail-control" type="button" aria-expanded="false" aria-controls="rail-filter-row" aria-label="Procurar sessão"><span aria-hidden="true">⌕</span></button>
+      <button id="menu-button" class="rail-control rail-menu" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="Mostrar ou esconder as sessões"><span aria-hidden="true">≡</span></button>
     </div>
-    <p class="field">
-      <label class="field-label" for="session-filter">Filtrar por nome ou pasta</label>
-      <input id="session-filter" type="search" autocomplete="off" spellcheck="false" placeholder="ex.: leitor de CSV">
-    </p>
-    <ul id="session-list" class="session-list" role="list"></ul>
-    <p id="session-empty" class="empty" hidden>Nenhuma sessão ainda. Use <strong>Nova sessão</strong> para começar um trabalho.</p>
+    <div id="rail-filter-row" class="rail-filter" hidden>
+      <label class="sr-only" for="session-filter">Filtrar por nome ou pasta</label>
+      <input id="session-filter" type="search" autocomplete="off" spellcheck="false" placeholder="filtrar sessões">
+    </div>
+    <ul id="session-list" class="rail-list" role="list"></ul>
+    <p id="session-empty" class="rail-note" hidden></p>
+    <button id="new-session-button" class="rail-new" type="button"><span aria-hidden="true">+</span> Nova sessão</button>
   </aside>
 
-  <main id="main" class="main" tabindex="-1">
+  <main id="main" class="panel" tabindex="-1">
     <section id="view-gate" class="view gate" hidden aria-labelledby="gate-title">
-      <div class="card gate-card">
-        <p class="eyebrow"><span class="dot" aria-hidden="true"></span> Painel local</p>
+      <div class="block">
+        <p class="eyebrow"><span aria-hidden="true">⊙</span> Painel local</p>
         <h2 id="gate-title">Conecte esta aba ao OpenVibeCoding</h2>
         <p class="lede">Este painel roda dentro do seu computador, ao lado do que você já usa no terminal. Para abrir aqui, o terminal libera esta aba uma única vez.</p>
         <ol class="gate-steps">
           <li>
             <p>No terminal, rode o comando:</p>
-            <p class="code-line"><code>ovc --ui</code><button id="copy-command" class="link-button" type="button">Copiar</button></p>
+            <p class="code-line"><code>ovc --ui</code><button id="copy-command" class="link-button" type="button">copiar</button></p>
           </li>
           <li><p>O navegador abre um link de uso único, válido por 5 minutos.</p></li>
           <li><p>Assim que o link abrir, esta página entra sozinha.</p></li>
@@ -60,6 +48,7 @@
         <div class="buttons">
           <button id="gate-retry" class="primary-button" type="button">Já abri o link, tentar de novo</button>
           <button id="gate-help" class="secondary-button" type="button" aria-expanded="false" aria-controls="gate-help-body">Não funcionou</button>
+          <button id="help-button-2" class="link-button" type="button" aria-haspopup="dialog">ajuda e atalhos</button>
         </div>
         <div id="gate-help-body" class="panel-inset" hidden>
           <h3>O que costuma resolver</h3>
@@ -75,8 +64,8 @@
     </section>
 
     <section id="view-onboarding" class="view onboarding" hidden aria-labelledby="onboarding-title">
-      <div class="card">
-        <p class="eyebrow"><span class="dot" aria-hidden="true"></span> Primeiro acesso</p>
+      <div class="block">
+        <p class="eyebrow"><span aria-hidden="true">⊙</span> Primeiro acesso</p>
         <h2 id="onboarding-title">Escolha um modelo gratuito para começar</h2>
         <p class="lede">Um modelo é o "cérebro" que conversa com você. Comece por um com plano gratuito: você cola uma chave, testamos com um pedido real e só então ele passa a valer.</p>
         <ol class="steps" id="onboarding-steps">
@@ -89,27 +78,32 @@
     </section>
 
     <section id="view-chat" class="view chat" hidden aria-labelledby="chat-title">
-      <header class="chat-head">
-        <div class="chat-title-row">
+      <header class="head">
+        <div class="head-line">
           <h2 id="chat-title">Sessão</h2>
-          <button id="rename-button" class="link-button" type="button">Renomear</button>
-          <button id="details-button" class="link-button" type="button">Detalhes</button>
+          <p class="head-actions">
+            <button id="transcript-search-button" class="link-button" type="button" aria-expanded="false" aria-controls="search-row" aria-label="Buscar nesta conversa"><span aria-hidden="true">⌕</span></button>
+            <button id="rename-button" class="link-button" type="button">renomear</button>
+            <button id="details-button" class="link-button" type="button">detalhes</button>
+          </p>
         </div>
-        <p id="chat-workspace" class="muted small"></p>
-        <p class="chips">
-          <span id="status-chip" class="chip" role="status">Pronta</span>
-          <span id="usage-chip" class="chip">tokens: —</span>
-          <span id="context-chip" class="chip">contexto: —</span>
-          <span id="cost-chip" class="chip" hidden>custo: —</span>
+        <p id="chat-workspace" class="head-path"></p>
+        <p class="head-meta">
+          <span id="status-pill" class="pill pill-idle" data-kind="idle">
+            <span id="status-dot" class="pill-dot" aria-hidden="true">▪</span><span id="status-chip" role="status">Pronta</span>
+          </span>
+          <span id="usage-chip" class="head-stat">tokens: —</span>
+          <span id="context-chip" class="head-stat">contexto: —</span>
+          <span id="cost-chip" class="head-stat" hidden>custo: —</span>
         </p>
       </header>
 
-      <div class="search-row">
+      <div id="search-row" class="search-row" hidden>
         <label class="field-label" for="transcript-search">Buscar nesta conversa</label>
         <input id="transcript-search" type="search" autocomplete="off" spellcheck="false" placeholder="procurar no texto">
         <span id="search-count" class="muted small" role="status"></span>
-        <button id="search-prev" class="secondary-button" type="button" aria-label="Resultado anterior">↑</button>
-        <button id="search-next" class="secondary-button" type="button" aria-label="Próximo resultado">↓</button>
+        <button id="search-prev" class="secondary-button" type="button" aria-label="Resultado anterior"><span aria-hidden="true">↑</span></button>
+        <button id="search-next" class="secondary-button" type="button" aria-label="Próximo resultado"><span aria-hidden="true">↓</span></button>
       </div>
 
       <div id="recover-banner" class="banner" hidden>
@@ -128,28 +122,47 @@
       </div>
 
       <form id="composer" class="composer">
-        <p class="composer-model small muted">Conversando com <span id="composer-model">—</span> · <button id="composer-model-button" class="link-button" type="button">trocar</button></p>
-        <label class="field-label" for="prompt">Sua mensagem para o agente</label>
-        <textarea id="prompt" rows="3" placeholder="Ex.: leia o README e me diga como rodar os testes deste projeto" spellcheck="true"></textarea>
+        <div class="composer-box">
+          <label class="sr-only" for="prompt">Sua mensagem para o agente</label>
+          <textarea id="prompt" rows="3" placeholder="Pergunte qualquer coisa… &quot;Corrija um TODO no código&quot;" spellcheck="true"></textarea>
+          <p class="composer-meta">
+            <span class="meta-agent">Agente</span>
+            <span class="meta-sep" aria-hidden="true">·</span>
+            <button id="model-button" class="meta-model" type="button" aria-haspopup="dialog" aria-label="Trocar de modelo">—</button>
+            <span id="composer-provider" class="meta-provider"></span>
+            <span id="composer-variant" class="meta-variant"></span>
+          </p>
+        </div>
+        <p class="composer-base" aria-hidden="true"><span class="base-corner">╹</span><span id="composer-base-fill"></span></p>
+        <div class="composer-foot">
+          <span id="composer-place" class="foot-place"></span>
+          <span class="foot-right">
+            <span id="composer-usage" class="foot-usage" hidden></span>
+            <span id="composer-hint" class="foot-keys"><kbd>enter</kbd> envia · <kbd>shift</kbd>+<kbd>enter</kbd> quebra a linha · <kbd>esc</kbd> interrompe</span>
+          </span>
+        </div>
         <div class="composer-actions">
-          <p class="hint" id="composer-hint"><kbd>Enter</kbd> envia · <kbd>Shift</kbd>+<kbd>Enter</kbd> quebra a linha · <kbd>Esc</kbd> interrompe</p>
-          <div class="buttons">
+          <span class="foot-tools">
+            <button id="palette-button" class="key-hint" type="button" aria-haspopup="dialog"><kbd>ctrl</kbd>+<kbd>k</kbd> comandos</button>
+            <button id="help-button" class="key-hint" type="button" aria-haspopup="dialog"><kbd>?</kbd> ajuda</button>
+          </span>
+          <span class="composer-buttons">
             <button id="stop-button" class="danger-button" type="button" hidden>Parar</button>
             <button id="send-button" class="primary-button" type="submit">Enviar</button>
-          </div>
+          </span>
         </div>
-        <p id="composer-status" class="muted small" role="status"></p>
+        <p id="composer-status" class="composer-status" role="status"></p>
       </form>
     </section>
   </main>
 </div>
 
-<footer class="statusbar">
-  <p id="status-local" class="muted small">Onde estou? Serviço local desta máquina</p>
-  <div class="statusbar-actions">
-    <button id="status-button" class="link-button" type="button" aria-haspopup="dialog">Onde ficam meus dados</button>
-    <button id="help-button-2" class="link-button" type="button" aria-haspopup="dialog">Atalhos</button>
-  </div>
+<footer class="bar">
+  <p id="status-local" class="bar-note"><span class="bar-mark" aria-hidden="true">⊙</span> Serviço local desta máquina · só o texto enviado ao modelo sai daqui</p>
+  <p class="bar-actions">
+    <button id="settings-button" class="key-hint" type="button" aria-haspopup="dialog">ajustes</button>
+    <button id="status-button" class="key-hint" type="button" aria-haspopup="dialog">estado do serviço</button>
+  </p>
 </footer>
 
 <div id="announcer" class="sr-only" role="status" aria-live="polite"></div>
@@ -158,7 +171,7 @@
 <dialog id="dialog-model" class="dialog" aria-labelledby="dialog-model-title">
   <div class="dialog-head">
     <h2 id="dialog-model-title">Trocar de modelo</h2>
-    <button class="icon-button dialog-close" type="button" aria-label="Fechar" data-close><span aria-hidden="true">×</span></button>
+    <button class="icon-button dialog-close" type="button" aria-label="Fechar" data-close><span aria-hidden="true">✕</span></button>
   </div>
   <div id="dialog-model-body" class="dialog-body"></div>
 </dialog>
@@ -166,7 +179,7 @@
 <dialog id="dialog-palette" class="dialog dialog-palette" aria-labelledby="dialog-palette-title">
   <div class="dialog-head">
     <h2 id="dialog-palette-title">Comandos</h2>
-    <button class="icon-button dialog-close" type="button" aria-label="Fechar" data-close><span aria-hidden="true">×</span></button>
+    <button class="icon-button dialog-close" type="button" aria-label="Fechar" data-close><span aria-hidden="true">✕</span></button>
   </div>
   <div class="dialog-body">
     <label class="field-label" for="palette-input">Procurar um comando</label>
@@ -179,15 +192,15 @@
 <dialog id="dialog-help" class="dialog" aria-labelledby="dialog-help-title">
   <div class="dialog-head">
     <h2 id="dialog-help-title">Como este painel funciona</h2>
-    <button class="icon-button dialog-close" type="button" aria-label="Fechar" data-close><span aria-hidden="true">×</span></button>
+    <button class="icon-button dialog-close" type="button" aria-label="Fechar" data-close><span aria-hidden="true">✕</span></button>
   </div>
   <div class="dialog-body">
     <h3>Atalhos</h3>
     <ul class="checklist">
-      <li><kbd>Enter</kbd> envia a mensagem · <kbd>Shift</kbd>+<kbd>Enter</kbd> quebra a linha.</li>
-      <li><kbd>Esc</kbd> interrompe o que estiver rodando; com uma aprovação na tela, ela é recusada.</li>
-      <li><kbd>Ctrl</kbd>+<kbd>K</kbd> abre os comandos · <kbd>?</kbd> abre esta ajuda.</li>
-      <li><kbd>Ctrl</kbd>+<kbd>F</kbd> vai para a busca da conversa.</li>
+      <li><kbd>enter</kbd> envia a mensagem · <kbd>shift</kbd>+<kbd>enter</kbd> quebra a linha.</li>
+      <li><kbd>esc</kbd> interrompe o que estiver rodando; com uma aprovação na tela, ela é recusada.</li>
+      <li><kbd>ctrl</kbd>+<kbd>k</kbd> abre os comandos · <kbd>?</kbd> abre esta ajuda.</li>
+      <li><kbd>ctrl</kbd>+<kbd>f</kbd> vai para a busca da conversa.</li>
     </ul>
     <h3>O que o agente pode fazer sozinho</h3>
     <p>Ler arquivos, listar o projeto, procurar texto e inspecionar o Git acontecem sem interromper você. Tudo que <strong>muda</strong> o projeto — escrever, apagar, mover, rodar comando, usar navegador ou desktop — para numa aprovação e espera a sua resposta.</p>
@@ -199,25 +212,18 @@
       <li>Comandos rodam em modo confinado quando o sistema oferece isolamento; sem isolamento, o comando é recusado em vez de rodar sem proteção.</li>
       <li>A conversa, os usos e a auditoria ficam no computador que roda o <code>ovc</code>. Só o texto enviado ao modelo sai daqui.</li>
     </ul>
+    <h3>Aparência</h3>
+    <p>O painel replica o tema escuro do terminal (<code>dracula</code>): mesma paleta, mesma grade de colunas e os mesmos glifos. Nesta versão ele é sempre escuro.</p>
   </div>
 </dialog>
 
 <dialog id="dialog-settings" class="dialog" aria-labelledby="dialog-settings-title">
   <div class="dialog-head">
     <h2 id="dialog-settings-title">Ajustes</h2>
-    <button class="icon-button dialog-close" type="button" aria-label="Fechar" data-close><span aria-hidden="true">×</span></button>
+    <button class="icon-button dialog-close" type="button" aria-label="Fechar" data-close><span aria-hidden="true">✕</span></button>
   </div>
   <div class="dialog-body">
     <h3>Aparência</h3>
-    <p class="field">
-      <label class="field-label" for="setting-theme">Tema</label>
-      <select id="setting-theme">
-        <option value="dark">Escuro (padrão da marca)</option>
-        <option value="light">Claro</option>
-        <option value="system">Seguir o sistema</option>
-      </select>
-      <span class="field-help">O tema muda na hora e fica guardado neste navegador.</span>
-    </p>
     <p class="field">
       <label class="field-label" for="setting-density">Densidade</label>
       <select id="setting-density">
@@ -233,7 +239,7 @@
         <option value="medium">Médio</option>
         <option value="large">Maior</option>
       </select>
-      <span class="field-help">Útil em telas grandes ou quando a leitura cansa.</span>
+      <span class="field-help">A grade é medida em colunas do texto: mudar o tamanho muda quantas colunas cabem na tela.</span>
     </p>
     <p class="field">
       <label class="field-label" for="setting-motion">Animações</label>
@@ -242,12 +248,12 @@
         <option value="reduced">Reduzidas</option>
         <option value="full">Completas</option>
       </select>
-      <span class="field-help">Reduzidas removem transições e indicadores animados.</span>
+      <span class="field-help">Reduzidas travam o indicador de trabalho no primeiro quadro.</span>
     </p>
     <h3>Comportamento</h3>
     <p class="field checkbox-field">
       <input id="setting-send-enter" type="checkbox">
-      <label for="setting-send-enter">Enviar com <kbd>Enter</kbd> (desligado: <kbd>Ctrl</kbd>+<kbd>Enter</kbd> envia)</label>
+      <label for="setting-send-enter">Enviar com <kbd>enter</kbd> (desligado: <kbd>ctrl</kbd>+<kbd>enter</kbd> envia)</label>
     </p>
     <p class="field checkbox-field">
       <input id="setting-notify" type="checkbox">
@@ -265,7 +271,7 @@
 <dialog id="dialog-session" class="dialog" aria-labelledby="dialog-session-title">
   <div class="dialog-head">
     <h2 id="dialog-session-title">Detalhes da sessão</h2>
-    <button class="icon-button dialog-close" type="button" aria-label="Fechar" data-close><span aria-hidden="true">×</span></button>
+    <button class="icon-button dialog-close" type="button" aria-label="Fechar" data-close><span aria-hidden="true">✕</span></button>
   </div>
   <div id="dialog-session-body" class="dialog-body"></div>
 </dialog>
@@ -273,7 +279,7 @@
 <dialog id="dialog-text" class="dialog" aria-labelledby="dialog-text-title">
   <div class="dialog-head">
     <h2 id="dialog-text-title">Editar</h2>
-    <button class="icon-button dialog-close" type="button" aria-label="Fechar" data-close><span aria-hidden="true">×</span></button>
+    <button class="icon-button dialog-close" type="button" aria-label="Fechar" data-close><span aria-hidden="true">✕</span></button>
   </div>
   <div class="dialog-body">
     <form id="dialog-text-form">
@@ -294,7 +300,7 @@
 <dialog id="dialog-confirm" class="dialog" aria-labelledby="dialog-confirm-title">
   <div class="dialog-head">
     <h2 id="dialog-confirm-title">Confirmar</h2>
-    <button class="icon-button dialog-close" type="button" aria-label="Fechar" data-close><span aria-hidden="true">×</span></button>
+    <button class="icon-button dialog-close" type="button" aria-label="Fechar" data-close><span aria-hidden="true">✕</span></button>
   </div>
   <div class="dialog-body">
     <p id="dialog-confirm-body"></p>
