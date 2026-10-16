@@ -21,7 +21,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/código%20aberto- MIT-brightgreen" alt="Código aberto MIT">
+  <img src="https://img.shields.io/badge/licença-MIT-brightgreen" alt="Licença MIT">
   <img src="https://img.shields.io/badge/feito%20em-Go-00ADD8?logo=go&logoColor=white" alt="Feito em Go">
   <img src="https://img.shields.io/badge/Windows-Linux-macOS-informational" alt="Windows, Linux e macOS">
 </p>
