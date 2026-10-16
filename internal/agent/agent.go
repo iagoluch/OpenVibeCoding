@@ -123,7 +123,7 @@ func (e *Engine) Run(ctx context.Context, prompt string, emit func(Event)) error
 		if tokens > budget-2300 {
 			return errors.New("active turn exceeds context budget; start /new with a shorter task (original history is saved)")
 		}
-		emit(Event{Kind: "status", Text: fmt.Sprintf("requesting · ~%d conservative tokens · %d indexed messages", tokens, omitted)})
+		emit(Event{Kind: "status", Text: fmt.Sprintf(i18n.T(e.Config.Language, "agent.status.requesting"), tokens, omitted)})
 		stream := e.Config.Stream(func(s string) { emit(Event{Kind: "delta", Text: s}) })
 		reply, err := client.Stream(ctx, messages, Tools(), stream.Write)
 		stream.Close()
