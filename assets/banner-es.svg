@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="title desc">
-<title id="title">OpenVibeCoding — Desarrollo con IA, bajo tu control.</title><desc id="desc">Banner de OpenVibeCoding con símbolo azul sobre un círculo blanco y la mascota Byte.</desc>
+<title id="title">OpenVibeCoding — Desarrollo con IA, bajo tu control.</title><desc id="desc">Banner de OpenVibeCoding con el símbolo aprobado sobre un círculo blanco y la mascota Byte.</desc>
 <defs><linearGradient id="line" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#69CFFF"/><stop offset="1" stop-color="#0D2B46"/></linearGradient></defs>
 <rect width="1200" height="360" fill="#050A11"/>
 <path d="M0 28H1200M0 332H1200M625 28V332" stroke="#193A52" stroke-width="1"/>
@@ -21,26 +21,43 @@
 <text x="69" y="293" font-family="Arial,sans-serif" font-size="9" letter-spacing="0.45" fill="#9DC9E1">APP DE ESCRITORIO EN DESARROLLO · CLI/TUI DISPONIBLE HOY</text>
 <circle cx="895" cy="180" r="142" fill="#0A1521" stroke="#193A52" stroke-width="1.5"/>
 <circle cx="895" cy="180" r="130" fill="none" stroke="#102B41" stroke-width="1"/>
-<g transform="translate(775 60) scale(.46875)">
-<title id="title">OpenVibeCoding symbol</title><desc id="desc">An open blue circular stroke enclosing an interlocking ring and check-like stroke, on a white disc.</desc>
+<g transform="translate(775 60) scale(.375)">
+<title id="title">OpenVibeCoding — símbolo oficial</title>
+<desc id="desc">Símbolo azul orgânico com um contorno circular aberto, um laço central e um traço em forma de V, sobre um círculo branco.</desc>
 <defs>
- <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#72E4FF"/><stop offset=".48" stop-color="#087CFA"/><stop offset="1" stop-color="#061C46"/></linearGradient>
- <linearGradient id="shade" x1="0" y1="0" x2=".9" y2="1"><stop offset="0" stop-color="#0A204A"/><stop offset=".52" stop-color="#0877E8"/><stop offset="1" stop-color="#68DFFF"/></linearGradient>
+ <linearGradient id="outerBlue" x1="0.08" y1="0.18" x2="0.93" y2="0.82"><stop offset="0" stop-color="#72E8FF"/><stop offset=".36" stop-color="#21B9F5"/><stop offset=".69" stop-color="#0755D8"/><stop offset="1" stop-color="#13B6F4"/></linearGradient>
+ <linearGradient id="loopBlue" x1="0.05" y1="0.15" x2="0.95" y2="0.9"><stop offset="0" stop-color="#80E8FF"/><stop offset=".35" stop-color="#23B8F5"/><stop offset=".7" stop-color="#0648CE"/><stop offset="1" stop-color="#42D5FF"/></linearGradient>
+ <linearGradient id="checkBlue" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#29C5F7"/><stop offset=".55" stop-color="#0756D8"/><stop offset="1" stop-color="#0A2A59"/></linearGradient>
 </defs>
-<circle cx="256" cy="256" r="246" fill="#FFFFFF"/>
-<path d="M316 91 C272 79 220 79 174 91 C91 112 44 174 39 250 C33 326 72 389 132 421 C175 445 231 454 281 447 C306 444 327 437 347 427" fill="none" stroke="url(#blue)" stroke-width="25" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M148 204 C177 247 205 287 239 324 C250 336 260 344 270 350 C281 356 289 351 300 338 C333 298 370 261 412 221" fill="none" stroke="url(#shade)" stroke-width="25" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M256 139 C309 139 351 178 351 229 C351 280 309 319 256 319 C203 319 161 280 161 229 C161 178 203 139 256 139Z" fill="none" stroke="url(#blue)" stroke-width="25" stroke-linejoin="round"/>
+<circle cx="320" cy="320" r="300" fill="#FFFFFF"/>
+<path d="M 414 99
+ C 382 91, 347 90, 316 95
+ C 252 104, 196 130, 153 172
+ C 112 212, 88 261, 82 315
+ C 76 371, 93 422, 128 460
+ C 165 501, 218 523, 279 529
+ C 329 534, 375 526, 414 510"
+ fill="none" stroke="url(#outerBlue)" stroke-width="27" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 192 246
+ C 211 274, 232 309, 252 340
+ C 273 371, 297 398, 319 420
+ C 324 425, 329 425, 334 419
+ C 369 382, 407 343, 446 306
+ C 461 291, 475 279, 488 266"
+ fill="none" stroke="url(#checkBlue)" stroke-width="25" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 325 174
+ C 372 174, 407 209, 407 254
+ C 407 300, 372 334, 325 334
+ C 278 334, 244 300, 244 254
+ C 244 209, 278 174, 325 174 Z"
+ fill="none" stroke="url(#loopBlue)" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
 </g>
-<g transform="translate(1017 252) scale(1.2)">
-<circle cx="24" cy="24" r="31" fill="#081421" stroke="#25516E"/>
-<g transform="translate(4 4) scale(0.95)">
+<g transform="translate(1017 252) scale(1.2)"><circle cx="24" cy="24" r="31" fill="#081421" stroke="#25516E"/><g transform="translate(4 4) scale(0.95)">
 <path d="M2 13h5v5H2zM7 5h4v4H7zM5 25h5v5H5z" fill="#69CFFF"/>
 <path d="M15 10 24 4 35 8 42 17 41 27 35 35 25 39 17 32 12 23 12 16Z" fill="#0D2B46" stroke="#69CFFF" stroke-width="2.4" stroke-linejoin="round"/>
 <path d="M15 10 20 15 12 21" fill="none" stroke="#3B9DD4" stroke-width="2" stroke-linejoin="round"/>
 <rect x="22" y="18" width="3.5" height="6.5" rx="1.7" fill="#DFF7FF"/><rect x="31" y="17" width="3.5" height="6.5" rx="1.7" fill="#DFF7FF"/>
 <path d="M20 30h7" stroke="#69CFFF" stroke-width="2" stroke-linecap="round"/>
-</g>
-</g>
+</g></g>
 <text x="1117" y="329" text-anchor="end" font-family="Arial,sans-serif" font-size="9" letter-spacing="1.4" fill="#496A82">INTENT / REVIEW / EVIDENCE</text>
 </svg>
