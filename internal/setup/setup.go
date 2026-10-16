@@ -90,8 +90,7 @@ func Run(ctx context.Context, dir string, c config.Config) error {
 	}
 	if selected.provider == "local" || selected.provider == "lmstudio" {
 		if activateLocal(ctx, dir, c, in, selected.provider, ollama, lmstudio) {
-			fmt.Println("
-" + i18n.T(c.Language, "setup.complete"))
+			fmt.Println("\n" + i18n.T(c.Language, "setup.complete"))
 			fmt.Println("  " + i18n.T(c.Language, "setup.projectCommand"))
 			fmt.Println("  ovc")
 		}
@@ -120,8 +119,7 @@ func Run(ctx context.Context, dir string, c config.Config) error {
 	if !activate(ctx, dir, c, in, selected.provider, "") {
 		return nil
 	}
-	fmt.Println("
-" + i18n.T(c.Language, "setup.complete"))
+	fmt.Println("\n" + i18n.T(c.Language, "setup.complete"))
 	fmt.Println("  " + i18n.T(c.Language, "setup.projectCommand"))
 	fmt.Println("  ovc")
 	return nil
@@ -304,8 +302,7 @@ func importOpenCode(ctx context.Context, dir string, c config.Config, in *bufio.
 	if !activate(ctx, dir, c, in, imported, "") {
 		return nil
 	}
-	fmt.Println("
-" + i18n.T(c.Language, "setup.complete"))
+	fmt.Println("\n" + i18n.T(c.Language, "setup.complete"))
 	fmt.Println("  " + i18n.T(c.Language, "setup.projectCommand"))
 	fmt.Println("  ovc")
 	return nil
