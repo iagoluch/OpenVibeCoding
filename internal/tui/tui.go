@@ -354,7 +354,7 @@ func (m *Model) command(text string) tea.Cmd {
 			break
 		}
 		if session.Workspace != m.Engine.Workspace.Path {
-			err = fmt.Errorf(i18n.T(c.Language, "session.workspace"), session.Workspace)
+			err = fmt.Errorf("%s", fmt.Sprintf(i18n.T(c.Language, "session.workspace"), session.Workspace))
 			break
 		}
 		err = m.Engine.Store.Recover(arg)
