@@ -89,13 +89,20 @@ func TestRuntimePairingIsSingleUseAndExpires(t *testing.T) {
 	if resp.StatusCode != http.StatusSeeOther || resp.Header.Get("Location") != "/" || cookie == "" {
 		t.Fatalf("pairing rejected: %d %q %q", resp.StatusCode, resp.Header.Get("Location"), cookie)
 	}
+	if got := resp.Header.Get("Cache-Control"); got != "no-store" {
+		t.Fatalf("pairing answer is cacheable: Cache-Control = %q", got)
+	}
 	if again := ask(t, c, "GET", strings.TrimPrefix(link, c.Meta.URL), nil, ""); again.StatusCode != http.StatusGone {
 		t.Fatalf("single-use code reused: %d", again.StatusCode)
 	}
-	if unknown := ask(t, c, "GET", "/pair?token=deadbeef", nil, ""); unknown.StatusCode != http.StatusGone {
+	unknown := ask(t, c, "GET", "/pair?token=deadbeef", nil, "")
+	if unknown.StatusCode != http.StatusGone {
 		t.Fatalf("unknown code accepted: %d", unknown.StatusCode)
 	}
-	b, _ := io.ReadAll(ask(t, c, "GET", "/pair?token=deadbeef", nil, "").Body)
+	if got := unknown.Header.Get("Cache-Control"); got != "no-store" {
+		t.Fatalf("refused pairing answer is cacheable: Cache-Control = %q", got)
+	}
+	b, _ := io.ReadAll(unknown.Body)
 	if !strings.Contains(string(b), "ovc --ui") {
 		t.Fatalf("pairing failure page is not actionable: %q", string(b))
 	}

@@ -136,6 +136,9 @@ func (s *Server) pairAccept(w http.ResponseWriter, r *http.Request) {
 		s.mu.Unlock()
 	}
 	webui.Secure(w.Header())
+	// The pairing answer carries a single-use decision and, on success, the
+	// session cookie: it must never be stored or replayed from a cache.
+	w.Header().Set("Cache-Control", "no-store")
 	if !paired {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.WriteHeader(http.StatusGone)

@@ -171,7 +171,7 @@ func (c *Client) Run(ctx context.Context, e *agent.Engine, prompt string, emit f
 			}
 			return nil
 		}
-		event := agent.Event{Kind: v.Kind, Text: v.Text, Usage: v.Usage}
+		event := agent.Event{Kind: v.Kind, Code: v.Code, Text: v.Text, Usage: v.Usage}
 		if v.Approval != "" {
 			event.Decision = make(chan bool, 1)
 		}

@@ -16,8 +16,12 @@ import (
 
 type Event struct {
 	Kind, Text string
-	Decision   chan bool
-	Usage      provider.Usage
+	// Code is a stable label for events whose Text is a sentence meant for a
+	// person (today only "status"): clients translate by Code instead of
+	// parsing prose, and Text keeps its original wording.
+	Code     string
+	Decision chan bool
+	Usage    provider.Usage
 }
 type Engine struct {
 	images    []string
@@ -106,7 +110,7 @@ func (e *Engine) Run(ctx context.Context, prompt string, emit func(Event)) error
 		if tokens > budget-2300 {
 			return errors.New("active turn exceeds context budget; start /new with a shorter task (original history is saved)")
 		}
-		emit(Event{Kind: "status", Text: fmt.Sprintf("requesting · ~%d conservative tokens · %d indexed messages", tokens, omitted)})
+		emit(Event{Kind: "status", Code: "requesting", Text: fmt.Sprintf("requesting · ~%d conservative tokens · %d indexed messages", tokens, omitted)})
 		stream := e.Config.Stream(func(s string) { emit(Event{Kind: "delta", Text: s}) })
 		reply, err := client.Stream(ctx, messages, Tools(), stream.Write)
 		stream.Close()

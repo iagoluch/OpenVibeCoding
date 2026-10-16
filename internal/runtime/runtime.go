@@ -84,6 +84,7 @@ type turn struct {
 }
 type wireEvent struct {
 	Kind, Text, Approval string
+	Code                 string
 	Usage                provider.Usage
 }
 
@@ -445,7 +446,7 @@ func (s *Server) run(w http.ResponseWriter, r *http.Request, owner string) {
 	// would answer its /approve with a 403 and leave that turn waiting.
 	var issued []string
 	e = engine.Run(ctx, req.Prompt, func(event agent.Event) {
-		out := wireEvent{Kind: event.Kind, Text: c.Redact(event.Text), Usage: event.Usage}
+		out := wireEvent{Kind: event.Kind, Code: event.Code, Text: c.Redact(event.Text), Usage: event.Usage}
 		if event.Decision != nil {
 			out.Approval = random()
 			s.mu.Lock()
