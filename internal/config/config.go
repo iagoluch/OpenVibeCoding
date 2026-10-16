@@ -221,11 +221,18 @@ func Load(dir string) (Config, error) {
 	if e != nil {
 		return c, e
 	}
+	if normalized, ok := i18n.Normalize(c.Language); ok {
+		c.Language = normalized
+	}
 	if os.Getenv("OPENVIBECODING_DEBUG") == "1" {
 		c.Debug = true
 	}
 	if language := os.Getenv("OPENVIBECODING_LANGUAGE"); language != "" {
-		c.Language = language
+		selected, ok := i18n.Normalize(language)
+		if !ok {
+			return c, fmt.Errorf("unsupported interface language %q (choose auto, en, pt-BR, es, or zh-CN)", language)
+		}
+		c.Language = selected
 	}
 	if p := os.Getenv("OPENVIBECODING_PROVIDER"); p != "" {
 		c.Provider = p
