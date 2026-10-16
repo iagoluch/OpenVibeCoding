@@ -122,3 +122,50 @@ func TestUndoRequiresRuntimeCapability(t *testing.T) {
 	}
 }
 
+
+
+func TestLanguageCommandPersistsAndLocalizes(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("OPENVIBECODING_HOME", home)
+	t.Setenv("OPENVIBECODING_LANGUAGE", "")
+	t.Setenv("LC_ALL", "")
+	t.Setenv("LC_MESSAGES", "")
+	t.Setenv("LANG", "en_US.UTF-8")
+
+	m := fixture(t)
+	m.command("/language pt-BR")
+	if m.Engine.Config.Language != "pt-BR" {
+		t.Fatalf("in-memory language = %q, want pt-BR", m.Engine.Config.Language)
+	}
+	if m.input.Placeholder != "Descreva uma tarefa ou use /help" {
+		t.Fatalf("input placeholder was not localized: %q", m.input.Placeholder)
+	}
+	if !strings.Contains(strings.Join(m.lines, "\n"), "Idioma da interface salvo: pt-BR") {
+		t.Fatal("language change confirmation was not localized")
+	}
+
+	loaded, err := config.Load(home)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if loaded.Language != "pt-BR" {
+		t.Fatalf("persisted language = %q, want pt-BR", loaded.Language)
+	}
+
+	m.command("/language fr-FR")
+	if m.Engine.Config.Language != "pt-BR" {
+		t.Fatal("invalid language replaced the valid preference")
+	}
+	if !strings.Contains(strings.Join(m.lines, "\n"), "Idioma não suportado") {
+		t.Fatal("invalid-language error was not localized")
+	}
+}
+
+func TestLanguageCommandHelpListsLocales(t *testing.T) {
+	m := fixture(t)
+	m.Engine.Config.Language = "pt-BR"
+	m.command("/help")
+	if !strings.Contains(strings.Join(m.lines, "\n"), "/language") {
+		t.Fatal("help does not advertise the language command")
+	}
+}
