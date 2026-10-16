@@ -25,6 +25,7 @@ var catalogs = map[string]map[string]string{
 		"language.usage": "Usage: /language [auto|en|pt-BR|es|zh-CN]",
 		"language.options": "Available languages: auto (system), en (English), pt-BR (Português do Brasil), es (Español), zh-CN (简体中文)",
 		"language.current": "Interface language: %s (resolved: %s)",
+		"language.auto": "Automatic (system locale)",
 		"language.changed": "Interface language saved: %s",
 		"language.invalid": "Unsupported language %q. Choose auto, en, pt-BR, es, or zh-CN.",
 		"command.unknown": "unknown command %q; use /help",
@@ -50,6 +51,7 @@ var catalogs = map[string]map[string]string{
 		"language.usage": "Uso: /language [auto|en|pt-BR|es|zh-CN]",
 		"language.options": "Idiomas: auto (sistema), en (inglês), pt-BR (português brasileiro), es (espanhol), zh-CN (chinês simplificado)",
 		"language.current": "Idioma da interface: %s (resolvido: %s)",
+		"language.auto": "Automático (idioma do sistema)",
 		"language.changed": "Idioma da interface salvo: %s",
 		"language.invalid": "Idioma não suportado %q. Escolha auto, en, pt-BR, es ou zh-CN.",
 		"command.unknown": "comando desconhecido %q; use /help",
@@ -75,6 +77,7 @@ var catalogs = map[string]map[string]string{
 		"language.usage": "Uso: /language [auto|en|pt-BR|es|zh-CN]",
 		"language.options": "Idiomas: auto (sistema), en (inglés), pt-BR (portugués brasileño), es (español), zh-CN (chino simplificado)",
 		"language.current": "Idioma de la interfaz: %s (resuelto: %s)",
+		"language.auto": "Automático (idioma del sistema)",
 		"language.changed": "Idioma de la interfaz guardado: %s",
 		"language.invalid": "Idioma no compatible %q. Elige auto, en, pt-BR, es o zh-CN.",
 		"command.unknown": "comando desconocido %q; usa /help",
@@ -100,6 +103,7 @@ var catalogs = map[string]map[string]string{
 		"language.usage": "用法：/language [auto|en|pt-BR|es|zh-CN]",
 		"language.options": "可用语言：auto（系统）、en（英语）、pt-BR（巴西葡萄牙语）、es（西班牙语）、zh-CN（简体中文）",
 		"language.current": "界面语言：%s（当前解析为：%s）",
+		"language.auto": "自动（系统语言）",
 		"language.changed": "已保存界面语言：%s",
 		"language.invalid": "不支持的语言 %q。请选择 auto、en、pt-BR、es 或 zh-CN。",
 		"command.unknown": "未知命令 %q；请使用 /help",
@@ -118,6 +122,10 @@ var catalogs = map[string]map[string]string{
 // Normalize validates and canonicalizes a user-selected language tag.
 func Normalize(tag string) (string, bool) {
 	tag = strings.TrimSpace(tag)
+	// Locale variables commonly include an encoding or modifier, e.g. pt_BR.UTF-8.
+	if cut := strings.IndexAny(tag, ".@"); cut >= 0 {
+		tag = tag[:cut]
+	}
 	switch strings.ToLower(strings.ReplaceAll(tag, "_", "-")) {
 	case "", "auto", "system":
 		return Auto, true
@@ -180,7 +188,7 @@ func Name(preference string) string {
 	}
 	switch normalized {
 	case Auto:
-		return T(preference, "language.options")
+		return T(preference, "language.auto")
 	case "en":
 		return "English"
 	case "pt-BR":
