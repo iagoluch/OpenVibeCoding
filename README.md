@@ -1,4 +1,8 @@
 <p align="center">
+  <img src="assets/banner-pt-br.svg" alt="Identidade visual do OpenVibeCoding — desenvolvimento com IA sob seu controle" width="100%">
+</p>
+
+<p align="center">
   <strong>Um ambiente de desenvolvimento com IA, projetado para uma experiência desktop.</strong><br>
   Revise mudanças, aprove operações e acompanhe resultados — com você no controle.
 </p>
@@ -19,7 +23,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/license-MIT-brightgreen" alt="Licença MIT">
+  <img src="https://img.shields.io/badge/license-MIT-69CFFF" alt="Licença MIT">
   <img src="https://img.shields.io/badge/feito%20em-Go-00ADD8?logo=go&logoColor=white" alt="Feito em Go">
   <img src="https://img.shields.io/badge/Windows-Linux-macOS-informational" alt="Windows, Linux e macOS">
 </p>

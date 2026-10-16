@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="title desc">
+<title id="title">OpenVibeCoding — Desarrollo con IA, bajo tu control.</title>
+<desc id="desc">Banner de identidad visual de OpenVibeCoding en azul claro, azul oscuro y negro, con la mascota Byte.</desc>
+<rect width="1200" height="360" fill="#050A11"/>
+<path d="M0 22H1200M0 336H1200" stroke="#132A3C" stroke-width="1"/>
+<path d="M34 40V316" stroke="#153149" stroke-width="1"/>
+<path d="M642 22V336" stroke="#193A52" stroke-width="1"/>
+<path d="M54 42H612" stroke="#24465F" stroke-width="1"/>
+<g transform="translate(57 51) scale(0.78)">
+  <path d="M2 13h5v5H2zM7 5h4v4H7zM5 25h5v5H5z" fill="#66CEFF"/>
+  <path d="M15 10 24 4 35 8 42 17 41 27 35 35 25 39 17 32 12 23 12 16Z" fill="#0D2B46" stroke="#69CFFF" stroke-width="2.4" stroke-linejoin="round"/>
+  <path d="M15 10 20 15 12 21" fill="none" stroke="#3B9DD4" stroke-width="2" stroke-linejoin="round"/>
+  <rect x="22" y="18" width="3.5" height="6.5" rx="1.7" fill="#DFF7FF"/>
+  <rect x="31" y="17" width="3.5" height="6.5" rx="1.7" fill="#DFF7FF"/>
+  <path d="M20 30h7" stroke="#69CFFF" stroke-width="2" stroke-linecap="round"/>
+ </g>
+<text x="104" y="73" font-family="Arial,sans-serif" font-size="15" font-weight="700" letter-spacing="2.4" fill="#E6F5FF">OPENVIBECODING</text>
+<text x="54" y="111" font-family="'Noto Sans CJK SC','Microsoft YaHei',Arial,sans-serif" font-size="10" letter-spacing="1.4" fill="#69CFFF">DIRECCIÓN DEL PRODUCTO / DESKTOP-FIRST</text>
+<text x="54" y="158" font-family="'Noto Sans CJK SC','Microsoft YaHei',Arial,sans-serif" font-size="31" font-weight="700" letter-spacing="-0.8" fill="#EAF7FF">Desarrollo con IA,</text>
+<text x="54" y="203" font-family="'Noto Sans CJK SC','Microsoft YaHei',Arial,sans-serif" font-size="31" font-weight="700" letter-spacing="-0.8" fill="#69CFFF">bajo tu control.</text>
+<text x="56" y="240" font-family="'Noto Sans CJK SC','Microsoft YaHei',Arial,sans-serif" font-size="14" fill="#A6C4D8">Proyectos, revisión y verificación en un flujo integrado.</text>
+<path d="M54 260H602" stroke="#193A52"/>
+<circle cx="61" cy="287" r="3" fill="#69CFFF"/>
+<text x="74" y="291" font-family="'Noto Sans CJK SC','Microsoft YaHei',Arial,sans-serif" font-size="9" letter-spacing="0.8" fill="#9DC9E1">APP DE ESCRITORIO EN DESARROLLO  ·  CLI/TUI DISPONIBLE HOY</text>
+<g>
+  <rect x="704" y="43" width="454" height="272" rx="8" fill="#081421" stroke="#25516E" stroke-width="1.4"/>
+  <path d="M704 77H1158" stroke="#21445D"/>
+  <circle cx="721" cy="60" r="3" fill="#69CFFF"/><circle cx="733" cy="60" r="3" fill="#2C6488"/><circle cx="745" cy="60" r="3" fill="#173A53"/>
+  <text x="761" y="64" font-family="Arial,sans-serif" font-size="9" fill="#8FAFC4">OVC / WORKSPACE</text>
+  <text x="1005" y="63" font-family="'Noto Sans CJK SC','Microsoft YaHei',Arial,sans-serif" font-size="7.5" fill="#69CFFF">CONCEPTO · NO ES UNA CAPTURA</text>
+  <path d="M837 78V300" stroke="#1C3A50"/>
+  <rect x="720" y="99" width="111" height="24" rx="4" fill="#0F2C42" stroke="#235273" stroke-width="0.7"/>
+   <rect x="730" y="107" width="5" height="5" rx="1" fill="#69CFFF"/>
+   <text x="742" y="116" font-family="Arial,'Noto Sans CJK SC',sans-serif" font-size="10" fill="#DFF7FF">Proyectos</text>
+<rect x="720" y="131" width="111" height="24" rx="4" fill="#091522" stroke="#13283A" stroke-width="0.7"/>
+   <rect x="730" y="139" width="5" height="5" rx="1" fill="#5C7A91"/>
+   <text x="742" y="148" font-family="Arial,'Noto Sans CJK SC',sans-serif" font-size="10" fill="#8FAEC1">Conversación</text>
+<rect x="720" y="163" width="111" height="24" rx="4" fill="#091522" stroke="#13283A" stroke-width="0.7"/>
+   <rect x="730" y="171" width="5" height="5" rx="1" fill="#5C7A91"/>
+   <text x="742" y="180" font-family="Arial,'Noto Sans CJK SC',sans-serif" font-size="10" fill="#8FAEC1">Cambios</text>
+<rect x="720" y="195" width="111" height="24" rx="4" fill="#091522" stroke="#13283A" stroke-width="0.7"/>
+   <rect x="730" y="203" width="5" height="5" rx="1" fill="#5C7A91"/>
+   <text x="742" y="212" font-family="Arial,'Noto Sans CJK SC',sans-serif" font-size="10" fill="#8FAEC1">Pruebas</text>
+  <text x="855" y="94" font-family="'Noto Sans CJK SC','Microsoft YaHei',Arial,sans-serif" font-size="12" font-weight="600" fill="#E1F3FC">Proyecto actual</text>
+  <rect x="845" y="111" width="82" height="62" rx="5" fill="#0B1A29" stroke="#1A3A53"/>
+   <text x="855" y="128" font-family="Arial,sans-serif" font-size="7" letter-spacing="0.7" fill="#80B8D7">DIFFS</text>
+   <path d="M855 141h48" stroke="#234D6A" stroke-width="2"/>
+   <path d="M855 151h39" stroke="#69CFFF" stroke-width="2"/>
+<rect x="936" y="111" width="82" height="62" rx="5" fill="#0B1A29" stroke="#1A3A53"/>
+   <text x="946" y="128" font-family="Arial,sans-serif" font-size="7" letter-spacing="0.7" fill="#80B8D7">PRUEBAS</text>
+   <path d="M946 141h34" stroke="#2F5B79" stroke-width="2"/>
+   <path d="M946 151h39" stroke="#4F86AA" stroke-width="2"/>
+<rect x="1027" y="111" width="82" height="62" rx="5" fill="#0B1A29" stroke="#1A3A53"/>
+   <text x="1037" y="128" font-family="Arial,sans-serif" font-size="7" letter-spacing="0.7" fill="#80B8D7">APROBACIONES</text>
+   <path d="M1037 141h48" stroke="#234D6A" stroke-width="2"/>
+   <path d="M1037 151h22" stroke="#3278A5" stroke-width="2"/>
+  <rect x="847" y="184" width="243" height="96" rx="5" fill="#07111D" stroke="#1C3B52"/>
+  <text x="860" y="201" font-family="monospace" font-size="9" fill="#91B8CE">src/parser.go</text>
+  <path d="M860 211H1077" stroke="#172F43"/>
+  <text x="860" y="232" font-family="monospace" font-size="12" fill="#6FD0FF">+ validate(input)</text>
+  <text x="860" y="253" font-family="'Noto Sans CJK SC','Microsoft YaHei',Arial,sans-serif" font-size="9" fill="#9DBDCF">2 cambios esperan revisión</text>
+  <path d="M860 263H1042" stroke="#19374C"/>
+  <g transform="translate(1090 248) scale(0.68)">
+  <path d="M2 13h5v5H2zM7 5h4v4H7zM5 25h5v5H5z" fill="#66CEFF"/>
+  <path d="M15 10 24 4 35 8 42 17 41 27 35 35 25 39 17 32 12 23 12 16Z" fill="#0D2B46" stroke="#69CFFF" stroke-width="2.4" stroke-linejoin="round"/>
+  <path d="M15 10 20 15 12 21" fill="none" stroke="#3B9DD4" stroke-width="2" stroke-linejoin="round"/>
+  <rect x="22" y="18" width="3.5" height="6.5" rx="1.7" fill="#DFF7FF"/>
+  <rect x="31" y="17" width="3.5" height="6.5" rx="1.7" fill="#DFF7FF"/>
+  <path d="M20 30h7" stroke="#69CFFF" stroke-width="2" stroke-linecap="round"/>
+ </g>
+</g>
+<text x="1115" y="337" text-anchor="end" font-family="Arial,sans-serif" font-size="9" letter-spacing="1.4" fill="#496A82">INTENT / REVIEW / EVIDENCE</text>
+</svg>
