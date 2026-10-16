@@ -12,6 +12,8 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/iagoluch/OpenVibeCoding/internal/agent"
+	appconfig "github.com/iagoluch/OpenVibeCoding/internal/config"
+	"github.com/iagoluch/OpenVibeCoding/internal/i18n"
 	"github.com/iagoluch/OpenVibeCoding/internal/automation"
 	"github.com/iagoluch/OpenVibeCoding/internal/provider"
 )
@@ -48,7 +50,7 @@ type Model struct {
 
 func New(e *agent.Engine) *Model {
 	input := textarea.New()
-	input.Placeholder = "Describe a task, or /help"
+	input.Placeholder = i18n.T(e.Config.Language, "input.placeholder")
 	input.ShowLineNumbers = false
 	input.CharLimit = 16000
 	input.SetHeight(3)
@@ -72,7 +74,7 @@ func (m *Model) restore() {
 		m.add(v.Message.Role, v.Message.Content)
 	}
 	if len(entries) == 0 {
-		m.add("welcome", "OpenVibeCoding · review before action\nAsk me to inspect this project. /help lists commands.\nFile tools stay inside the workspace. Commands require approval and use OS isolation when available.")
+		m.add("welcome", i18n.T(m.Engine.Config.Language, "welcome.body"))
 	}
 }
 func (m *Model) add(role, text string) {
@@ -117,7 +119,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "approval":
 			m.approval = v.Decision
 			m.status = "approval required"
-			m.add("review", v.Text+"\n\nCtrl+Y approves this operation · Ctrl+N rejects · PgUp/PgDn inspect diff")
+			m.add("review", v.Text+"\n\n"+i18n.T(m.Engine.Config.Language, "approval.hint"))
 		case "status":
 			m.status = v.Text
 		default:
@@ -242,17 +244,40 @@ func (m *Model) submit(text string) tea.Cmd {
 	return wait(events)
 }
 func (m *Model) command(text string) tea.Cmd {
-	name, arg, err := Parse(text)
+	name, arg, err := ParseLanguage(text, m.Engine.Config.Language)
 	if err != nil {
 		m.add("error", err.Error())
 		return nil
 	}
 	c := m.Engine.Config
 	switch name {
+	case "/language":
+		if arg == "" {
+			current := fmt.Sprintf(i18n.T(c.Language, "language.current"), c.Language, i18n.Resolve(c.Language))
+			m.add("language", current+"\n"+i18n.T(c.Language, "language.options"))
+			return nil
+		}
+		language, ok := i18n.Normalize(arg)
+		if !ok {
+			m.add("error", fmt.Sprintf(i18n.T(c.Language, "language.invalid"), arg))
+			return nil
+		}
+		c.Language = language
+		dir, saveErr := appconfig.Dir()
+		if saveErr == nil {
+			saveErr = appconfig.Save(dir, c)
+		}
+		if saveErr != nil {
+			m.add("error", fmt.Sprintf(i18n.T(c.Language, "error.configSave"), saveErr))
+			return nil
+		}
+		m.Engine.Config = c
+		m.input.Placeholder = i18n.T(c.Language, "input.placeholder")
+		m.add("language", fmt.Sprintf(i18n.T(c.Language, "language.changed"), language))
 	case "/exit":
 		return tea.Quit
 	case "/help":
-		m.add("help", "/model [provider/model] · /provider [name] · /harness [review|inspect]\n/sessions · /resume <id> · /new · /rename <title> · /delete <other-session-id>\n/init · /undo · /doctor\n/context · /cost · /permissions · /capabilities · /changes · /config · /status · /clear · /exit\nEnter send · Ctrl+J multiline · Tab complete · Alt+↑/↓ history\nPgUp/PgDn scroll · Esc cancel · Ctrl+C cancel/exit\nApprovals: Ctrl+Y accept one operation · Ctrl+N reject")
+		m.add("help", i18n.T(c.Language, "help.body"))
 	case "/clear":
 		m.lines = nil
 		m.stream = ""
@@ -262,7 +287,7 @@ func (m *Model) command(text string) tea.Cmd {
 	case "/undo":
 		undoer, ok := m.Engine.Store.(Undoer)
 		if !ok {
-			err = fmt.Errorf("undo needs the shared runtime change log")
+			err = fmt.Errorf("%s", i18n.T(c.Language, "undo.runtime"))
 			break
 		}
 		var summary string
@@ -287,7 +312,7 @@ func (m *Model) command(text string) tea.Cmd {
 		} else if name == "/provider" {
 			p, ok := c.Providers[arg]
 			if !ok {
-				m.add("error", "unknown provider")
+				m.add("error", i18n.T(c.Language, "provider.unknown"))
 				return nil
 			}
 			c.Provider = arg
@@ -295,7 +320,7 @@ func (m *Model) command(text string) tea.Cmd {
 		} else {
 			parts := strings.SplitN(arg, "/", 2)
 			if len(parts) != 2 {
-				m.add("error", "usage: /model provider/model")
+				m.add("error", i18n.T(c.Language, "model.usage"))
 				return nil
 			}
 			c.Provider = parts[0]
@@ -329,7 +354,7 @@ func (m *Model) command(text string) tea.Cmd {
 			break
 		}
 		if session.Workspace != m.Engine.Workspace.Path {
-			err = fmt.Errorf("session belongs to another workspace; launch with --workspace %q", session.Workspace)
+			err = fmt.Errorf(i18n.T(c.Language, "session.workspace"), session.Workspace)
 			break
 		}
 		err = m.Engine.Store.Recover(arg)
@@ -357,7 +382,7 @@ func (m *Model) command(text string) tea.Cmd {
 		}
 	case "/delete":
 		if arg == "" || arg == m.Engine.Session {
-			err = fmt.Errorf("specify another session ID; start /new before deleting this session")
+			err = fmt.Errorf("%s", i18n.T(c.Language, "session.deleteOther"))
 			break
 		}
 		_, err = m.Engine.Store.Get(arg)
@@ -410,7 +435,7 @@ func (m *Model) command(text string) tea.Cmd {
 		if arg != "" {
 			parts := strings.Fields(arg)
 			if len(parts) != 2 || (parts[1] != "on" && parts[1] != "off") {
-				err = fmt.Errorf("usage: /permissions browser|desktop|clipboard|network|install on|off")
+				err = fmt.Errorf("%s", i18n.T(c.Language, "permissions.usage"))
 				break
 			}
 			enabled := parts[1] == "on"
@@ -426,7 +451,7 @@ func (m *Model) command(text string) tea.Cmd {
 			case "clipboard":
 				c.Automation.Clipboard = enabled
 			default:
-				err = fmt.Errorf("unknown permission")
+				err = fmt.Errorf("%s", i18n.T(c.Language, "permissions.unknown"))
 			}
 			if err != nil {
 				break
@@ -457,15 +482,15 @@ func (m *Model) command(text string) tea.Cmd {
 	return nil
 }
 func (m *Model) View() tea.View {
-	title := accent.Render(" OPENVIBECODING ") + muted.Render(" project agent")
+	title := accent.Render(" "+i18n.T(m.Engine.Config.Language, "app.title")+" ") + muted.Render(i18n.T(m.Engine.Config.Language, "app.subtitle"))
 	status := fmt.Sprintf(" %s/%s · %s · %s", m.Engine.Config.Provider, m.Engine.Config.Model, m.Engine.Config.Harness, m.status)
 	if label := m.usageLabel(); label != "" {
 		status += " · " + label
 	}
 	status = lipgloss.NewStyle().Width(max(10, m.width-2)).Render(m.Engine.Config.Redact(status))
-	help := "Enter send  Ctrl+J newline  /help  Esc stop"
+	help := i18n.T(m.Engine.Config.Language, "view.help")
 	if m.approval != nil {
-		help = "REVIEW · Ctrl+Y approve · Ctrl+N reject · PgUp/PgDn scroll"
+		help = i18n.T(m.Engine.Config.Language, "view.review")
 	}
 	v := tea.NewView(title + "\n" + muted.Render(m.Engine.Config.Redact(m.Engine.Workspace.Path)) + "\n\n" + m.output.View() + "\n" + warning.Render(status) + "\n" + m.input.View() + "\n" + muted.Render(help))
 	v.AltScreen = true
