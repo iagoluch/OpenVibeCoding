@@ -339,7 +339,7 @@ func (m *Model) command(text string) tea.Cmd {
 		}
 		m.Engine.Config = c
 		m.usage = provider.Usage{}
-		m.add("configuration", fmt.Sprintf(i18n.T(c.Language, "config.activeLabel"), c.Provider+"/"+c.Model, c.Harness))
+		m.add("configuration", fmt.Sprintf(i18n.T(c.Language, "config.activeLabel"), c.Provider, c.Model, c.Harness))
 	case "/new":
 		if arg != "" {
 			err = fmt.Errorf("%s", i18n.T(c.Language, "usage.new"))
