@@ -30,6 +30,12 @@ func Connect(dir string) (*Client, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	r, e := c.request(ctx, "/health", nil)
+	if errors.Is(e, errUnreachable) {
+		// The metadata validated but nothing answered on its address: the
+		// daemon died without removing runtime.json. That is the same state
+		// as never having started, so callers answer it the same way.
+		return nil, ErrNotRunning
+	}
 	if e != nil {
 		return nil, e
 	}
@@ -40,6 +46,11 @@ func Connect(dir string) (*Client, error) {
 	}
 	return c, nil
 }
+
+// errUnreachable marks a request that never reached a listener: the daemon is
+// gone, or its address changed under a stale metadata file.
+var errUnreachable = errors.New("runtime connection failed")
+
 func (c *Client) request(ctx context.Context, path string, v any) (*http.Response, error) {
 	b, e := json.Marshal(v)
 	if e != nil {
@@ -54,7 +65,7 @@ func (c *Client) request(ctx context.Context, path string, v any) (*http.Respons
 	r.Header.Set("Content-Type", "application/json")
 	resp, e := c.HTTP.Do(r)
 	if e != nil {
-		return nil, errors.New("runtime connection failed")
+		return nil, errUnreachable
 	}
 	if resp.StatusCode != 200 {
 		resp.Body.Close()

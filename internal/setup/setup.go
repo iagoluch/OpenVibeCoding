@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"golang.org/x/term"
@@ -76,12 +77,22 @@ const (
 )
 
 // Detect probes the local model runners; a missing server is normal and
-// reported as no models.
+// reported as no models. The two probes run at once so a silent port costs its
+// own timeout instead of adding to the other's.
 func Detect() Local {
-	return Local{
-		Ollama:   detectModels(ollamaURL, "models", "name"),
-		LMStudio: detectModels(lmstudioURL, "data", "id"),
-	}
+	var detected Local
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		detected.Ollama = detectModels(ollamaURL, "models", "name")
+	}()
+	go func() {
+		defer wg.Done()
+		detected.LMStudio = detectModels(lmstudioURL, "data", "id")
+	}()
+	wg.Wait()
+	return detected
 }
 
 // LocalProvider reports whether a provider name is served by a local runner.
