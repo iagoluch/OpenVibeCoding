@@ -35,6 +35,23 @@ The default credential backend is the OS keychain: macOS Keychain, Windows Crede
 
 Use `ovc --doctor` to check configuration and capabilities without printing keys. If credentials or saved configuration change while the runtime is running, stop the idle runtime with `ovc --runtime stop`, then reconnect to load them. `/model` and `/harness` switches take effect immediately without a restart.
 
+## Interface language
+
+The terminal interface supports English, Brazilian Portuguese, Spanish and Simplified Chinese. The default `auto` preference follows `LC_ALL`, `LC_MESSAGES` or `LANG` when those variables identify a supported locale; it falls back to English when no supported locale is detected.
+
+Change the saved preference from inside the app:
+
+```text
+/language
+/language pt-BR
+/language en
+/language es
+/language zh-CN
+/language auto
+```
+
+The setting is stored in `config.json`. The `OPENVIBECODING_LANGUAGE` environment variable overrides the saved preference, and the `--language` startup option can set a new preference before opening the app. Command names, flags, provider IDs, model IDs and code remain stable across languages; the selected language guides user-facing agent explanations as well as the translated interface.
+
 ## Providers
 
 | Adapter | Configuration |

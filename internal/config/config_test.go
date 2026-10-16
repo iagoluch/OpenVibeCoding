@@ -192,3 +192,29 @@ func TestNegativePriceRejected(t *testing.T) {
 		t.Fatal("negative price accepted")
 	}
 }
+
+
+func TestLanguagePreferenceRoundTrip(t *testing.T) {
+	t.Setenv("OPENVIBECODING_LANGUAGE", "")
+	dir := t.TempDir()
+	c := Default()
+	c.Language = "pt-BR"
+	if err := Save(dir, c); err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := Load(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if loaded.Language != "pt-BR" {
+		t.Fatalf("language preference = %q, want pt-BR", loaded.Language)
+	}
+}
+
+func TestUnsupportedLanguageRejected(t *testing.T) {
+	c := Default()
+	c.Language = "fr-FR"
+	if err := c.Validate(); err == nil {
+		t.Fatal("unsupported interface language accepted")
+	}
+}

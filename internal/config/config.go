@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/iagoluch/OpenVibeCoding/internal/automation"
 	"github.com/iagoluch/OpenVibeCoding/internal/credentials"
+	"github.com/iagoluch/OpenVibeCoding/internal/i18n"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -36,6 +37,7 @@ type Permissions struct {
 }
 type Config struct {
 	Debug       bool                `json:"debug,omitempty"`
+	Language    string              `json:"language,omitempty"`
 	Permissions Permissions         `json:"permissions"`
 	Automation  automation.Settings `json:"automation"`
 	Provider    string              `json:"provider"`
@@ -48,7 +50,7 @@ type Config struct {
 func price(v float64) *float64 { return &v }
 
 func Default() Config {
-	return Config{Provider: "openai", Model: "gpt-4.1-mini", Harness: "review", Providers: map[string]Provider{
+	return Config{Language: i18n.Auto, Provider: "openai", Model: "gpt-4.1-mini", Harness: "review", Providers: map[string]Provider{
 		"anthropic": {Protocol: "anthropic", BaseURL: "https://api.anthropic.com/v1", KeyEnv: "ANTHROPIC_API_KEY", Models: []Model{
 			{ID: "claude-sonnet-4-5", Context: 200000, Tools: true, InputPrice: price(3), OutputPrice: price(15)},
 		}},
@@ -219,8 +221,18 @@ func Load(dir string) (Config, error) {
 	if e != nil {
 		return c, e
 	}
+	if normalized, ok := i18n.Normalize(c.Language); ok {
+		c.Language = normalized
+	}
 	if os.Getenv("OPENVIBECODING_DEBUG") == "1" {
 		c.Debug = true
+	}
+	if language := os.Getenv("OPENVIBECODING_LANGUAGE"); language != "" {
+		selected, ok := i18n.Normalize(language)
+		if !ok {
+			return c, fmt.Errorf("unsupported interface language %q (choose auto, en, pt-BR, es, or zh-CN)", language)
+		}
+		c.Language = selected
 	}
 	if p := os.Getenv("OPENVIBECODING_PROVIDER"); p != "" {
 		c.Provider = p
@@ -253,6 +265,9 @@ func (c Config) Active() (Provider, Model, error) {
 	return p, Model{}, fmt.Errorf("unknown model %q for %s", c.Model, c.Provider)
 }
 func (c Config) Validate() error {
+	if _, ok := i18n.Normalize(c.Language); !ok {
+		return errors.New("unsupported interface language")
+	}
 	if c.Harness != "review" && c.Harness != "inspect" {
 		return errors.New("harness must be review or inspect")
 	}

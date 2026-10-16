@@ -129,3 +129,23 @@ func TestDetectModels(t *testing.T) {
 		t.Fatalf("%v", got)
 	}
 }
+
+func TestConfirmAcceptsLocalizedAffirmatives(t *testing.T) {
+	cases := []struct {
+		language string
+		answer   string
+	}{
+		{"en", "yes\n"},
+		{"pt-BR", "sim\n"},
+		{"es", "sí\n"},
+		{"zh-CN", "是\n"},
+	}
+	for _, tc := range cases {
+		if !confirm(bufio.NewReader(strings.NewReader(tc.answer)), "Proceed?", tc.language) {
+			t.Errorf("confirm(%q) did not accept %q", tc.language, strings.TrimSpace(tc.answer))
+		}
+	}
+	if confirm(bufio.NewReader(strings.NewReader("n\n")), "Proceed?", "pt-BR") {
+		t.Fatal("negative answer must not be accepted")
+	}
+}

@@ -73,7 +73,7 @@ type response struct {
 type turn struct {
 	Permissions                                          config.Permissions
 	Automation                                           automation.Settings
-	Session, Prompt, Provider, Model, Harness, Workspace string
+	Session, Prompt, Provider, Model, Harness, Language, Workspace string
 	Shell                                                bool
 }
 type wireEvent struct {
@@ -322,6 +322,9 @@ func (s *Server) run(w http.ResponseWriter, r *http.Request, owner string) {
 	c.Provider = req.Provider
 	c.Model = req.Model
 	c.Harness = req.Harness
+	if req.Language != "" {
+		c.Language = req.Language
+	}
 	c.Permissions = req.Permissions
 	c.Automation.Browser = req.Automation.Browser
 	c.Automation.Desktop = req.Automation.Desktop

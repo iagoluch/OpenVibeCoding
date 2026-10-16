@@ -12,6 +12,8 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/iagoluch/OpenVibeCoding/internal/agent"
+	appconfig "github.com/iagoluch/OpenVibeCoding/internal/config"
+	"github.com/iagoluch/OpenVibeCoding/internal/i18n"
 	"github.com/iagoluch/OpenVibeCoding/internal/automation"
 	"github.com/iagoluch/OpenVibeCoding/internal/provider"
 )
@@ -48,7 +50,7 @@ type Model struct {
 
 func New(e *agent.Engine) *Model {
 	input := textarea.New()
-	input.Placeholder = "Describe a task, or /help"
+	input.Placeholder = i18n.T(e.Config.Language, "input.placeholder")
 	input.ShowLineNumbers = false
 	input.CharLimit = 16000
 	input.SetHeight(3)
@@ -72,11 +74,16 @@ func (m *Model) restore() {
 		m.add(v.Message.Role, v.Message.Content)
 	}
 	if len(entries) == 0 {
-		m.add("welcome", "OpenVibeCoding · review before action\nAsk me to inspect this project. /help lists commands.\nFile tools stay inside the workspace. Commands require approval and use OS isolation when available.")
+		m.add("welcome", i18n.T(m.Engine.Config.Language, "welcome.body"))
 	}
 }
 func (m *Model) add(role, text string) {
-	m.lines = append(m.lines, accent.Render(strings.ToUpper(role))+"\n"+m.Engine.Config.Redact(text))
+	roleKey := "role." + strings.ToLower(role)
+	label := i18n.T(m.Engine.Config.Language, roleKey)
+	if label == roleKey {
+		label = strings.ToUpper(role)
+	}
+	m.lines = append(m.lines, accent.Render(label)+"\n"+m.Engine.Config.Redact(text))
 	m.refresh(true)
 }
 func (m *Model) refresh(bottom bool) {
@@ -117,7 +124,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "approval":
 			m.approval = v.Decision
 			m.status = "approval required"
-			m.add("review", v.Text+"\n\nCtrl+Y approves this operation · Ctrl+N rejects · PgUp/PgDn inspect diff")
+			m.add("review", v.Text+"\n\n"+i18n.T(m.Engine.Config.Language, "approval.hint"))
 		case "status":
 			m.status = v.Text
 		default:
@@ -242,17 +249,40 @@ func (m *Model) submit(text string) tea.Cmd {
 	return wait(events)
 }
 func (m *Model) command(text string) tea.Cmd {
-	name, arg, err := Parse(text)
+	name, arg, err := ParseLanguage(text, m.Engine.Config.Language)
 	if err != nil {
 		m.add("error", err.Error())
 		return nil
 	}
 	c := m.Engine.Config
 	switch name {
+	case "/language":
+		if arg == "" {
+			current := fmt.Sprintf(i18n.T(c.Language, "language.current"), c.Language, i18n.Resolve(c.Language))
+			m.add("language", current+"\n"+i18n.T(c.Language, "language.options"))
+			return nil
+		}
+		language, ok := i18n.Normalize(arg)
+		if !ok {
+			m.add("error", fmt.Sprintf(i18n.T(c.Language, "language.invalid"), arg))
+			return nil
+		}
+		c.Language = language
+		dir, saveErr := appconfig.Dir()
+		if saveErr == nil {
+			saveErr = appconfig.Save(dir, c)
+		}
+		if saveErr != nil {
+			m.add("error", fmt.Sprintf(i18n.T(c.Language, "error.configSave"), saveErr))
+			return nil
+		}
+		m.Engine.Config = c
+		m.input.Placeholder = i18n.T(c.Language, "input.placeholder")
+		m.add("language", fmt.Sprintf(i18n.T(c.Language, "language.changed"), language))
 	case "/exit":
 		return tea.Quit
 	case "/help":
-		m.add("help", "/model [provider/model] · /provider [name] · /harness [review|inspect]\n/sessions · /resume <id> · /new · /rename <title> · /delete <other-session-id>\n/init · /undo · /doctor\n/context · /cost · /permissions · /capabilities · /changes · /config · /status · /clear · /exit\nEnter send · Ctrl+J multiline · Tab complete · Alt+↑/↓ history\nPgUp/PgDn scroll · Esc cancel · Ctrl+C cancel/exit\nApprovals: Ctrl+Y accept one operation · Ctrl+N reject")
+		m.add("help", i18n.T(c.Language, "help.body"))
 	case "/clear":
 		m.lines = nil
 		m.stream = ""
@@ -262,7 +292,7 @@ func (m *Model) command(text string) tea.Cmd {
 	case "/undo":
 		undoer, ok := m.Engine.Store.(Undoer)
 		if !ok {
-			err = fmt.Errorf("undo needs the shared runtime change log")
+			err = fmt.Errorf("%s", i18n.T(c.Language, "undo.runtime"))
 			break
 		}
 		var summary string
@@ -279,7 +309,7 @@ func (m *Model) command(text string) tea.Cmd {
 				}
 			}
 			sort.Strings(list)
-			m.add("configuration", fmt.Sprintf("Active %s/%s · harness %s\n%s", c.Provider, c.Model, c.Harness, strings.Join(list, "\n")))
+			m.add("configuration", fmt.Sprintf(i18n.T(c.Language, "config.active"), c.Provider, c.Model, c.Harness, strings.Join(list, "\n")) )
 			return nil
 		}
 		if name == "/harness" {
@@ -287,7 +317,7 @@ func (m *Model) command(text string) tea.Cmd {
 		} else if name == "/provider" {
 			p, ok := c.Providers[arg]
 			if !ok {
-				m.add("error", "unknown provider")
+				m.add("error", i18n.T(c.Language, "provider.unknown"))
 				return nil
 			}
 			c.Provider = arg
@@ -295,7 +325,7 @@ func (m *Model) command(text string) tea.Cmd {
 		} else {
 			parts := strings.SplitN(arg, "/", 2)
 			if len(parts) != 2 {
-				m.add("error", "usage: /model provider/model")
+				m.add("error", i18n.T(c.Language, "model.usage"))
 				return nil
 			}
 			c.Provider = parts[0]
@@ -309,10 +339,10 @@ func (m *Model) command(text string) tea.Cmd {
 		}
 		m.Engine.Config = c
 		m.usage = provider.Usage{}
-		m.add("configuration", "Active: "+c.Provider+"/"+c.Model+" · "+c.Harness)
+		m.add("configuration", fmt.Sprintf(i18n.T(c.Language, "config.activeLabel"), c.Provider, c.Model, c.Harness))
 	case "/new":
 		if arg != "" {
-			err = fmt.Errorf("usage: /new")
+			err = fmt.Errorf("%s", i18n.T(c.Language, "usage.new"))
 			break
 		}
 		var id string
@@ -329,7 +359,7 @@ func (m *Model) command(text string) tea.Cmd {
 			break
 		}
 		if session.Workspace != m.Engine.Workspace.Path {
-			err = fmt.Errorf("session belongs to another workspace; launch with --workspace %q", session.Workspace)
+			err = fmt.Errorf("%s", fmt.Sprintf(i18n.T(c.Language, "session.workspace"), session.Workspace))
 			break
 		}
 		err = m.Engine.Store.Recover(arg)
@@ -348,16 +378,16 @@ func (m *Model) command(text string) tea.Cmd {
 		m.add("sessions", strings.Join(lines, "\n"))
 	case "/rename":
 		if arg == "" {
-			err = fmt.Errorf("usage: /rename title")
+			err = fmt.Errorf("%s", i18n.T(c.Language, "usage.rename"))
 			break
 		}
 		err = m.Engine.Store.Rename(m.Engine.Session, c.Redact(arg))
 		if err == nil {
-			m.add("session", "Renamed")
+			m.add("session", i18n.T(c.Language, "session.renamed"))
 		}
 	case "/delete":
 		if arg == "" || arg == m.Engine.Session {
-			err = fmt.Errorf("specify another session ID; start /new before deleting this session")
+			err = fmt.Errorf("%s", i18n.T(c.Language, "session.deleteOther"))
 			break
 		}
 		_, err = m.Engine.Store.Get(arg)
@@ -365,7 +395,7 @@ func (m *Model) command(text string) tea.Cmd {
 			err = m.Engine.Store.Delete(arg)
 		}
 		if err == nil {
-			m.add("session", "Deleted "+arg)
+			m.add("session", fmt.Sprintf(i18n.T(c.Language, "session.deleted"), arg))
 		}
 	case "/context":
 		entries, e := m.Engine.Store.History(m.Engine.Session)
@@ -376,7 +406,7 @@ func (m *Model) command(text string) tea.Cmd {
 		for _, msg := range messages {
 			total += agent.Estimate(msg)
 		}
-		m.add("context", fmt.Sprintf("~%d conservative byte-based tokens / %d configured limit; %d messages indexed as excerpts. Original history remains in SQLite; incremental structured summaries are prepared during requests, and recall retrieves original evidence.", total, model.Context, n))
+		m.add("context", fmt.Sprintf(i18n.T(c.Language, "context.summary"), total, model.Context, n))
 
 	case "/changes":
 		entries, e := m.Engine.Store.History(m.Engine.Session)
@@ -405,12 +435,12 @@ func (m *Model) command(text string) tea.Cmd {
 				cost += *u.Cost
 			}
 		}
-		m.add("usage", fmt.Sprintf("Saved session: %d input / %d output tokens reported. Known estimated cost: $%.6f; %d requests lack configured prices. Requests without usage remain unknown.", input, output, cost, unknown))
+		m.add("usage", fmt.Sprintf(i18n.T(c.Language, "cost.summary"), input, output, cost, unknown))
 	case "/permissions":
 		if arg != "" {
 			parts := strings.Fields(arg)
 			if len(parts) != 2 || (parts[1] != "on" && parts[1] != "off") {
-				err = fmt.Errorf("usage: /permissions browser|desktop|clipboard|network|install on|off")
+				err = fmt.Errorf("%s", i18n.T(c.Language, "permissions.usage"))
 				break
 			}
 			enabled := parts[1] == "on"
@@ -426,7 +456,7 @@ func (m *Model) command(text string) tea.Cmd {
 			case "clipboard":
 				c.Automation.Clipboard = enabled
 			default:
-				err = fmt.Errorf("unknown permission")
+				err = fmt.Errorf("%s", i18n.T(c.Language, "permissions.unknown"))
 			}
 			if err != nil {
 				break
@@ -436,7 +466,7 @@ func (m *Model) command(text string) tea.Cmd {
 			}
 			m.Engine.Config = c
 		}
-		m.add("permissions", fmt.Sprintf("Harness %s; file changes reviewed individually. Host shell opt-in: %t. Default shell: isolated on supported Linux hosts, otherwise denied (opt-in: restart with --allow-unsandboxed-shell). Browser=%t Desktop=%t Clipboard=%t. Automation actions require approval. Network/install grants are visible in /config. Use /permissions browser|desktop|clipboard|network|install on|off.", c.Harness, m.Engine.Workspace.AllowShell, c.Automation.Browser, c.Automation.Desktop, c.Automation.Clipboard))
+		m.add("permissions", fmt.Sprintf(i18n.T(c.Language, "permissions.summary"), c.Harness, m.Engine.Workspace.AllowShell, c.Automation.Browser, c.Automation.Desktop, c.Automation.Clipboard))
 	case "/config":
 		b, _ := json.MarshalIndent(c, "", "  ")
 		m.add("configuration", string(b))
@@ -446,10 +476,10 @@ func (m *Model) command(text string) tea.Cmd {
 		if version == "" {
 			version = "dev"
 		}
-		m.add("doctor", fmt.Sprintf("OpenVibeCoding %s\nWorkspace: %s\nProvider: %s/%s · tools %t\nHarness: %s\nCredential available: %t\nHost shell opt-in: %t\nOS sandbox: %s\nNetwork grant: %t · install grant: %t\nRuntime: shared authenticated service",
+		m.add("doctor", fmt.Sprintf(i18n.T(c.Language, "doctor.summary"),
 			version, m.Engine.Workspace.Path, c.Provider, c.Model, model.Tools, c.Harness, p.KeyEnv == "" || p.Secret != "", m.Engine.Workspace.AllowShell, m.Engine.Workspace.SandboxStatus(), c.Permissions.Network, c.Permissions.Install))
 	case "/status":
-		m.add("status", fmt.Sprintf("Session: %s\nWorkspace: %s\nProvider: %s/%s\nHarness: %s\nRuntime: shared authenticated service\nState: %s", m.Engine.Session, m.Engine.Workspace.Path, c.Provider, c.Model, c.Harness, m.status))
+		m.add("status", fmt.Sprintf(i18n.T(c.Language, "status.summary"), m.Engine.Session, m.Engine.Workspace.Path, c.Provider, c.Model, c.Harness, localizedStatus(c.Language, m.status)))
 	}
 	if err != nil {
 		m.add("error", err.Error())
@@ -457,19 +487,28 @@ func (m *Model) command(text string) tea.Cmd {
 	return nil
 }
 func (m *Model) View() tea.View {
-	title := accent.Render(" OPENVIBECODING ") + muted.Render(" project agent")
-	status := fmt.Sprintf(" %s/%s · %s · %s", m.Engine.Config.Provider, m.Engine.Config.Model, m.Engine.Config.Harness, m.status)
+	title := accent.Render(" "+i18n.T(m.Engine.Config.Language, "app.title")+" ") + muted.Render(i18n.T(m.Engine.Config.Language, "app.subtitle"))
+	status := fmt.Sprintf(" %s/%s · %s · %s", m.Engine.Config.Provider, m.Engine.Config.Model, m.Engine.Config.Harness, localizedStatus(m.Engine.Config.Language, m.status))
 	if label := m.usageLabel(); label != "" {
 		status += " · " + label
 	}
 	status = lipgloss.NewStyle().Width(max(10, m.width-2)).Render(m.Engine.Config.Redact(status))
-	help := "Enter send  Ctrl+J newline  /help  Esc stop"
+	help := i18n.T(m.Engine.Config.Language, "view.help")
 	if m.approval != nil {
-		help = "REVIEW · Ctrl+Y approve · Ctrl+N reject · PgUp/PgDn scroll"
+		help = i18n.T(m.Engine.Config.Language, "view.review")
 	}
 	v := tea.NewView(title + "\n" + muted.Render(m.Engine.Config.Redact(m.Engine.Workspace.Path)) + "\n\n" + m.output.View() + "\n" + warning.Render(status) + "\n" + m.input.View() + "\n" + muted.Render(help))
 	v.AltScreen = true
 	return v
+}
+
+func localizedStatus(language, status string) string {
+	key := "status." + strings.ReplaceAll(strings.ToLower(status), " ", "_")
+	value := i18n.T(language, key)
+	if value == key {
+		return status
+	}
+	return value
 }
 
 // usageLabel summarizes tokens reported this session view and the estimated
@@ -484,11 +523,11 @@ func (m *Model) usageLabel() string {
 	}
 	label := fmt.Sprintf("↑%s ↓%s", compactTokens(m.usage.Input), compactTokens(m.usage.Output))
 	if model.InputPrice == nil || model.OutputPrice == nil {
-		return label + " · price unset"
+		return label + " · " + i18n.T(m.Engine.Config.Language, "usage.priceUnset")
 	}
 	cost := (float64(m.usage.Input)* *model.InputPrice + float64(m.usage.Output)* *model.OutputPrice) / 1e6
 	if cost == 0 {
-		return label + " · free"
+		return label + " · " + i18n.T(m.Engine.Config.Language, "usage.free")
 	}
 	return fmt.Sprintf("%s · ~$%s", label, formatCost(cost))
 }
