@@ -451,7 +451,7 @@ func Normalize(tag string) (string, bool) {
 		return Auto, true
 	case "en", "en-us", "en-gb":
 		return "en", true
-	case "pt", "pt-br", "pt-pt":
+	case "pt", "pt-br":
 		return "pt-BR", true
 	case "es", "es-es", "es-mx", "es-ar":
 		return "es", true
