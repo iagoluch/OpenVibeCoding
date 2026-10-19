@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/banner-zh-CN.svg" alt="OpenVibeCoding 品牌视觉 — AI 开发，每一步由你掌控" width="100%">
+  <img src="assets/ovc-brand-banner.jpg" alt="OpenVibeCoding 官方视觉：白色圆盘上的蓝色标志与 Byte 吉祥物，蓝黑色电影感背景，不含界面模型。" width="100%">
 </p>
 
 <p align="center">

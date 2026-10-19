@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/banner.svg" alt="OpenVibeCoding visual identity — AI development, with you in control" width="100%">
+  <img src="assets/ovc-brand-banner.jpg" alt="Official OpenVibeCoding artwork: blue emblem on a white disc and the Byte mascot in a cinematic blue-and-black scene, without an interface mockup." width="100%">
 </p>
 
 <p align="center">

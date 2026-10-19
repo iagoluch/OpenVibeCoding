@@ -41,3 +41,8 @@ Generic AI gradients, decorative glowing orbs, excessive glassmorphism, robot ma
 ## Approved primary logo
 
 The primary symbol is the approved blue open-circle and central-loop/check mark on a white circular disc. The canonical vector source is `assets/logo.svg`. The mark has no OVC lettering. The Byte mascot remains a separate secondary element. README banners use the symbol as the dominant visual and Byte as the smaller companion.
+
+
+## Banner aprovado
+
+Os quatro READMEs usam `assets/ovc-brand-banner.jpg`, a arte cinematográfica aprovada. Ela mantém somente o símbolo oficial, o mascote Byte e o cenário abstrato azul/preto; não inclui selo promocional nem mockup da interface desktop, que ainda está em desenvolvimento. Os SVGs continuam disponíveis como recursos vetoriais, mas não são a fonte do banner.
