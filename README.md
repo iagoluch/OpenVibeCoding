@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/banner-pt-br.svg" alt="Identidade visual do OpenVibeCoding — desenvolvimento com IA sob seu controle" width="100%">
+  <img src="assets/ovc-brand-banner.jpg" alt="Arte oficial do OpenVibeCoding: logo azul sobre círculo branco e mascote Byte, em um cenário cinematográfico azul e preto, sem mockup de interface." width="100%">
 </p>
 
 <p align="center">
