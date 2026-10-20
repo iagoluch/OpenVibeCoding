@@ -151,6 +151,27 @@ contract.
 **Implementation started 2026-10-15; this document records the decision baseline** — the decisions
 above precede the code and are not descriptions of shipped behaviour.
 
+Update 2026-10-16 — **Milestone 1 (web) has landed** (`--ui`, `internal/webui`, pairing flow shipped
+before this update was written; the "no `--ui` flag" note below is retained as the writing-time
+observation, not current state), and **Milestone 1-D (desktop shell) landed 2026-10-16** as a third
+thin client, keeping §2.2's thin-client and shared-home rules:
+
+- **Wails v3 is resolved**: pinned `v3.0.0-beta.30`, CGO off, Windows-first. Every desktop file is
+  behind the `desktop` build tag, so plain builds keep a wails-free dependency graph (asserted in CI
+  via `go list -deps ./cmd/ovc`).
+- **The P3 window shape won**: the window is the daemon's own web UI served through a reverse proxy
+  in the Wails asset handler — the bearer token stays in the shell process and is injected per
+  request; the page never holds token or cookie. Verified live on 2026-10-16 against a scratch-home
+  daemon with a fake provider: workspace → session → streamed NDJSON → approval → diff → results →
+  cancel (provider disconnect observed) → resume; the window closes and the daemon survives.
+- Scope shipped as M1-D: proxy allowlist (default-deny, `/pair` and `/stop` blocked), the one
+  binding `desktop.UI.PickFolder` (confined, test-enumerated), pt-BR tray, per-process webview data
+  folders, daemon respawn monitor, Windows exe icon, second release artifact `ovc-desktop`.
+  Deferred honestly: macOS/Linux windows (toolchains not wired in CI), NSIS installer (makensis
+  absent — portable exe only), theme-aware tray icon, the pre-existing `/run` permissions/automation
+  fields remain client-supplied for M1 (client ids are assertable; a cheap gate would be theater;
+  config opt-in scheduled for M2).
+
 Observable state at writing time (verified 2026-10-15):
 
 - `cmd/ovc/` contains `main.go` plus the per-platform signal files only: **no `--ui` flag and no

@@ -1,6 +1,6 @@
 # OpenVibeCoding — project instructions
 
-Terminal coding agent (`ovc`) in Go with Bubble Tea v2. Module `github.com/iagoluch/OpenVibeCoding`, Go 1.26.2+.
+Terminal coding agent (`ovc`) in Go with Bubble Tea v2. Module `github.com/iagoluch/OpenVibeCoding`, Go 1.27.2+ (the stdlib of release binaries must be free of the GO-2026-6603..6617 vulnerabilities, fixed in Go 1.27.2).
 
 ## Build and test
 
@@ -26,6 +26,8 @@ bash scripts/package.sh             # release archives + SHA256SUMS (needs Pytho
 | `internal/store/` | SQLite schema and migrations (bump `user_version` on change) |
 | `internal/workspace/` | Confined file tools, shell sandbox (bubblewrap on Linux) |
 | `internal/tui/` | Bubble Tea interface, slash commands |
+| `internal/webui/` | Embedded browser client served by the daemon (page, assets, no service worker) |
+| `internal/desktop/` | Windows desktop shell behind the `desktop` build tag: Wails window = reverse proxy to the daemon, confined folder-picker bridge, pt-BR tray, respawn monitor |
 | `internal/automation/` | Playwright browser worker, desktop backends |
 | `internal/config/` | Provider registry and permissions |
 | `docs/` | User guide, architecture, security, automation, testing |

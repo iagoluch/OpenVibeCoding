@@ -562,10 +562,18 @@ function renderCounters() {
   }
 }
 
+/** Título de exibição: o armazenamento guarda o sentinela "Untitled" até a
+ *  auto-titulação do agente rodar (agent.go compara Title != "Untitled"); para a
+ *  tela ele vale como vazio e vira "Sem título", sem tocar no valor guardado. */
+function displayTitle(session) {
+  const title = session && session.Title ? String(session.Title).trim() : "";
+  return title && title !== "Untitled" ? title : "Sem título";
+}
+
 /** Cabeçalho da sessão: título, pasta real e números do contexto (§6). */
 function renderHead() {
   const session = state.session;
-  $("chat-title").textContent = session ? session.Title || "Sem título" : "Sessão";
+  $("chat-title").textContent = session ? displayTitle(session) : "Sessão";
   $("chat-workspace").textContent = session ? `${basename(session.Workspace)} · ${session.Workspace}` : "";
   const place = $("composer-place");
   if (place) place.textContent = session ? shorten(session.Workspace, 44) : "";
@@ -879,7 +887,7 @@ function renderSessions() {
 /** Item da trilha: `▪`/`●` de estado, título em 40 colunas e ✕ para fechar (§6). */
 function railItem(session) {
   const current = Boolean(state.session && state.session.ID === session.ID);
-  const title = session.Title || "Sem título";
+  const title = displayTitle(session);
   const button = el("button", { class: "rail-item", type: "button", title: `${title} · ${session.Workspace || "pasta não informada"}` });
   if (current) button.setAttribute("aria-current", "true");
   button.append(el("span", { class: "rail-dot", "aria-hidden": "true" }, current ? "●" : "▪"));
@@ -1595,6 +1603,67 @@ function confirmDialog({ title, body, note = "", accept = "Confirmar" }) {
   });
 }
 
+// ---------- desktop shell bridge ----------
+
+// O shell desktop (Wails v3) injeta window.wails com bindings Go antes dos
+// scripts da página. No navegador comum, na PWA e antes da integração o objeto
+// não existe: nada abaixo muda o comportamento, o botão fica escondido e a
+// pasta continua digitada à mão.
+const PICK_FOLDER_BINDING = "desktop.UI.PickFolder";
+
+/** A ponte de chamadas do shell, ou null fora dele. */
+function desktopBridge() {
+  const call = window.wails && window.wails.Call;
+  return call && typeof call.ByName === "function" ? call : null;
+}
+
+/**
+ * Botão "Selecionar pasta…" do diálogo de sessão. Ele nasce escondido e só
+ * aparece quando a ponte existe. O diálogo é reconstruído a cada abertura,
+ * então esta conferência cobre o boot da página e cada reabertura; o foco no
+ * campo cobre a ponte chegando depois da abertura — mas só via transição: se
+ * a ponte chegar com o campo já focado, nenhum foco novo dispara e o botão
+ * espera a próxima transição de foco (fora do shell real, que instala a
+ * ponte antes dos scripts da página, é caso teórico).
+ */
+function syncWorkspacePicker() {
+  const picker = $("workspace-picker");
+  if (picker) picker.hidden = !desktopBridge();
+}
+
+/** Pede a pasta ao shell e a devolve pelo mesmo caminho do teclado. */
+async function pickWorkspaceFolder(input, status) {
+  const bridge = desktopBridge();
+  status.classList.remove("error-text");
+  status.textContent = "";
+  if (!bridge) {
+    syncWorkspacePicker();
+    status.classList.add("error-text");
+    status.textContent = "Não deu para abrir o seletor de pastas. Feche esta janela e tente de novo.";
+    return;
+  }
+  try {
+    const folder = String(await bridge.ByName(PICK_FOLDER_BINDING) || "").trim();
+    if (!folder) return; // seletor fechado sem escolher: nada a fazer
+    // Mesmo caminho dos atalhos de pastas recentes: o valor entra no campo e a
+    // validação continua sendo da criação da sessão, nunca daqui.
+    input.value = folder;
+    $("dialog-session-create").focus();
+  } catch (error) {
+    // Taxonomia de erro do wails v3 (runtime.ts): ReferenceError = método
+    // desconhecido; TypeError = assinatura errada; RuntimeError = o método Go
+    // devolveu erro — o diálogo falhou de verdade. As três aparecem. O
+    // cancelamento do seletor não passa por aqui: o Go devolve ("", nil) e o
+    // resolve acima já trata a string vazia em silêncio.
+    const brokenBinding = error instanceof ReferenceError || error instanceof TypeError;
+    const dialogFailed = error && typeof error === "object" && error.name === "RuntimeError";
+    if (brokenBinding || dialogFailed) {
+      status.classList.add("error-text");
+      status.textContent = "Não deu para abrir o seletor de pastas. Feche esta janela e tente de novo.";
+    }
+  }
+}
+
 // ---------- session dialog ----------
 
 function openSessionDialog(mode) {
@@ -1602,7 +1671,12 @@ function openSessionDialog(mode) {
   const creating = mode === "create" || !state.session;
   $("dialog-session-title").textContent = creating ? "Começar uma sessão" : "Detalhes da sessão";
 
-  const folderField = el("p", { class: "field" });
+  // Ids estáveis (workspace-field, dialog-folder, workspace-picker,
+  // workspace-picker-note, dialog-session-create) são o contrato com o shell
+  // desktop: o shell os usa para achar campo, botão e status sem depender de
+  // texto ou posição, e alias/fallbacks futuros podem preencher a pasta e
+  // seguir o fluxo por eles — renomear um quebra o shell sem tocar aqui.
+  const folderField = el("p", { class: "field", id: "workspace-field" });
   folderField.append(el("label", { class: "field-label", for: "dialog-folder" }, creating ? "Pasta do projeto" : "Nova pasta do projeto"));
   const input = el("input", {
     id: "dialog-folder",
@@ -1611,7 +1685,14 @@ function openSessionDialog(mode) {
     autocomplete: "off",
     value: (state.info && state.info.workspace) || "",
   });
-  folderField.append(input, el("span", { class: "field-help" }, "Caminho completo da pasta onde o agente pode trabalhar. Ex.: C:\\projetos\\meu-app"));
+  input.addEventListener("focus", syncWorkspacePicker);
+  const status = el("p", { class: "muted", role: "status", id: "workspace-picker-note" });
+  const picker = action("Selecionar pasta…", "secondary-button", () => pickWorkspaceFolder(input, status), { id: "workspace-picker" });
+  picker.hidden = true;
+  // span (não div): <p> só aceita phrasing content; o display:flex da classe
+  // faz a linha independente da tag.
+  folderField.append(el("span", { class: "field-row" }, input, picker),
+    el("span", { class: "field-help" }, "Caminho completo da pasta onde o agente pode trabalhar. Ex.: C:\\projetos\\meu-app"));
   body.append(el("h3", {}, "Nova sessão"), folderField);
   const recent = (state.info && state.info.workspaces) || [];
   if (recent.length) {
@@ -1626,7 +1707,8 @@ function openSessionDialog(mode) {
   body.append(el("div", { class: "buttons" }, action("Criar sessão", "primary-button", async () => {
     await createSession(input.value);
     closeDialog("dialog-session");
-  })));
+  }, { id: "dialog-session-create" })), status);
+  syncWorkspacePicker();
 
   const session = state.session;
   if (creating || !session) {
@@ -1638,7 +1720,7 @@ function openSessionDialog(mode) {
   body.append(el("h3", {}, "Sessão aberta"));
   const usage = state.usage;
   const rows = [
-    ["Nome", session.Title || "Sem título"],
+    ["Nome", displayTitle(session)],
     ["Pasta", session.Workspace],
     ["Identificador", session.ID],
     ["Criada", `${when(session.Created)} (${clock(session.Created)})`],

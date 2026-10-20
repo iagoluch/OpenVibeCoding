@@ -28,3 +28,19 @@ jobs:
         with:
           name: openvibecoding-binaries
           path: dist/
+  desktop:
+    # The desktop shell is Windows-first. Building the Wails window on Linux
+    # needs GTK4 development headers and on macOS the Xcode SDK, neither of
+    # which this job wires up in M1, so tagged desktop coverage runs on
+    # windows-latest only. The plain 3-OS gate above stays the release barrier.
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0
+        with:
+          go-version-file: go.mod
+      - run: go vet -tags desktop ./...
+      - run: go test -tags desktop -count=1 ./...
+      - run: go build -tags desktop -o ovc-desktop.exe ./cmd/ovc
+      - name: INV2 plain builds must not depend on wails
+        run: if (go list -deps ./cmd/ovc | Select-String -Quiet wails) { Write-Error 'wails leaked into the untagged dependency graph'; exit 1 }

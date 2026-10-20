@@ -5,7 +5,20 @@ on:
 permissions:
   contents: write
 jobs:
+  desktop:
+    # The release publishes the Windows desktop artifact, so its tagged suite
+    # must gate it. Wails builds on Windows only in CI (GTK4/Xcode headers
+    # are not wired up on the other runners — same reason as the ci.yml
+    # desktop job), so the gate runs there and the release job waits for it.
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: go test -tags desktop -count=1 ./...
   release:
+    needs: desktop
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

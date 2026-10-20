@@ -109,6 +109,9 @@ func run() error {
 	if *ui {
 		return openUI(dir, *project)
 	}
+	if *desktopFlag {
+		return runDesktop(dir)
+	}
 	w, e := workspace.Open(*project, *shell)
 	if e != nil {
 		return e

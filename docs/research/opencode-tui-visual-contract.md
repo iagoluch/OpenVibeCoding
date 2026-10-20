@@ -147,6 +147,15 @@ Semântica (`packages/theme/src/tui/resolve.ts:172-194`):
 | Sombra do logo (dir.) | `tint(background.base, text.base, .25)` | `#5c5e65` | idem |
 | Fundo de destaque de tab (hover) | `tint(raised.base, raised.high, raised.high.a)` | ≈ `#44475a` | `session-tabs-rail.tsx:16-18` |
 
+> **Exceção de contraste (decidida em 20/10/2026):** os pares muted-sobre-base — rótulos
+> de botão secundário (`text.action.secondary`, §2.2) e texto de ajuda de campo
+> (`field-help`) — pintam `#6272a4` sobre `#282a36`, 3,03:1, abaixo da diretriz WCAG de
+> 4,5:1. **Fidelidade vence:** o TUI de verdade pinta esses textos em `text.muted`
+> (`#6272a4`, §2.2), e a folha do OVC replica. É uma exceção deliberada, herdada da
+> paleta original — não um esquecimento — e vale só para esses pares; texto corrido que
+> precisa ser lido segue usando `--text-soft` (`#94bdb9`, 6,9:1), o passo seguinte da
+> mesma escala.
+
 ---
 
 ## 3. Tipografia e grade

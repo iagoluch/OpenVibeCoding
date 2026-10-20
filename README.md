@@ -51,6 +51,8 @@ Credentials use the OS keychain by default. `ovc --setup` detects Ollama and LM 
 
 Prefer a browser? `ovc --ui` starts the same runtime, prints one single-use pairing link (valid for five minutes) and opens the local web client — free-model onboarding, streaming replies and the same operation approvals.
 
+Prefer a window? `ovc --desktop` opens the Windows desktop shell — the same runtime and web UI in a native window with a pt-BR tray; build it with `go build -tags desktop -o ovc.exe ./cmd/ovc`.
+
 Release archives for Linux, macOS and Windows (amd64/arm64) are built by CI from tagged commits and published on [Releases](https://github.com/iagoluch/OpenVibeCoding/releases/latest); the installers verify SHA-256 checksums. See the [installation and upgrade guide](docs/guide.md#install-and-launch).
 
 ## The development loop

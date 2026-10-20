@@ -21,7 +21,7 @@ Windows: `./scripts/install.ps1 -AddToPath`, then reopen the terminal (if your e
 
 ## Credentials and first run
 
-The first run writes a default configuration. `ovc --setup` is the guided path: it detects Ollama and LM Studio servers, lists free-tier providers with the page that issues each key, can import credentials already configured in OpenCode, stores the key in the OS keychain and makes one real request before activating. When the preferred model is retired, rate limited or busy, the wizard tries the provider's next model instead of failing the first run.
+The first run writes a default configuration whose active pair is a free model — OpenRouter `thinkingmachines/inkling:free` — so a clean home never targets a paid provider; without a key it simply reports the missing credential. `ovc --setup` is the guided path: it detects Ollama and LM Studio servers, lists free-tier providers with the page that issues each key, can import credentials already configured in OpenCode, stores the key in the OS keychain and makes one real request before activating. When the preferred model is retired, rate limited or busy, the wizard tries the provider's next model instead of failing the first run.
 
 Store a credential directly through hidden terminal input when you already know the provider:
 
@@ -111,6 +111,22 @@ ovc --ui --workspace /path/to/project
 It starts or reuses the runtime, prints one pairing link and opens it in the default browser. The link carries a 256-bit single-use code that expires after five minutes and is never written to the runtime log; only a client holding the runtime token may mint one. Opening it pairs that browser and redirects to the panel; the runtime keeps running afterwards, so `ovc --runtime stop` is what shuts it down. Pairing governs the handoff, not later requests: every request is authenticated on its own, the panel answers only on this machine's loopback origin, and another browser needs its own link. See [security guarantees](security.md#browser-ui-loopback-web-client).
 
 The first screen is free-first onboarding: it lists local Ollama/LM Studio models and the free-tier providers (each with the page that issues its key), and activates the choice only after one real request succeeds; a secondary option activates without testing. After that the client is the same agent over the same runtime: replies stream in, every operation still requires an approval, and session handling, model switching and cancellation work as in the terminal. The page holds no state of its own — sessions, approvals and configuration stay owned by the runtime — and it registers no service worker, so nothing of it keeps running after the tab closes.
+
+## Desktop window (`ovc --desktop`)
+
+The desktop shell is the same web UI inside a native window, built on Wails v3. It is compiled in only when you build with the `desktop` build tag — plain builds refuse the flag with an instruction instead:
+
+```sh
+go build -tags desktop -o ovc.exe ./cmd/ovc
+ovc --desktop
+```
+
+Run it from a terminal or double-click the exe. It attaches to the shared runtime like the other clients (spawning it from the same executable when absent), and the window is already authenticated: no pairing link, because the shell keeps the runtime token in its own process and never hands it to the page. Closing the window does not stop the runtime — that matches `ovc --ui` — and the tray menu offers `Mostrar` (focus the window), `Parar serviço` (asks the runtime to stop; a running turn is refused with a dialog, never force-killed) and `Sair` (close the shell; the runtime keeps running). Note the stop semantics: `Parar serviço` while the window is open is transient — the shell's monitor restores the service automatically (~3s), because its job is keeping a daemon alive. To stop for real, close the window first (the shell exits; the runtime persists, ready for the next client) and then use `ovc --runtime stop` from a terminal if you want the runtime itself down.
+
+In the session dialog, `Selecionar pasta…` opens the native folder chooser instead of typing a path by hand; the chosen path is still validated by the runtime when the session is created, exactly like a typed one. Everything else — prompts, streamed replies, approvals, diffs, cancellation — is the same client over the same runtime as the browser UI.
+
+Windows is the supported platform for M1 (the shipped artifact is `ovc-desktop.exe`, a portable exe — no installer yet). The tagged build and tests are exercised on Windows in CI; macOS and Linux windows are untested and need their platform toolchains. See [security guarantees](security.md#desktop-shell-wails-window) for the proxy trust position and the confined bridge.
+
 
 ## Browser QA
 
