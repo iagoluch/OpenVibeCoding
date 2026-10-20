@@ -1,5 +1,7 @@
 # Validation and troubleshooting
 
+[Português](pt-BR/testes.md) · [English](testing.md) · [Español](es/pruebas.md) · [简体中文](zh-CN/testing.md)
+
 ## Automated checks
 
 ```sh

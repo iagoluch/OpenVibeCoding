@@ -1,5 +1,7 @@
 # OpenVibeCoding
 
+[Português](pt-BR/guia.md) · [English](guide.md) · [Español](es/guia.md) · [简体中文](zh-CN/guide.md)
+
 A terminal coding agent written in Go with Bubble Tea. It can inspect projects, propose reviewed file changes, run approved commands, manage persistent task context, test websites in Chromium, and perform approved desktop actions through platform backends.
 
 ## Install and launch

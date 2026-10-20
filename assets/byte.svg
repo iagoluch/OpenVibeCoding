@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52" role="img" aria-labelledby="title desc">
+<title id="title">Byte — mascote do OpenVibeCoding</title><desc id="desc">Uma pequena criatura abstrata em formato de semente, formada por uma silhueta angular azul e pixels soltos; não é um robô.</desc>
+<rect width="52" height="52" rx="12" fill="#07111D"/>
+<g transform="translate(4 6) scale(1)">
+  <path d="M2 13h5v5H2zM7 5h4v4H7zM5 25h5v5H5z" fill="#66CEFF"/>
+  <path d="M15 10 24 4 35 8 42 17 41 27 35 35 25 39 17 32 12 23 12 16Z" fill="#0D2B46" stroke="#69CFFF" stroke-width="2.4" stroke-linejoin="round"/>
+  <path d="M15 10 20 15 12 21" fill="none" stroke="#3B9DD4" stroke-width="2" stroke-linejoin="round"/>
+  <rect x="22" y="18" width="3.5" height="6.5" rx="1.7" fill="#DFF7FF"/>
+  <rect x="31" y="17" width="3.5" height="6.5" rx="1.7" fill="#DFF7FF"/>
+  <path d="M20 30h7" stroke="#69CFFF" stroke-width="2" stroke-linecap="round"/>
+ </g>
+</svg>
