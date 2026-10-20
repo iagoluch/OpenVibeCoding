@@ -25,6 +25,27 @@ func TestValidationAndRedaction(t *testing.T) {
 		t.Fatal("plaintext remote accepted")
 	}
 }
+
+// TestDefaultActivePairIsFree pins the 2026-10-19 decision: an untouched
+// home must not target a paid provider. The default active pair is the first
+// free provider in the shipped catalog, and it must resolve (Validate
+// requires Active) with configured zero prices.
+func TestDefaultActivePairIsFree(t *testing.T) {
+	c := Default()
+	if c.Provider != "openrouter" || c.Model != "thinkingmachines/inkling:free" {
+		t.Fatalf("default active pair drifted: %s/%s", c.Provider, c.Model)
+	}
+	p, m, e := c.Active()
+	if e != nil {
+		t.Fatal(e)
+	}
+	if p.KeyEnv != "OPENROUTER_API_KEY" || m.InputPrice == nil || m.OutputPrice == nil || *m.InputPrice != 0 || *m.OutputPrice != 0 {
+		t.Fatalf("default pair must be a free model with configured zero prices: %+v", m)
+	}
+	if e := c.Validate(); e != nil {
+		t.Fatal(e)
+	}
+}
 func TestLoadPreservesConfiguration(t *testing.T) {
 	dir := t.TempDir()
 	c, e := Load(dir)
@@ -132,6 +153,28 @@ func TestSaveOmitsStockProviders(t *testing.T) {
 	}
 	if back.Provider != "openrouter" || back.Model != "thinkingmachines/inkling:free" {
 		t.Fatal("active selection lost")
+	}
+}
+
+// TestRedactTailChopFloor pins the over-redaction fix (2026-10-19): a text
+// TAIL that coincides with a SHORT prefix of a known secret must survive —
+// live evidence was an honest provider error "…a local server is running"
+// chopped to "runnin[REDACTED]" because a user key started with 'g'. Full
+// secrets stay fully redacted and meaningful prefixes still chop, so a
+// stream ending halfway through a credential leaks nothing.
+func TestRedactTailChopFloor(t *testing.T) {
+	c := Default()
+	p := c.Providers["groq"]
+	p.Secret = "gsk-live-token-123456789" // starts with 'g', like the live evidence
+	c.Providers["groq"] = p
+	if got := c.Redact("a local server is running"); got != "a local server is running" {
+		t.Fatalf("over-redacted an honest tail: %q", got)
+	}
+	if got := c.Redact("prefix " + p.Secret + " suffix"); got != "prefix [REDACTED] suffix" {
+		t.Fatalf("full-secret redaction changed: %q", got)
+	}
+	if got := c.Redact("chunk ends with gsk-live"); got != "chunk ends with [REDACTED]" {
+		t.Fatalf("meaningful prefix tail was not redacted: %q", got)
 	}
 }
 

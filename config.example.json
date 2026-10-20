@@ -1,6 +1,6 @@
 {
-  "provider": "openai",
-  "model": "gpt-4.1-mini",
+  "provider": "openrouter",
+  "model": "thinkingmachines/inkling:free",
   "harness": "review",
   "providers": {
     "custom-gateway": {

@@ -48,7 +48,14 @@ type Config struct {
 func price(v float64) *float64 { return &v }
 
 func Default() Config {
-	return Config{Provider: "openai", Model: "gpt-4.1-mini", Harness: "review", Providers: map[string]Provider{
+	// The default active pair is the first FREE provider in the catalog below
+	// (openrouter, whose shipped models are all :free tiers; model
+	// thinkingmachines/inkling:free is its first entry). A clean home must not
+	// target a paid provider: the pair is static (no runtime probing) and
+	// must exist in the registry because Validate() requires Active() to
+	// resolve. Users who pick another provider keep theirs — this only
+	// changes the untouched first-run state. Decided 2026-10-19.
+	return Config{Provider: "openrouter", Model: "thinkingmachines/inkling:free", Harness: "review", Providers: map[string]Provider{
 		"anthropic": {Protocol: "anthropic", BaseURL: "https://api.anthropic.com/v1", KeyEnv: "ANTHROPIC_API_KEY", Models: []Model{
 			{ID: "claude-sonnet-4-5", Context: 200000, Tools: true, InputPrice: price(3), OutputPrice: price(15)},
 		}},
@@ -290,6 +297,14 @@ func (c Config) Validate() error {
 	return e
 }
 
+// minTailPrefix is the floor for the streaming tail heuristic: only a text
+// tail matching at least this many leading bytes of a secret is chopped.
+// Live evidence (2026-10-19) showed a 1-byte floor redacting honest text —
+// an error ending "…running" was chopped to "runnin[REDACTED]" because a
+// user key started with 'g'. Full-secret matches are unaffected: they are
+// replaced wholesale before this heuristic runs.
+const minTailPrefix = 8
+
 // Redact removes configured credentials and terminal controls before persistence or display.
 func (c Config) Redact(s string) string {
 	for _, p := range c.Providers {
@@ -300,8 +315,10 @@ func (c Config) Redact(s string) string {
 		if k != "" {
 			s = strings.ReplaceAll(s, k, "[REDACTED]")
 			// Streaming may end halfway through a credential. Hide matching
-			// suffixes until more data arrives, including short prefixes.
-			for n := min(len(k)-1, len(s)); n > 0; n-- {
+			// suffixes until more data arrives — meaningful prefixes only,
+			// so a short coincidence with a secret's first bytes does not
+			// redact honest text.
+			for n := min(len(k)-1, len(s)); n >= minTailPrefix; n-- {
 				if strings.HasSuffix(s, k[:n]) {
 					s = s[:len(s)-n] + "[REDACTED]"
 					break

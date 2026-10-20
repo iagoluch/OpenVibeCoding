@@ -11,6 +11,9 @@ import (
 
 func TestUsageLabelReflectsConfiguredPrices(t *testing.T) {
 	m := &Model{Engine: &agent.Engine{Config: config.Default()}, status: "idle"}
+	// Pin a paid pair explicitly: the shipped default is free (decision
+	// 2026-10-19), and this test is about the price math, not the default.
+	m.Engine.Config.Provider, m.Engine.Config.Model = "openai", "gpt-4.1-mini"
 	if label := m.usageLabel(); label != "" {
 		t.Fatal("expected no label without usage", label)
 	}

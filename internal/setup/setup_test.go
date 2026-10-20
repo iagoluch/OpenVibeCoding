@@ -64,7 +64,7 @@ func TestSelectRefusesUnknownProviderAndModel(t *testing.T) {
 	if e != nil || updated.Provider != "openai" || updated.Model != "gpt-4.1" {
 		t.Fatalf("select did not report the new configuration: %v", e)
 	}
-	if c.Provider != "openai" || c.Model != "gpt-4.1-mini" {
+	if c.Provider != "openrouter" || c.Model != "thinkingmachines/inkling:free" {
 		t.Fatal("select must not mutate the caller's configuration")
 	}
 	back, e := config.Load(dir)

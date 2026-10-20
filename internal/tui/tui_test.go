@@ -35,7 +35,7 @@ func fixture(t *testing.T) *Model {
 func TestSwitchAndClear(t *testing.T) {
 	m := fixture(t)
 	m.command("/model missing/nope")
-	if m.Engine.Config.Provider != "openai" {
+	if m.Engine.Config.Provider != "openrouter" {
 		t.Fatal("invalid switch applied")
 	}
 	m.command("/model local/qwen3:8b")
