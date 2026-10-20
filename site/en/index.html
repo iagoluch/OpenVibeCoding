@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>OpenVibeCoding — A coding agent that shows its work</title>
+<meta name="description" content="OpenVibeCoding is a pre-1.0 terminal coding agent in Go. Inspect a project, review the diff, approve each operation, and see the command's real output and exit status.">
+<meta name="theme-color" content="#070b12">
+<link rel="icon" href="../icon.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="OpenVibeCoding">
+<meta property="og:locale" content="en_US">
+<meta property="og:locale:alternate" content="pt_BR">
+<meta property="og:title" content="OpenVibeCoding — A coding agent that shows its work">
+<meta property="og:description" content="A pre-1.0 terminal coding agent in Go. The model proposes. The runtime enforces. You see the evidence.">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="OpenVibeCoding — A coding agent that shows its work">
+<meta name="twitter:description" content="A pre-1.0 terminal coding agent in Go. Review the diff, approve the operation, see the exit code.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../site.css">
+</head>
+<body id="top">
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="shell nav-shell">
+    <a class="brand" href="#top" aria-label="OpenVibeCoding, back to top">
+      <svg class="mark" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><rect width="48" height="48" rx="12" fill="currentColor"/><path d="m13 14 10 10-10 10m15 0h9" fill="none" stroke="#070b12" stroke-width="3"/></svg>
+      <span>OpenVibeCoding</span>
+    </a>
+
+    <nav class="primary-nav" aria-label="Primary">
+      <a href="#how-it-works">How it works</a>
+      <a href="#what-it-does">What it does</a>
+      <a href="#install">Install</a>
+    </nav>
+
+    <div class="nav-actions">
+      <span class="version">v0.2.0 · pre-1.0</span>
+      <div class="lang-switch" role="group" aria-label="Language">
+        <a href="../index.html" hreflang="pt-BR" lang="pt-BR">PT</a>
+        <span class="lang-sep" aria-hidden="true">/</span>
+        <a href="index.html" hreflang="en" lang="en" aria-current="page">EN</a>
+      </div>
+      <a class="gh-link" href="https://github.com/iagoluch/OpenVibeCoding">
+        <span>GitHub</span>
+        <svg viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M3 9 9 3M4 3h5v5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="square"/></svg>
+      </a>
+    </div>
+
+    <button class="menu-toggle" id="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="Open menu" data-label-open="Open menu" data-label-close="Close menu">
+      <svg class="icon-open" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2 4h12M2 8h12M2 12h12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/></svg>
+      <svg class="icon-close" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m3 3 10 10M13 3 3 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/></svg>
+    </button>
+  </div>
+
+  <div class="mobile-menu" id="mobile-menu" hidden>
+    <nav aria-label="Mobile">
+      <a href="#how-it-works">How it works <span aria-hidden="true">↓</span></a>
+      <a href="#what-it-does">What it does <span aria-hidden="true">↓</span></a>
+      <a href="#install">Install <span aria-hidden="true">↓</span></a>
+      <a href="https://github.com/iagoluch/OpenVibeCoding">GitHub repository
+        <svg viewBox="0 0 12 12" width="13" height="13" aria-hidden="true" focusable="false"><path d="M3 9 9 3M4 3h5v5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="square"/></svg>
+      </a>
+    </nav>
+    <div class="mobile-lang lang-switch" role="group" aria-label="Language">
+      <a href="../index.html" hreflang="pt-BR" lang="pt-BR">PT</a>
+      <span class="lang-sep" aria-hidden="true">/</span>
+      <a href="index.html" hreflang="en" lang="en" aria-current="page">EN</a>
+    </div>
+    <p class="menu-meta"><span>v0.2.0 · pre-1.0</span><span>MIT</span></p>
+  </div>
+</header>
+
+<main id="main" tabindex="-1">
+
+  <!-- Hero -->
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="shell hero-grid">
+      <div class="hero-copy">
+        <h1 id="hero-title">A coding agent<br>that <span class="marked">shows its work.</span></h1>
+        <p class="lede">OpenVibeCoding is a terminal coding agent that keeps the loop visible. It reads the project, proposes a diff, waits for your approval, then shows the command and the result. Sessions and evidence are stored on your machine.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#install">
+            Install v0.2.0
+            <svg viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M6 2v8M2.5 6.5 6 10l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="square"/></svg>
+          </a>
+          <a class="btn btn-quiet" href="https://github.com/iagoluch/OpenVibeCoding">
+            View the repository
+            <svg viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M3 9 9 3M4 3h5v5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="square"/></svg>
+          </a>
+        </div>
+        <p class="hero-meta"><span>Go + Bubble Tea</span><span class="sr-only">·</span><span>SQLite sessions</span><span class="sr-only">·</span><span>MIT</span></p>
+      </div>
+
+      <figure class="hero-visual">
+        <div class="terminal" role="group" aria-label="Reconstruction of an OpenVibeCoding terminal session" lang="en">
+          <div class="term-top">
+            <span class="term-brand">OPENVIBECODING</span>
+            <span class="term-sub">project agent</span>
+          </div>
+          <div class="term-path">~/work/parser</div>
+
+          <div class="term-body">
+            <div class="term-block">
+              <span class="term-role">User</span>
+              <p class="term-prompt">Parse() rejects valid input. Find the cause, fix it, and run the parser tests.</p>
+            </div>
+
+            <div class="term-block">
+              <span class="term-role">Plan</span>
+              <ul class="plan">
+                <li>Read the parser implementation and its tests.</li>
+                <li>Replace the empty return with input validation.</li>
+                <li>Run the parser package tests.</li>
+              </ul>
+            </div>
+
+            <div class="term-block">
+              <div class="review-head">
+                <span class="term-role">Review</span>
+                <span class="review-file">src/parser.go</span>
+              </div>
+              <div class="diff" role="group" aria-label="Proposed unified diff" tabindex="0">
+                <div class="diff-hunk">@@ -18,3 +18,3 @@</div>
+                <div class="diff-line"><span class="diff-sign"> </span><span class="diff-code">func Parse(input string) error {</span></div>
+                <div class="diff-line diff-del"><span class="diff-sign">-</span><span class="diff-code">    return nil</span></div>
+                <div class="diff-line diff-add"><span class="diff-sign">+</span><span class="diff-code">    return validate(input)</span></div>
+                <div class="diff-line"><span class="diff-sign"> </span><span class="diff-code">}</span></div>
+              </div>
+              <p class="approved"><span class="tick" aria-hidden="true">✓</span> approved <span class="sep" aria-hidden="true">·</span> applied to <span class="term-code">src/parser.go</span></p>
+            </div>
+
+            <div class="term-block">
+              <span class="term-role">Verify</span>
+              <p class="cmd"><span class="cmd-prompt">$</span> go test ./internal/parser</p>
+              <p class="test-out"><span class="test-ok">ok</span><span>internal/parser</span><span class="test-time">0.012s</span></p>
+              <p class="test-exit">exit 0</p>
+            </div>
+          </div>
+
+          <div class="term-status">
+            <span>anthropic/claude-sonnet-4-5</span><span>review</span><span class="status-idle">idle</span>
+          </div>
+          <div class="term-input">
+            <span class="prompt-glyph" aria-hidden="true">›</span><span class="cursor" aria-hidden="true"></span><span class="input-hint">Describe a task, or /help</span>
+          </div>
+          <div class="term-help">Enter send · Ctrl+J newline · /help · Esc stop</div>
+        </div>
+        <figcaption class="term-caption">Interface reconstruction from the real TUI. No live model request is shown.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- Loop -->
+  <section class="loop" id="how-it-works" aria-labelledby="loop-title">
+    <div class="shell">
+      <div class="section-head">
+        <h2 id="loop-title">A change is not done when the model says so.</h2>
+        <p class="section-intro">It is done when the diff is reviewed and the command has an exit code. That is the loop OpenVibeCoding is built around.</p>
+      </div>
+
+      <div class="loop-grid">
+        <article class="loop-step">
+          <span class="seq">01</span>
+          <h3>Inspect</h3>
+          <p>Reads project instructions, searches code and inspects Git state. Reads stay inside the workspace and do not ask for approval.</p>
+          <div class="artifact">
+            <p class="artifact-label">workspace · read-only</p>
+            <div class="tree">
+              <span class="tree-root">work/parser</span>
+              <span class="tree-row"><span class="tree-name">AGENTS.md</span><span class="tree-note">instructions</span></span>
+              <span class="tree-row"><span class="tree-name">internal/parser/</span><span class="tree-note">source + tests</span></span>
+              <span class="tree-row"><span class="tree-name">git status</span><span class="tree-note">clean</span></span>
+            </div>
+          </div>
+        </article>
+
+        <article class="loop-step">
+          <span class="seq">02</span>
+          <h3>Review</h3>
+          <p>Every write, move or delete arrives as a unified diff. A stale proposal is rejected when the file changes underneath it.</p>
+          <div class="artifact">
+            <p class="artifact-label">src/parser.go</p>
+            <div class="mini-diff">
+              <span class="mini-line mini-del"><span class="mini-sign">-</span>return nil</span>
+              <span class="mini-line mini-add"><span class="mini-sign">+</span>return validate(input)</span>
+            </div>
+            <p class="artifact-foot">stale proposals rejected</p>
+          </div>
+        </article>
+
+        <article class="loop-step">
+          <span class="seq">03</span>
+          <h3>Approve</h3>
+          <p><kbd>Ctrl+Y</kbd> accepts one operation. <kbd>Ctrl+N</kbd> rejects it. Approval is per operation, never inherited from an earlier turn.</p>
+          <div class="artifact">
+            <div class="key-row"><kbd>Ctrl+Y</kbd><span>approve this operation</span></div>
+            <div class="key-row"><kbd>Ctrl+N</kbd><span>reject this operation</span></div>
+            <p class="artifact-foot">one operation at a time</p>
+          </div>
+        </article>
+
+        <article class="loop-step">
+          <span class="seq">04</span>
+          <h3>Verify</h3>
+          <p>Approved commands return stdout, stderr and exit status. <span class="term-code">/changes</span> shows what changed; <span class="term-code">/undo</span> reverses the last applied change.</p>
+          <div class="artifact">
+            <p class="artifact-cmd"><span class="dollar">$</span> go test ./internal/parser</p>
+            <p class="artifact-out"><span class="ok">ok</span><span>internal/parser</span><span class="time">0.012s</span></p>
+            <p class="artifact-foot exit">exit 0</p>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- Boundaries -->
+  <section class="boundaries" id="what-it-does" aria-labelledby="boundaries-title">
+    <div class="shell">
+      <div class="section-head">
+        <h2 id="boundaries-title">Small surface. Explicit boundaries.</h2>
+        <p class="section-intro">Each capability has a place to be granted, approved or refused. The terminal stays the interface; the runtime owns the limits.</p>
+      </div>
+
+      <div class="pull-row">
+        <p class="pull">The model proposes.<br><span>The runtime enforces.</span></p>
+        <p class="pull-note">A previous approval never authorizes new work. Every write, command and integration crosses its own boundary.</p>
+      </div>
+
+      <table class="boundary-table">
+        <caption class="sr-only">Capabilities and their enforced boundaries</caption>
+        <tbody>
+          <tr>
+            <th scope="row">File changes</th>
+            <td>Unified diff before the operation, per-operation approval, and <code>/undo</code> for the last applied change.</td>
+          </tr>
+          <tr>
+            <th scope="row">Commands</th>
+            <td>Approval first, then stdout, stderr and exit status. On Linux they run in Bubblewrap with no network by default; if isolation cannot be enforced, execution fails closed. Elsewhere, <code>--allow-unsandboxed-shell</code> is an explicit opt-in, not an OS sandbox.</td>
+          </tr>
+          <tr>
+            <th scope="row">Providers</th>
+            <td>Native OpenAI, Anthropic and Gemini. Compatible DeepSeek, Kimi, Qwen, Mistral and local endpoints. Free-tier presets for OpenRouter, Groq, Cerebras, NVIDIA NIM, Z.AI and Google AI Studio.</td>
+          </tr>
+          <tr>
+            <th scope="row">Sessions</th>
+            <td>SQLite history, summaries, audit records and usage. Resume a saved session after a restart.</td>
+          </tr>
+          <tr>
+            <th scope="row">Beyond the terminal</th>
+            <td>Playwright browser QA and platform desktop tools, behind separate browser, desktop and clipboard grants. The built-in desktop backend does not support Wayland.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="lower-grid">
+        <div class="lower-block">
+          <h3>One runtime, several terminals</h3>
+          <div class="diagram" role="group" aria-label="Three terminals reuse one local runtime, which stores sessions and audit records in SQLite">
+            <div class="diagram-terminals">
+              <span>terminal 01</span>
+              <span>terminal 02</span>
+              <span>terminal 03</span>
+            </div>
+            <div class="diagram-arrow" aria-hidden="true">
+              <svg viewBox="0 0 34 12" focusable="false"><path d="M0 6h31M26 2l5 4-5 4" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+            </div>
+            <div class="diagram-node"><b>local runtime</b><small>authenticated loopback</small></div>
+            <div class="diagram-arrow" aria-hidden="true">
+              <svg viewBox="0 0 34 12" focusable="false"><path d="M0 6h31M26 2l5 4-5 4" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+            </div>
+            <div class="diagram-node"><b>SQLite</b><small>sessions · audit</small></div>
+          </div>
+          <p>The first terminal starts the runtime; the others reuse it. <code>ovc --ui</code> serves the same runtime to a local browser through a single-use pairing link that expires after five minutes.</p>
+        </div>
+
+        <div class="lower-block">
+          <h3>Models are a choice, not a default</h3>
+          <dl class="model-list">
+            <div class="model-row"><dt>Native</dt><dd>OpenAI, Anthropic, Gemini</dd></div>
+            <div class="model-row"><dt>Compatible</dt><dd>DeepSeek, Kimi, Qwen, Mistral, custom endpoints</dd></div>
+            <div class="model-row"><dt>Local</dt><dd>Ollama and LM Studio, detected by <code>ovc --setup</code></dd></div>
+            <div class="model-row"><dt>Presets</dt><dd>OpenRouter, Groq, Cerebras, NVIDIA NIM, Z.AI, Google AI Studio</dd></div>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Profiles -->
+  <section class="profiles" aria-labelledby="profiles-title">
+    <div class="shell">
+      <div class="section-head">
+        <h2 id="profiles-title">The same loop, at your pace.</h2>
+        <p class="section-intro">Set up for a first project, a daily workspace, or a host where isolation is not optional.</p>
+      </div>
+
+      <div class="profile-list">
+        <article class="profile">
+          <h3>First project</h3>
+          <p class="profile-body">Start with a local model or a free-tier preset. The setup wizard tests one real request before activating a provider. File changes still wait for a diff.</p>
+          <p class="profile-detail"><code>ovc --setup</code> detects Ollama and LM Studio, lists free-tier key pages, and stores credentials in the OS keychain by default.</p>
+        </article>
+
+        <article class="profile">
+          <h3>Daily work</h3>
+          <p class="profile-body">Sessions survive restarts, older exchanges are summarized, and <code>/undo</code> reverses the last applied change. Use browser QA when the task leaves the code, or <code>ovc --ui</code> when a browser is the better surface.</p>
+          <p class="profile-detail">Original history stays in SQLite. An undo is refused if the file changed after the operation, so newer work is never overwritten silently.</p>
+        </article>
+
+        <article class="profile">
+          <h3>Strict environments</h3>
+          <p class="profile-body">Use a native adapter or your own compatible endpoint. On Linux, approved commands run in Bubblewrap with no network by default; when isolation cannot be enforced, execution fails closed. Network and install grants start off.</p>
+          <p class="profile-detail"><code>--allow-unsandboxed-shell</code> runs approved commands with your user privileges. It is an explicit choice, not isolation.</p>
+        </article>
+      </div>
+
+      <p class="section-note"><span><strong>Pre-1.0:</strong> interfaces and provider support can change between releases.</span></p>
+    </div>
+  </section>
+
+  <!-- Install -->
+  <section class="install" id="install" aria-labelledby="install-title">
+    <div class="shell">
+      <div class="section-head">
+        <h2 id="install-title">From clone to first session.</h2>
+        <p class="section-intro">Release binaries do not need Go: the install script downloads the archive for your OS and CPU and verifies its SHA-256. Source builds need Go 1.26.2+.</p>
+      </div>
+
+      <div class="install-grid">
+        <div class="install-copy">
+          <p class="install-lede">Clone the public repository, run the installer for one release archive, then choose a provider and open a workspace.</p>
+          <ol class="steps">
+            <li>
+              <div>
+                <h3>Get the code</h3>
+                <p>Clone the repository; the installer and the source live there.</p>
+              </div>
+            </li>
+            <li>
+              <div>
+                <h3>Install the binary</h3>
+                <p>The script downloads and verifies the archive for your OS and CPU, then installs <code>ovc</code> to <code>~/.local/bin</code> (or <code>%LOCALAPPDATA%\Programs\OpenVibeCoding</code> on Windows). Add that directory to PATH if <code>ovc</code> is not found.</p>
+              </div>
+            </li>
+            <li>
+              <div>
+                <h3>Choose a model</h3>
+                <p><code>ovc --setup</code> offers local servers and free-tier presets, then tests one real request.</p>
+              </div>
+            </li>
+            <li>
+              <div>
+                <h3>Open a project</h3>
+                <p>Point <code>ovc</code> at a workspace. Reads are immediate; writes and commands wait for approval.</p>
+              </div>
+            </li>
+          </ol>
+        </div>
+
+        <div class="install-panel">
+          <div class="install-bar">
+            <div class="tabs" role="tablist" aria-label="Installation platform">
+              <button class="tab" id="tab-unix" type="button" role="tab" aria-selected="true" aria-controls="panel-unix" tabindex="0">Linux / macOS</button>
+              <button class="tab" id="tab-windows" type="button" role="tab" aria-selected="false" aria-controls="panel-windows" tabindex="-1">Windows</button>
+            </div>
+            <button class="copy-btn" id="copy-commands" type="button"
+              data-label-copy="Copy"
+              data-label-copied="Copied"
+              data-label-failed="Copy failed"
+              data-status-empty="No commands found to copy."
+              data-status-copied="Installation commands copied to the clipboard."
+              data-status-failed="Copy failed. Select the commands and copy them manually.">
+              <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M5.5 5.5h8v8h-8zM2.5 10.5v-8h8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="miter"/></svg>
+              <span id="copy-label">Copy</span>
+            </button>
+          </div>
+
+          <div id="panel-unix" role="tabpanel" aria-labelledby="tab-unix">
+            <pre class="code-wrap" role="region" tabindex="0" aria-label="Linux and macOS installation commands"><code id="code-unix">git clone https://github.com/iagoluch/<wbr>OpenVibeCoding.git
+cd OpenVibeCoding
+bash scripts/install.sh
+# if ovc is not found, add ~/.local/bin to PATH
+ovc --setup
+ovc --workspace /path/to/project</code></pre>
+          </div>
+
+          <div id="panel-windows" role="tabpanel" aria-labelledby="tab-windows" hidden>
+            <pre class="code-wrap" role="region" tabindex="0" aria-label="Windows installation commands"><code id="code-windows">git clone https://github.com/iagoluch/<wbr>OpenVibeCoding.git
+cd OpenVibeCoding
+./scripts/install.ps1 -AddToPath
+# reopen PowerShell after the PATH update
+ovc --setup
+ovc --workspace C:\path\to\project</code></pre>
+          </div>
+
+          <div class="install-foot">
+            <span>Release install · SHA-256 verified</span>
+            <a href="https://github.com/iagoluch/OpenVibeCoding/blob/main/docs/guide.md">Full setup guide</a>
+          </div>
+          <span class="sr-only" id="copy-status" role="status" aria-live="polite"></span>
+        </div>
+      </div>
+
+      <div class="status-row">
+        <span class="status-label">Status</span>
+        <p class="status-text"><strong>OpenVibeCoding is under active development.</strong> Native macOS and Windows runtime behavior still requires validation on those hosts; Linux browser, desktop and sandbox workflows have been tested. Cross-compilation does not certify native runtime behavior. See the <a href="https://github.com/iagoluch/OpenVibeCoding/releases/latest">latest release</a> or the <a href="https://github.com/iagoluch/OpenVibeCoding/blob/main/docs/guide.md">full guide</a>.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Closing -->
+  <section class="closing" aria-labelledby="closing-title">
+    <div class="shell closing-grid">
+      <h2 id="closing-title">Keep the terminal.<br>Keep the evidence.</h2>
+      <div class="closing-copy">
+        <p>OpenVibeCoding is pre-1.0 and built in the open. Read the code, run the tests, or open the latest release before you install.</p>
+        <div class="closing-actions">
+          <a class="btn btn-primary" href="https://github.com/iagoluch/OpenVibeCoding">
+            Open the repository
+            <svg viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M3 9 9 3M4 3h5v5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="square"/></svg>
+          </a>
+          <a class="btn btn-quiet" href="https://github.com/iagoluch/OpenVibeCoding/blob/main/docs/guide.md">Read the guide</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="shell">
+    <div class="footer-top">
+      <a class="footer-brand" href="#top" aria-label="OpenVibeCoding, back to top">
+        <svg class="mark" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><rect width="48" height="48" rx="12" fill="currentColor"/><path d="m13 14 10 10-10 10m15 0h9" fill="none" stroke="#070b12" stroke-width="3"/></svg>
+        <span>OpenVibeCoding</span>
+      </a>
+      <p class="footer-note">An independent terminal coding project. Pre-1.0. MIT licensed.</p>
+    </div>
+
+    <nav class="footer-nav" aria-label="Footer">
+      <a href="https://github.com/iagoluch/OpenVibeCoding">GitHub</a>
+      <a href="https://github.com/iagoluch/OpenVibeCoding/releases">Releases</a>
+      <a href="https://github.com/iagoluch/OpenVibeCoding/blob/main/docs/guide.md">User guide</a>
+      <a href="https://github.com/iagoluch/OpenVibeCoding/blob/main/docs/security.md">Security</a>
+      <a href="https://github.com/iagoluch/OpenVibeCoding/blob/main/docs/architecture.md">Architecture</a>
+      <a href="https://github.com/iagoluch/OpenVibeCoding/blob/main/docs/testing.md">Testing</a>
+      <a href="https://github.com/iagoluch/OpenVibeCoding/blob/main/LICENSE">License</a>
+    </nav>
+
+    <div class="footer-bottom">
+      <span>Copyright 2026 Iago Luchtenberg</span>
+      <span>MIT · pre-1.0</span>
+    </div>
+  </div>
+</footer>
+
+<script src="../site.js"></script>
+</body>
+</html>
